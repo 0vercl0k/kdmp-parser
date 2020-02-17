@@ -167,7 +167,7 @@ struct KDMP_PARSER_PHYSMEM_RUN : public DisplayUtils {
 static_assert(sizeof(KDMP_PARSER_PHYSMEM_RUN) == 0x10,
               "PHYSICAL_MEMORY_RUN's size looks wrong.");
 
-struct KDMP_PARSER_PHYS_MEM_DESC : public DisplayUtils {
+struct KDMP_PARSER_PHYSMEM_DESC : public DisplayUtils {
   uint32_t NumberOfRuns;
   uint32_t Padding0;
   uint64_t NumberOfPages;
@@ -179,9 +179,17 @@ struct KDMP_PARSER_PHYS_MEM_DESC : public DisplayUtils {
     DISPLAY_FIELD(NumberOfPages);
     DISPLAY_FIELD(Run);
   }
+
+  bool LooksGood() const {
+    if (NumberOfRuns == 'EGAP' || NumberOfPages == 0x4547415045474150ULL) {
+      return false;
+    }
+
+    return true;
+  }
 };
 
-static_assert(sizeof(KDMP_PARSER_PHYS_MEM_DESC) == 0x20,
+static_assert(sizeof(KDMP_PARSER_PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
 struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
@@ -234,8 +242,6 @@ struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
   uint8_t Bitmap[1];
 
   bool LooksGood() const {
-
-    return true;
 
     //
     // Integrity check the headers.
@@ -616,7 +622,7 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
 
   uint8_t Padding1[0x80 - (0x40 + sizeof(BugCheckCodeParameter))];
   uint64_t KdDebuggerDataBlock;
-  KDMP_PARSER_PHYS_MEM_DESC PhysicalMemoryBlockBuffer;
+  KDMP_PARSER_PHYSMEM_DESC PhysicalMemoryBlockBuffer;
 
   //
   // According to rekall there's a gap here:
@@ -678,9 +684,16 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     // Make sure it's a dump type we know how to handle.
     //
 
-    if (DumpType != DumpType_t::FullDump) {
-      _tprintf(_T("KDMP_PARSER_HEADER64::DumpType is not supported.\n"));
-      return false;
+    if (DumpType == FullDump) {
+      if (!PhysicalMemoryBlockBuffer.LooksGood()) {
+        _tprintf(_T("The PhysicalMemoryBlockBuffer looks wrong.\n"));
+        return false;
+      }
+    } else if (DumpType == BMPDump) {
+      if (!BmpHeader.LooksGood()) {
+        _tprintf(_T("The BmpHeader looks wrong.\n"));
+        return false;
+      }
     }
 
     //
@@ -688,14 +701,6 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     //
 
     if (!ContextRecord.LooksGood()) {
-      return false;
-    }
-
-    //
-    // Integrity check the BMP headers.
-    //
-
-    if (!BmpHeader.LooksGood()) {
       return false;
     }
 
@@ -734,8 +739,11 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(SuiteMask);
     DISPLAY_FIELD(WriterStatus);
     DISPLAY_FIELD(KdSecondaryVersion);
-    DISPLAY_FIELD(BmpHeader);
-    BmpHeader.Display();
+    if (DumpType == BMPDump) {
+      DISPLAY_FIELD(BmpHeader);
+      BmpHeader.Display();
+    }
+
     _tprintf(_T("\n"));
   }
 };
