@@ -1,8 +1,5 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #pragma once
-#ifndef _WIN64
-#error Only support is for Win 64bits.
-#endif
 
 #include <cstdint>
 #include <cstdio>
