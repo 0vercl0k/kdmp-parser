@@ -32,6 +32,18 @@ int _tmain(int argc, TCHAR *argv[]) {
            Context->SegFs, Context->SegGs, Context->EFlags);
 
   _tprintf(_T("-----\nPhysical memory:\n"));
-  Dmp.Runs();
+
+  for (const auto [Pa, Page] : Dmp.GetPhysmem()) {
+    _tprintf(_T("0x%08llx: "), Pa);
+    for (uint32_t ByteIdx = 0; ByteIdx < 16; ByteIdx++) {
+      _tprintf(_T("0x%02x"), Page[ByteIdx]);
+      if ((ByteIdx + 1) == 16) {
+        _tprintf(_T("...\n"));
+      } else {
+        _tprintf(_T(" "));
+      }
+    }
+  }
+
   return EXIT_SUCCESS;
 }

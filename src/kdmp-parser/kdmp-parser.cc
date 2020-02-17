@@ -8,6 +8,12 @@ KernelDumpParser::KernelDumpParser(const TCHAR *PathFile)
 KernelDumpParser::~KernelDumpParser() {
 
   //
+  // Empty out the physmem.
+  //
+
+  m_Physmem.clear();
+
+  //
   // Unmap the view of the mapping..
   //
 
@@ -36,21 +42,34 @@ KernelDumpParser::~KernelDumpParser() {
 }
 
 bool KernelDumpParser::Parse() {
-  bool Success = true;
 
   //
   // Map a view of the file.
   //
 
-  Success = MapFile();
-  if (!Success) {
+  if (!MapFile()) {
     _tprintf(_T("MapFile failed.\n"));
-    goto clean;
+    return false;
   }
 
-  Success = ParseDmpHeader();
-clean:
-  return Success;
+  if (!ParseDmpHeader()) {
+    _tprintf(_T("ParseDmpHeader failed.\n"));
+    return false;
+  }
+
+  if (m_DmpHdr->DumpType == FullDump) {
+    if (!BuildPhysmemFullDump()) {
+      _tprintf(_T("BuildPhysmemFullDump failed.\n"));
+      return false;
+    }
+  } else if (m_DmpHdr->DumpType == BMPDump) {
+    if (!BuildPhysmemBMPDump()) {
+      _tprintf(_T("BuildPhysmemBMPDump failed.\n"));
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool KernelDumpParser::ParseDmpHeader() {
@@ -197,15 +216,61 @@ clean:
   return Success;
 }
 
-void KernelDumpParser::Runs() {
+bool KernelDumpParser::BuildPhysmemBMPDump() {
+
+  const uint8_t *Page = (uint8_t *)m_DmpHdr + m_DmpHdr->BmpHeader.FirstPage;
+  const uint64_t BitmapSize = m_DmpHdr->BmpHeader.Pages / 8;
+  const uint8_t *Bitmap = m_DmpHdr->BmpHeader.Bitmap;
+
+  //
+  // Walk the bitmap byte per byte.
+  //
+
+  for (uint64_t BitmapIdx = 0; BitmapIdx < BitmapSize; BitmapIdx++) {
+
+    //
+    // Now walk the bits of the current byte.
+    //
+
+    const uint8_t Byte = Bitmap[BitmapIdx];
+    for (uint8_t BitIdx = 0; BitIdx < 8; BitIdx++) {
+
+      //
+      // If the bit is not set we just skip to the next.
+      //
+
+      const bool BitSet = ((Byte >> BitIdx) & 1) == 1;
+      if (!BitSet) {
+        continue;
+      }
+
+      //
+      // If the bit is one we add the page to the physmem.
+      //
+
+      const uint64_t Pfn = (BitmapIdx * 8) + BitIdx;
+      const uint64_t Pa = Pfn * 0x1000;
+      m_Physmem.try_emplace(Pa, Page);
+      Page += 0x1000;
+    }
+  }
+
+  return true;
+}
+
+bool KernelDumpParser::BuildPhysmemFullDump() {
 
   //
   // Walk through the runs.
   //
 
-  uint8_t *RunBase = (uint8_t *)m_DmpHdr + 0x2000;
+  uint8_t *RunBase = (uint8_t *)&m_DmpHdr->BmpHeader;
   const uint32_t NumberOfRuns =
       m_DmpHdr->PhysicalMemoryBlockBuffer.NumberOfRuns;
+
+  //
+  // Back at it, this time building the index!
+  //
 
   for (uint32_t RunIdx = 0; RunIdx < NumberOfRuns; RunIdx++) {
 
@@ -215,23 +280,15 @@ void KernelDumpParser::Runs() {
 
     const KDMP_PARSER_PHYSMEM_RUN *Run =
         &m_DmpHdr->PhysicalMemoryBlockBuffer.Run[RunIdx];
+
     const uint64_t BasePage = Run->BasePage;
     const uint64_t PageCount = Run->PageCount;
 
-    _tprintf(_T("Run[%02d] - BasePage=%08llx - PageCount=%08llx\n"), RunIdx,
-             BasePage, PageCount);
     //
     // Walk the pages from the run.
     //
 
-    for (uint32_t PageIdx = 0, NumberOfPagesDisplayed = 0;
-
-         //
-         // We want to display at most 5 pages per run.
-         //
-
-         PageIdx < PageCount && NumberOfPagesDisplayed < 5;
-         PageIdx++, NumberOfPagesDisplayed++) {
+    for (uint32_t PageIdx = 0; PageIdx < PageCount; PageIdx++) {
 
       //
       // Compute the current PFN as well as the actual physical address of the
@@ -269,29 +326,14 @@ void KernelDumpParser::Runs() {
       // That is the reason why the computation below is RunBase + (PageIdx *
       // 0x1000) instead of RunBase + (Pfn * 0x1000).
 
-      const uint8_t *PageBase = RunBase + (PageIdx * 0x1000);
+      const uint8_t *PageBase = RunBase + (uint64_t(PageIdx) * 0x1000);
 
       //
-      // Display the PFN and the first 16 bytes.
+      // Map the Pfn to a page.
       //
 
-      _tprintf(_T("0x%08llx: "), Pa);
-      for (uint32_t ByteIdx = 0; ByteIdx < 16; ByteIdx++) {
-        _tprintf(_T("0x%02x"), PageBase[ByteIdx]);
-        if ((ByteIdx + 1) == 16) {
-          _tprintf(_T("...\n"));
-        } else {
-          _tprintf(_T(" "));
-        }
-      }
+      m_Physmem.try_emplace(Pa, PageBase);
     }
-
-    //
-    // Make it obvious that we are about to display pages from another
-    // run.
-    //
-
-    _tprintf(_T("--\n"));
 
     //
     // Move the run base past all the pages in the current run.
@@ -299,4 +341,15 @@ void KernelDumpParser::Runs() {
 
     RunBase += PageCount * 0x1000;
   }
+
+  return true;
+}
+
+const Physmem_t &KernelDumpParser::GetPhysmem() {
+
+  //
+  // Give the user the physmem.
+  //
+
+  return m_Physmem;
 }

@@ -9,8 +9,13 @@
 #include <tchar.h>
 #include <windows.h>
 
+#include <map>
+
+using Physmem_t = std::map<uint64_t, const uint8_t *>;
+
 class KernelDumpParser {
 public:
+
   KernelDumpParser(const TCHAR *PathFile);
   ~KernelDumpParser();
 
@@ -20,15 +25,27 @@ public:
 
   bool Parse();
 
-  void Runs();
-
   //
-  // Give a view of Context record to the user.
+  // Give the Context record to the user.
   //
 
   const KDMP_PARSER_CONTEXT *GetContext();
 
+  const Physmem_t &GetPhysmem();
+
 private:
+  //
+  // Build a map of physical addresses / page data pointers for full dump.
+  //
+
+  bool BuildPhysmemFullDump();
+
+  //
+  // Build a map of physical addresses / page data pointers for BMP dump.
+  //
+
+  bool BuildPhysmemBMPDump();
+
   //
   // Parse the DMP_HEADER.
   //
@@ -70,4 +87,10 @@ private:
   //
 
   const TCHAR *m_PathFile;
+
+  //
+  // Mapping between physical addresses / page data.
+  //
+
+  Physmem_t m_Physmem;
 };
