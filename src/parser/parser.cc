@@ -2,7 +2,11 @@
 #include "kdmp-parser.h"
 #include <tchar.h>
 
-#define LINE_HDR                                                               \
+//
+// Delimiter.
+//
+
+#define DELIMITER                                                               \
   _T("----------------------------------------------------------------------") \
   _T("----------")
 
@@ -233,25 +237,29 @@ int _tmain(int argc, TCHAR *argv[]) {
   }
 
   //
-  // If the user wants the context, let's give it.
+  // If the user wants the context, then show it.
   //
 
   if (Opts.ShowContextRecord) {
-    _tprintf(LINE_HDR _T("\nContext Record:\n"));
+    _tprintf(DELIMITER _T("\nContext Record:\n"));
     Dmp.ShowContextRecord(2);
   }
 
+  //
+  // If the user wants the exception record, then show it.
+  //
+
   if (Opts.ShowExceptionRecord) {
-    _tprintf(LINE_HDR _T("\nException Record:\n"));
+    _tprintf(DELIMITER _T("\nException Record:\n"));
     Dmp.ShowExceptionRecord(2);
   }
 
   //
-  // If the user wants some physical memory, let's give it.
+  // If the user wants some physical memory, then show it.
   //
 
   if (Opts.ShowPhysicalMem) {
-    _tprintf(LINE_HDR _T("\nPhysical memory:\n"));
+    _tprintf(DELIMITER _T("\nPhysical memory:\n"));
 
     //
     // If the user specified a physical address this is the one we
@@ -259,6 +267,12 @@ int _tmain(int argc, TCHAR *argv[]) {
     //
 
     if (Opts.PhysicalAddress) {
+
+      //
+      // Retrieve the page for the specified PhysicalAddress.
+      // If it doesn't exist then display a message, else dump it on stdout.
+      //
+
       const uint8_t *Page = Dmp.GetPhysicalAddress(Opts.PhysicalAddress);
       if (Page == nullptr) {
         _tprintf(_T("0x%llx is not a valid physical address.\n"),
