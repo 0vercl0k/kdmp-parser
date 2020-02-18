@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test.cc">
+    <ClCompile Include="parser.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

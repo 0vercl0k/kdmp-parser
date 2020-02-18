@@ -52,10 +52,18 @@ bool KernelDumpParser::Parse() {
     return false;
   }
 
+  //
+  // Parse the DMP_HEADER.
+  //
+
   if (!ParseDmpHeader()) {
     _tprintf(_T("ParseDmpHeader failed.\n"));
     return false;
   }
+
+  //
+  // Retrieve the physical memory according to the type of dump we have.
+  //
 
   if (m_DmpHdr->DumpType == FullDump) {
     if (!BuildPhysmemFullDump()) {
@@ -79,7 +87,6 @@ bool KernelDumpParser::ParseDmpHeader() {
   //
 
   m_DmpHdr = (KDMP_PARSER_HEADER64 *)m_ViewBase;
-  m_DmpHdr->Display();
 
   //
   // Now let's make sure the structures look right.
@@ -345,11 +352,52 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
   return true;
 }
 
-const Physmem_t &KernelDumpParser::GetPhysmem() {
+const Physmem_t &KernelDumpParser::GetPhysmem() { return m_Physmem; }
+
+void KernelDumpParser::ShowContextRecord(const uint32_t Prefix = 0) const {
+  const KDMP_PARSER_CONTEXT &Context = m_DmpHdr->ContextRecord;
+  _tprintf(_T("%*srax=%016llx rbx=%016llx rcx=%016llx\n"), Prefix, _T(""),
+           Context.Rax, Context.Rbx, Context.Rcx);
+  _tprintf(_T("%*srdx=%016llx rsi=%016llx rdi=%016llx\n"), Prefix, _T(""),
+           Context.Rdx, Context.Rsi, Context.Rdi);
+  _tprintf(_T("%*srip=%016llx rsp=%016llx rbp=%016llx\n"), Prefix, _T(""),
+           Context.Rip, Context.Rsp, Context.Rbp);
+  _tprintf(_T("%*s r8=%016llx  r9=%016llx r10=%016llx\n"), Prefix, _T(""),
+           Context.R8, Context.R9, Context.R10);
+  _tprintf(_T("%*sr11=%016llx r12=%016llx r13=%016llx\n"), Prefix, _T(""),
+           Context.R11, Context.R12, Context.R13);
+  _tprintf(_T("%*sr14=%016llx r15=%016llx\n"), Prefix, _T(""), Context.R14,
+           Context.R15);
+  _tprintf(_T("%*scs=%04x ss=%04x ds=%04x es=%04x fs=%04x gs=%04x    ")
+           _T("             efl=%08x\n"),
+           Prefix, _T(""), Context.SegCs, Context.SegSs, Context.SegDs,
+           Context.SegEs, Context.SegFs, Context.SegGs, Context.EFlags);
+}
+
+void KernelDumpParser::ShowExceptionRecord(const uint32_t Prefix = 0) const {
+  m_DmpHdr->Exception.Display(Prefix);
+}
+
+const uint8_t *
+KernelDumpParser::GetPhysicalAddress(const uint64_t PhysicalAddress) const {
 
   //
-  // Give the user the physmem.
+  // Attempt to find the physical address.
   //
 
-  return m_Physmem;
+  Physmem_t::const_iterator Pair = m_Physmem.find(PhysicalAddress);
+
+  //
+  // If it doesn't exist then return nullptr.
+  //
+
+  if (Pair == m_Physmem.end()) {
+    return nullptr;
+  }
+
+  //
+  // Otherwise we return a pointer to the content of the page.
+  //
+
+  return Pair->second;
 }

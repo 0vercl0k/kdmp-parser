@@ -12,7 +12,6 @@ using Physmem_t = std::map<uint64_t, const uint8_t *>;
 
 class KernelDumpParser {
 public:
-
   KernelDumpParser(const TCHAR *PathFile);
   ~KernelDumpParser();
 
@@ -28,7 +27,29 @@ public:
 
   const KDMP_PARSER_CONTEXT *GetContext();
 
+  //
+  // Get the physmem.
+  //
+
   const Physmem_t &GetPhysmem();
+
+  //
+  // Show the exception record.
+  //
+
+  void ShowExceptionRecord(const uint32_t Prefix) const;
+
+  //
+  // Show the context record.
+  //
+
+  void ShowContextRecord(const uint32_t Prefix) const;
+
+  //
+  // Get the content of a physical address.
+  //
+
+  const uint8_t *GetPhysicalAddress(const uint64_t PhysicalAddress) const;
 
 private:
   //
