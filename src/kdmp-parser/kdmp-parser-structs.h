@@ -315,12 +315,12 @@ struct KDMP_PARSER_CONTEXT : public DisplayUtils {
   // Segment Registers and processor flags.
   //
 
-  WORD SegCs;
-  WORD SegDs;
-  WORD SegEs;
-  WORD SegFs;
-  WORD SegGs;
-  WORD SegSs;
+  uint16_t SegCs;
+  uint16_t SegDs;
+  uint16_t SegEs;
+  uint16_t SegFs;
+  uint16_t SegGs;
+  uint16_t SegSs;
   uint32_t EFlags;
 
   //
