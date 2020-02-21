@@ -278,9 +278,6 @@ struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
 static_assert(FIELD_OFFSET(KDMP_PARSER_BMP_HEADER64, FirstPage) == 0x20,
               "First page offset looks wrong.");
 
-// static_assert(sizeof(BMP_DUMP_HEADER64) == 0x38,
-//              "BMP_DUMP_HEADER64's size looks wrong.");
-
 struct KDMP_PARSER_CONTEXT : public DisplayUtils {
 
   //
