@@ -175,6 +175,10 @@ struct KDMP_PARSER_PHYSMEM_DESC : public DisplayUtils {
     DISPLAY_FIELD(NumberOfRuns);
     DISPLAY_FIELD(NumberOfPages);
     DISPLAY_FIELD(Run);
+    if (!LooksGood()) {
+        return;
+    }
+
     for (uint32_t RunIdx = 0; RunIdx < NumberOfRuns; RunIdx++) {
       Run[RunIdx].Show(Prefix + 2);
     }
