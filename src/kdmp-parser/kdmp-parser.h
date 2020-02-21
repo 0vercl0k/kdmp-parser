@@ -87,35 +87,35 @@ private:
   // Handle to the input file.
   //
 
-  HANDLE m_File;
+  HANDLE File_;
 
   //
   // Handle to the file mapping.
   //
 
-  HANDLE m_FileMap;
+  HANDLE FileMap_;
 
   //
   // Base address of the file view.
   //
 
-  PVOID m_ViewBase;
+  PVOID ViewBase_;
 
   //
   // Header of the crash-dump.
   //
 
-  KDMP_PARSER_HEADER64 *m_DmpHdr;
+  KDMP_PARSER_HEADER64 *DmpHdr_;
 
   //
   // File path to the crash-dump.
   //
 
-  const TCHAR *m_PathFile;
+  const TCHAR *PathFile_;
 
   //
   // Mapping between physical addresses / page data.
   //
 
-  Physmem_t m_Physmem;
+  Physmem_t Physmem_;
 };
