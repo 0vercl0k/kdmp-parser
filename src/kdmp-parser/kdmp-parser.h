@@ -46,6 +46,13 @@ public:
   void ShowContextRecord(const uint32_t Prefix) const;
 
   //
+  // Show all the structures of the dump.
+  //
+
+  void ShowAllStructures(const uint32_t Prefix) const;
+
+
+  //
   // Get the content of a physical address.
   //
 

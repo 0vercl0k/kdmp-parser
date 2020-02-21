@@ -154,7 +154,7 @@ struct KDMP_PARSER_PHYSMEM_RUN : public DisplayUtils {
   uint64_t BasePage;
   uint64_t PageCount;
 
-  void Display(const uint32_t Prefix = 0) const {
+  void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("PHYSICAL_MEMORY_RUN");
     DISPLAY_FIELD(BasePage);
     DISPLAY_FIELD(PageCount);
@@ -170,11 +170,14 @@ struct KDMP_PARSER_PHYSMEM_DESC : public DisplayUtils {
   uint64_t NumberOfPages;
   KDMP_PARSER_PHYSMEM_RUN Run[1];
 
-  void Display(const uint32_t Prefix = 0) const {
+  void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("PHYSICAL_MEMORY_DESCRIPTOR");
     DISPLAY_FIELD(NumberOfRuns);
     DISPLAY_FIELD(NumberOfPages);
     DISPLAY_FIELD(Run);
+    for (uint32_t RunIdx = 0; RunIdx < NumberOfRuns; RunIdx++) {
+      Run[RunIdx].Show(Prefix + 2);
+    }
   }
 
   bool LooksGood() const {
@@ -257,7 +260,7 @@ struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
     return true;
   }
 
-  void Display(const uint32_t Prefix = 0) const {
+  void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("KDMP_PARSER_BMP_HEADER64");
     DISPLAY_FIELD(Signature);
     DISPLAY_FIELD(ValidDump);
@@ -420,7 +423,7 @@ struct KDMP_PARSER_CONTEXT : public DisplayUtils {
     return true;
   }
 
-  void Display(const uint32_t Prefix = 0) const {
+  void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("KDMP_PARSER_CONTEXT");
     DISPLAY_FIELD(P1Home);
     DISPLAY_FIELD(P2Home);
@@ -557,7 +560,7 @@ struct KDMP_PARSER_EXCEPTION_RECORD64 : public DisplayUtils {
   uint32_t __unusedAlignment;
   uint64_t ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
 
-  void Display(const uint32_t Prefix = 0) const {
+  void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("KDMP_PARSER_EXCEPTION_RECORD64");
     DISPLAY_FIELD(ExceptionCode);
     DISPLAY_FIELD(ExceptionFlags);
@@ -704,7 +707,7 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     return true;
   }
 
-  void Display(const uint32_t Prefix = 0) const {
+  void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("KDMP_PARSER_HEADER64");
     DISPLAY_FIELD(Signature);
     DISPLAY_FIELD(ValidDump);
@@ -720,11 +723,11 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(BugCheckCodeParameter);
     DISPLAY_FIELD(KdDebuggerDataBlock);
     DISPLAY_FIELD(PhysicalMemoryBlockBuffer);
-    PhysicalMemoryBlockBuffer.Display(Prefix + 2);
+    PhysicalMemoryBlockBuffer.Show(Prefix + 2);
     DISPLAY_FIELD(ContextRecord);
-    ContextRecord.Display(Prefix + 2);
+    ContextRecord.Show(Prefix + 2);
     DISPLAY_FIELD(Exception);
-    Exception.Display(Prefix + 2);
+    Exception.Show(Prefix + 2);
     DISPLAY_FIELD(DumpType);
     DISPLAY_FIELD(RequiredDumpSpace);
     DISPLAY_FIELD(SystemTime);
@@ -738,10 +741,8 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(KdSecondaryVersion);
     if (DumpType == BMPDump) {
       DISPLAY_FIELD(BmpHeader);
-      BmpHeader.Display();
+      BmpHeader.Show();
     }
-
-    _tprintf(_T("\n"));
   }
 };
 

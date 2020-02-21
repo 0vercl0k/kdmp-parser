@@ -375,7 +375,11 @@ void KernelDumpParser::ShowContextRecord(const uint32_t Prefix = 0) const {
 }
 
 void KernelDumpParser::ShowExceptionRecord(const uint32_t Prefix = 0) const {
-  m_DmpHdr->Exception.Display(Prefix);
+  m_DmpHdr->Exception.Show(Prefix);
+}
+
+void KernelDumpParser::ShowAllStructures(const uint32_t Prefix = 0) const {
+  m_DmpHdr->Show(Prefix);
 }
 
 const uint8_t *

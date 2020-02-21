@@ -6,7 +6,7 @@
 // Delimiter.
 //
 
-#define DELIMITER                                                               \
+#define DELIMITER                                                              \
   _T("----------------------------------------------------------------------") \
   _T("----------")
 
@@ -21,6 +21,12 @@ struct Options_t {
   //
 
   bool ShowContextRecord;
+
+  //
+  // This is enabled if -a is used.
+  //
+
+  bool ShowAllStructures;
 
   //
   // This is enabled if -e is used.
@@ -58,8 +64,8 @@ struct Options_t {
 
   Options_t()
       : ShowContextRecord(false), ShowPhysicalMem(false),
-        ShowExceptionRecord(false), HasPhysicalAddress(0), PhysicalAddress(0),
-        DumpPath(nullptr) {}
+        ShowAllStructures(false), ShowExceptionRecord(false),
+        HasPhysicalAddress(0), PhysicalAddress(0), DumpPath(nullptr) {}
 };
 
 //
@@ -70,17 +76,20 @@ void Usage() {
   _tprintf(_T("parser.exe [-p [<physical address>]] [-c] [-e] <kdump path>\n"));
   _tprintf(_T("\n"));
   _tprintf(_T("Examples:\n"));
-  _tprintf(_T("  Display the context record:\n"));
+  _tprintf(_T("  Show every structures of the dump:\n"));
+  _tprintf(_T("    parser.exe -a full.dmp\n"));
+  _tprintf(_T("\n"));
+  _tprintf(_T("  Show the context record:\n"));
   _tprintf(_T("    parser.exe -c full.dmp\n"));
   _tprintf(_T("\n"));
-  _tprintf(_T("  Display the exception record:\n"));
+  _tprintf(_T("  Show the exception record:\n"));
   _tprintf(_T("    parser.exe -e full.dmp\n"));
   _tprintf(_T("\n"));
-  _tprintf(_T("  Display all the physical memory (first 16 bytes of every ")
+  _tprintf(_T("  Show all the physical memory (first 16 bytes of every ")
            _T("pages):\n"));
   _tprintf(_T("    parser.exe -p full.dmp\n"));
   _tprintf(_T("\n"));
-  _tprintf(_T("  Display the context record as well as the page at physical ")
+  _tprintf(_T("  Show the context record as well as the page at physical ")
            _T("address 0x1000:\n"));
   _tprintf(_T("    parser.exe -c -p 0x1000 full.dmp\n"));
 }
@@ -179,6 +188,13 @@ int _tmain(int argc, TCHAR *argv[]) {
       //
 
       Opts.ShowExceptionRecord = 1;
+    } else if (_tcscmp(Arg, _T("-a")) == 0) {
+
+      //
+      // Show all the structures.
+      //
+
+      Opts.ShowAllStructures = true;
     } else if (IsLastArg) {
 
       //
@@ -214,7 +230,8 @@ int _tmain(int argc, TCHAR *argv[]) {
   // structure.
   //
 
-  if (!Opts.ShowContextRecord && !Opts.ShowPhysicalMem) {
+  if (!Opts.ShowContextRecord && !Opts.ShowPhysicalMem &&
+      !Opts.ShowAllStructures && !Opts.ShowExceptionRecord) {
     _tprintf(_T("Forcing to show the context record as no option as been ")
              _T("passed.\n\n"));
     Opts.ShowContextRecord = 1;
@@ -234,6 +251,15 @@ int _tmain(int argc, TCHAR *argv[]) {
   if (!Success) {
     _tprintf(_T("Parsing of the dump failed, exiting.\n"));
     return EXIT_FAILURE;
+  }
+
+  //
+  // If the user wants all the structures, then show them.
+  //
+
+  if (Opts.ShowAllStructures) {
+    _tprintf(DELIMITER _T("\nDump structures:\n"));
+    Dmp.ShowAllStructures(2);
   }
 
   //
