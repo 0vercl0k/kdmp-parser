@@ -2,8 +2,8 @@
 #include "kdmp-parser.h"
 
 KernelDumpParser::KernelDumpParser(const TCHAR *PathFile)
-    : File_(nullptr), FileMap_(nullptr), ViewBase_(nullptr),
-      DmpHdr_(nullptr), PathFile_(PathFile) {}
+    : File_(nullptr), FileMap_(nullptr), ViewBase_(nullptr), DmpHdr_(nullptr),
+      PathFile_(PathFile) {}
 
 KernelDumpParser::~KernelDumpParser() {
 
@@ -272,8 +272,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
   //
 
   uint8_t *RunBase = (uint8_t *)&DmpHdr_->BmpHeader;
-  const uint32_t NumberOfRuns =
-      DmpHdr_->PhysicalMemoryBlockBuffer.NumberOfRuns;
+  const uint32_t NumberOfRuns = DmpHdr_->PhysicalMemoryBlockBuffer.NumberOfRuns;
 
   //
   // Back at it, this time building the index!
@@ -372,6 +371,48 @@ void KernelDumpParser::ShowContextRecord(const uint32_t Prefix = 0) const {
            _T("             efl=%08x\n"),
            Prefix, _T(""), Context.SegCs, Context.SegSs, Context.SegDs,
            Context.SegEs, Context.SegFs, Context.SegGs, Context.EFlags);
+  _tprintf(_T("%*sfpcw=%04x    fpsw=%04x    fptw=%04x\n"), Prefix, _T(""),
+           Context.ControlWord, Context.StatusWord, 1);
+  _tprintf(_T("%*s  st0=%016llx%016llx       st1=%016llx%016llx\n"), Prefix,
+           _T(""), Context.FloatRegisters[0].High,
+           Context.FloatRegisters[0].Low, Context.FloatRegisters[1].High,
+           Context.FloatRegisters[1].Low);
+  _tprintf(_T("%*s  st2=%016llx%016llx       st3=%016llx%016llx\n"), Prefix,
+           _T(""), Context.FloatRegisters[2].High,
+           Context.FloatRegisters[2].Low, Context.FloatRegisters[3].High,
+           Context.FloatRegisters[3].Low);
+  _tprintf(_T("%*s  st4=%016llx%016llx       st5=%016llx%016llx\n"), Prefix,
+           _T(""), Context.FloatRegisters[4].High,
+           Context.FloatRegisters[4].Low, Context.FloatRegisters[5].High,
+           Context.FloatRegisters[5].Low);
+  _tprintf(_T("%*s  st6=%016llx%016llx       st7=%016llx%016llx\n"), Prefix,
+           _T(""), Context.FloatRegisters[6].High,
+           Context.FloatRegisters[6].Low, Context.FloatRegisters[7].High,
+           Context.FloatRegisters[7].Low);
+  _tprintf(_T("%*s xmm0=%016llx%016llx      xmm1=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm0.High, Context.Xmm0.Low, Context.Xmm1.High,
+           Context.Xmm1.Low);
+  _tprintf(_T("%*s xmm2=%016llx%016llx      xmm3=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm2.High, Context.Xmm2.Low, Context.Xmm3.High,
+           Context.Xmm3.Low);
+  _tprintf(_T("%*s xmm4=%016llx%016llx      xmm5=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm4.High, Context.Xmm4.Low, Context.Xmm5.High,
+           Context.Xmm5.Low);
+  _tprintf(_T("%*s xmm6=%016llx%016llx      xmm7=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm6.High, Context.Xmm6.Low, Context.Xmm7.High,
+           Context.Xmm7.Low);
+  _tprintf(_T("%*s xmm8=%016llx%016llx      xmm9=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm8.High, Context.Xmm8.Low, Context.Xmm9.High,
+           Context.Xmm9.Low);
+  _tprintf(_T("%*sxmm10=%016llx%016llx     xmm11=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm10.High, Context.Xmm10.Low, Context.Xmm11.High,
+           Context.Xmm11.Low);
+  _tprintf(_T("%*sxmm12=%016llx%016llx     xmm13=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm12.High, Context.Xmm12.Low, Context.Xmm13.High,
+           Context.Xmm13.Low);
+  _tprintf(_T("%*sxmm14=%016llx%016llx     xmm15=%016llx%016llx\n"), Prefix,
+           _T(""), Context.Xmm14.High, Context.Xmm14.Low, Context.Xmm15.High,
+           Context.Xmm15.Low);
 }
 
 void KernelDumpParser::ShowExceptionRecord(const uint32_t Prefix = 0) const {
