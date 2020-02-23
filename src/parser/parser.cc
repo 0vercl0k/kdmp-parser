@@ -17,6 +17,12 @@
 struct Options_t {
 
   //
+  // This is enabled if -h is used.
+  //
+
+  bool ShowHelp;
+
+  //
   // This is enabled if -c is used.
   //
 
@@ -63,7 +69,7 @@ struct Options_t {
   //
 
   Options_t()
-      : ShowContextRecord(false), ShowPhysicalMem(false),
+      : ShowHelp(false), ShowContextRecord(false), ShowPhysicalMem(false),
         ShowAllStructures(false), ShowExceptionRecord(false),
         HasPhysicalAddress(0), PhysicalAddress(0), DumpPath(nullptr) {}
 };
@@ -72,8 +78,9 @@ struct Options_t {
 // Display usage
 //
 
-void Usage() {
-  _tprintf(_T("parser.exe [-p [<physical address>]] [-c] [-e] <kdump path>\n"));
+void Help() {
+  _tprintf(
+      _T("parser.exe [-p [<physical address>]] [-c] [-e] [-h] <kdump path>\n"));
   _tprintf(_T("\n"));
   _tprintf(_T("Examples:\n"));
   _tprintf(_T("  Show every structures of the dump:\n"));
@@ -195,6 +202,13 @@ int _tmain(int argc, TCHAR *argv[]) {
       //
 
       Opts.ShowAllStructures = true;
+    } else if (_tcscmp(Arg, _T("-h")) == 0) {
+
+      //
+      // Show all the structures.
+      //
+
+      Opts.ShowHelp = true;
     } else if (IsLastArg) {
 
       //
@@ -209,9 +223,18 @@ int _tmain(int argc, TCHAR *argv[]) {
       //
 
       _tprintf(_T("The argument %s is not recognized.\n\n"), Arg);
-      Usage();
+      Help();
       return EXIT_FAILURE;
     }
+  }
+
+  //
+  // Show the help.
+  //
+
+  if (Opts.ShowHelp) {
+    Help();
+    return EXIT_SUCCESS;
   }
 
   //
@@ -221,7 +244,7 @@ int _tmain(int argc, TCHAR *argv[]) {
 
   if (!Opts.DumpPath) {
     _tprintf(_T("You didn't provide the path to the dump file.\n\n"));
-    Usage();
+    Help();
     return EXIT_FAILURE;
   }
 
