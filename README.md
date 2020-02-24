@@ -89,7 +89,7 @@ Physical memory:
 You can build it using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) by opening the `kdmp-parser.sln` solution file or via command line using `msbuild` (from a Visual Studio shell):
 
 ```text
-(C:\ProgramData\Anaconda2) c:\work\codes\kdmp-parser\src>msbuild -t:Build -p:Configuration=Debug
+kdmp-parser\src>msbuild -t:Build -p:Configuration=Debug
 Microsoft (R) Build Engine version 16.4.0+e901037fe for .NET Framework
 Copyright (C) Microsoft Corporation. All rights reserved.
 
