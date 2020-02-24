@@ -7,7 +7,7 @@ import subprocess
 import itertools
 
 sln = r'src\kdmp-parser.sln'
-testdatas_url = ''
+testdatas_url = 'https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip'
 
 def msbuild(sln, platform, configuration):
     cmd = (
@@ -61,6 +61,7 @@ def main():
 
         os.remove(dmp_path)
 
+    os.remove(archive_path)
     print('All good!')
     return 0
 
