@@ -139,7 +139,7 @@ Time Elapsed 00:00:00.52
 
 ## Testing
 
-You can run `run-tests.py` to run basic tests. First, it builds every platform / configuration combination via `msbuild` (VS2019 assumed), then it downloads two kernel dumps (one full dump and one bitmap dump) and runs every flavor of `test.exe` against the dumps.
+You can run `run-tests.py` from a Visual Studio command prompt to run basic tests. First, it builds every platform / configuration combination via `msbuild`, then it downloads two kernel dumps (one full dump and one bitmap dump) and runs every flavor of `test.exe` against the dumps.
 
 ```text
 kdmp-parser>python run-tests.py
