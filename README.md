@@ -175,6 +175,7 @@ Build succeeded.
     0 Error(s)
 
 Time Elapsed 00:00:00.52
+Successfully downloaded the test datas in C:\Users\over\AppData\Local\Temp\tmps0xoj46o, extracting..
 Launching "src\x64\Release\test.exe C:\work\codes\kdmp-parser\full.dmp"..
 GPRs matches the testdatas.
 Launching "src\x64\Debug\test.exe C:\work\codes\kdmp-parser\full.dmp"..
