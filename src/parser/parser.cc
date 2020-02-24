@@ -338,33 +338,33 @@ int _tmain(int argc, TCHAR *argv[]) {
       // If the user didn't specify a physical address then dump the first
       // 16 bytes of every physical pages.
       //
-      // Note that as the physmem is unordered, so we order the Pfns here so that
+      // Note that as the physmem is unordered, so we order the addresses here so that
       // it is nicer for the user as they probably don't expect unorder.
       //
 
       const Physmem_t &Physmem = Dmp.GetPhysmem();
-      std::vector<Physmem_t::key_type> OrderedPfns;
-      OrderedPfns.reserve(Physmem.size());
+      std::vector<Physmem_t::key_type> OrderedPhysicalAddresses;
+      OrderedPhysicalAddresses.reserve(Physmem.size());
 
       //
-      // Stuff the Pfns in a vector.
+      // Stuff the physical addresses in a vector.
       //
 
       for (const auto [PhysicalAddress, _] : Dmp.GetPhysmem()) {
-        OrderedPfns.emplace_back(PhysicalAddress);
+        OrderedPhysicalAddresses.emplace_back(PhysicalAddress);
       }
 
       //
-      // Sort it.
+      // Sort them.
       //
 
-      std::sort(OrderedPfns.begin(), OrderedPfns.end());
+      std::sort(OrderedPhysicalAddresses.begin(), OrderedPhysicalAddresses.end());
 
       //
       // And now we can iterate through them and get the page content.
       //
 
-      for (const auto PhysicalAddress : OrderedPfns) {
+      for (const auto PhysicalAddress : OrderedPhysicalAddresses) {
         const uint8_t *Page = Dmp.GetPhysicalPage(PhysicalAddress);
         Hexdump(PhysicalAddress, Page, 16);
       }
