@@ -2,6 +2,9 @@
 #include "kdmp-parser.h"
 #include <tchar.h>
 
+#include <vector>
+#include <algorithm>
+
 //
 // Delimiter.
 //
@@ -322,7 +325,7 @@ int _tmain(int argc, TCHAR *argv[]) {
       // If it doesn't exist then display a message, else dump it on stdout.
       //
 
-      const uint8_t *Page = Dmp.GetPhysicalAddress(Opts.PhysicalAddress);
+      const uint8_t *Page = Dmp.GetPhysicalPage(Opts.PhysicalAddress);
       if (Page == nullptr) {
         _tprintf(_T("0x%llx is not a valid physical address.\n"),
                  Opts.PhysicalAddress);
@@ -335,8 +338,34 @@ int _tmain(int argc, TCHAR *argv[]) {
       // If the user didn't specify a physical address then dump the first
       // 16 bytes of every physical pages.
       //
+      // Note that as the physmem is unordered, so we order the Pfns here so that
+      // it is nicer for the user as they probably don't expect unorder.
+      //
 
-      for (const auto [PhysicalAddress, Page] : Dmp.GetPhysmem()) {
+      const Physmem_t &Physmem = Dmp.GetPhysmem();
+      std::vector<Physmem_t::key_type> OrderedPfns;
+      OrderedPfns.reserve(Physmem.size());
+
+      //
+      // Stuff the Pfns in a vector.
+      //
+
+      for (const auto [PhysicalAddress, _] : Dmp.GetPhysmem()) {
+        OrderedPfns.emplace_back(PhysicalAddress);
+      }
+
+      //
+      // Sort it.
+      //
+
+      std::sort(OrderedPfns.begin(), OrderedPfns.end());
+
+      //
+      // And now we can iterate through them and get the page content.
+      //
+
+      for (const auto PhysicalAddress : OrderedPfns) {
+        const uint8_t *Page = Dmp.GetPhysicalPage(PhysicalAddress);
         Hexdump(PhysicalAddress, Page, 16);
       }
     }

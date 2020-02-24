@@ -424,7 +424,7 @@ void KernelDumpParser::ShowAllStructures(const uint32_t Prefix = 0) const {
 }
 
 const uint8_t *
-KernelDumpParser::GetPhysicalAddress(const uint64_t PhysicalAddress) const {
+KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
 
   //
   // Attempt to find the physical address.

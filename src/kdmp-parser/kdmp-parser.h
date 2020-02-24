@@ -6,9 +6,9 @@
 #include <tchar.h>
 #include <windows.h>
 
-#include <map>
+#include <unordered_map>
 
-using Physmem_t = std::map<uint64_t, const uint8_t *>;
+using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
 class KernelDumpParser {
 public:
@@ -56,7 +56,7 @@ public:
   // Get the content of a physical address.
   //
 
-  const uint8_t *GetPhysicalAddress(const uint64_t PhysicalAddress) const;
+  const uint8_t *GetPhysicalPage(const uint64_t PhysicalAddress) const;
 
 private:
   //
