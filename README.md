@@ -138,4 +138,58 @@ Time Elapsed 00:00:00.52
 ```
 
 ## Testing
-TODO.
+
+You can run `run-tests.py` to run basic tests. First, it builds every platform / configuration combination via `msbuild` (VS2019 assumed), then it downloads two kernel dumps (one full dump and one bitmap dump) and runs every flavor of `test.exe` against the dumps.
+
+```text
+kdmp-parser>python run-tests.py
+Microsoft (R) Build Engine version 16.4.0+e901037fe for .NET Framework
+Copyright (C) Microsoft Corporation. All rights reserved.
+[...]
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.54
+Microsoft (R) Build Engine version 16.4.0+e901037fe for .NET Framework
+Copyright (C) Microsoft Corporation. All rights reserved.
+[...]
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.55
+Microsoft (R) Build Engine version 16.4.0+e901037fe for .NET Framework
+Copyright (C) Microsoft Corporation. All rights reserved.
+[...]
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.53
+Microsoft (R) Build Engine version 16.4.0+e901037fe for .NET Framework
+Copyright (C) Microsoft Corporation. All rights reserved.
+[...]
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.52
+Launching "src\x64\Release\test.exe C:\work\codes\kdmp-parser\full.dmp"..
+GPRs matches the testdatas.
+Launching "src\x64\Debug\test.exe C:\work\codes\kdmp-parser\full.dmp"..
+GPRs matches the testdatas.
+Launching "src\Release\test.exe C:\work\codes\kdmp-parser\full.dmp"..
+GPRs matches the testdatas.
+Launching "src\Debug\test.exe C:\work\codes\kdmp-parser\full.dmp"..
+GPRs matches the testdatas.
+Launching "src\x64\Release\test.exe C:\work\codes\kdmp-parser\bmp.dmp"..
+GPRs matches the testdatas.
+Launching "src\x64\Debug\test.exe C:\work\codes\kdmp-parser\bmp.dmp"..
+GPRs matches the testdatas.
+Launching "src\Release\test.exe C:\work\codes\kdmp-parser\bmp.dmp"..
+GPRs matches the testdatas.
+Launching "src\Debug\test.exe C:\work\codes\kdmp-parser\bmp.dmp"..
+GPRs matches the testdatas.
+All good!
+```
