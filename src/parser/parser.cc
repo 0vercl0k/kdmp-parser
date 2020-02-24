@@ -273,8 +273,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   // Parse the dump file.
   //
 
-  bool Success = Dmp.Parse();
-  if (!Success) {
+  if (!Dmp.Parse()) {
     _tprintf(_T("Parsing of the dump failed, exiting.\n"));
     return EXIT_FAILURE;
   }
