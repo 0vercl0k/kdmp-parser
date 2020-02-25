@@ -33,12 +33,10 @@ def test(platform, configuration, dmp_path):
     return subprocess.call(cmd)
 
 def main():
-    matrix = (
-        ('x64', 'Release'),
-        ('x64', 'Debug'),
-        ('x86', 'Release'),
-        ('x86', 'Debug')
-    )
+    matrix = tuple(itertools.product(
+        ('x64', 'x86'),
+        ('Debug', 'Release')
+    ))
 
     appveyor = os.getenv('APPVEYOR') is not None
     if not appveyor:
