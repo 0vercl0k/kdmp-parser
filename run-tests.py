@@ -32,7 +32,7 @@ def test(platform, configuration, dmp_path):
     print('Launching "{0}"..'.format(' '.join(cmd)))
     return subprocess.call(cmd)
 
-def main():
+def main(argc, argv):
     matrix = (
         ('x64', 'Release'),
         ('x64', 'Debug'),
@@ -40,30 +40,45 @@ def main():
         ('x86', 'Debug')
     )
 
-    for platform, configuration in matrix:
-        if msbuild(sln, platform, configuration) != 0:
-            print('{0}/{1} build failed, bailing.'.format(platform, configuration))
-            return 1
+    # If the user doesn't specify an argument, build the matrix. This is an option
+    # so that the AppVeyor bot has a way to skip this part. But at the same time, this
+    # part is useful for local development so keeping it behind this check.
+    if argc == 1:
+        for platform, configuration in matrix:
+            if msbuild(sln, platform, configuration) != 0:
+                print('{0}/{1} build failed, bailing.'.format(platform, configuration))
+                return 1
 
     # Download the test datas off github.
+    print('Downloading {0}..'.format(testdatas_url))
     archive_path, _ = urllib.request.urlretrieve(testdatas_url)
     print('Successfully downloaded the test datas in {0}, extracting..'.format(archive_path))
+
+    # Unzip its content in the same temp directory.
     archive_dir, _ = os.path.split(archive_path)
     zipfile.ZipFile(archive_path).extractall(archive_dir)
+
+    # Once we have extracted the archive content, we can delete it.
+    os.remove(archive_path)
+
+    # Build full path for both the full / bitmap dumps.
     full = os.path.join(archive_dir, 'full.dmp')
     bmp = os.path.join(archive_dir, 'bmp.dmp')
     dmp_paths = (full, bmp)
+
+    # Now iterate through all the configurations and run every flavor of test.exe against
+    # both dumps.
     for dmp_path in dmp_paths:
         for platform, configuration in matrix:
             if test(platform, configuration, dmp_path) != 0:
                 print('{0}/{1}/{2} test failed, bailing.'.format(platform, configuration, dmp_path))
                 return 1
 
+        # We've run this dump against all the flavor of the test application so we can delete it now.
         os.remove(dmp_path)
 
-    os.remove(archive_path)
     print('All good!')
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(len(sys.argv), sys.argv))
