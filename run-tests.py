@@ -70,7 +70,7 @@ def main():
         platform = os.getenv('platform')
         configuration = os.getenv('configuration')
         matrix = (
-            (platform, configuration)
+            (platform, configuration),
         )
 
     # Now iterate through all the configurations and run every flavor of test.exe against
