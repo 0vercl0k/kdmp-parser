@@ -32,7 +32,7 @@ def test(platform, configuration, dmp_path):
     print('Launching "{0}"..'.format(' '.join(cmd)))
     return subprocess.call(cmd)
 
-def main(argc, argv):
+def main():
     matrix = (
         ('x64', 'Release'),
         ('x64', 'Debug'),
@@ -43,7 +43,7 @@ def main(argc, argv):
     # If the user doesn't specify an argument, build the matrix. This is an option
     # so that the AppVeyor bot has a way to skip this part. But at the same time, this
     # part is useful for local development so keeping it behind this check.
-    if argc == 1:
+    if os.getenv('APPVEYOR') is None:
         for platform, configuration in matrix:
             if msbuild(sln, platform, configuration) != 0:
                 print('{0}/{1} build failed, bailing.'.format(platform, configuration))
@@ -81,4 +81,4 @@ def main(argc, argv):
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main(len(sys.argv), sys.argv))
+    sys.exit(main())
