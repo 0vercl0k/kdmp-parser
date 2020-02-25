@@ -1,0 +1,28 @@
+version: 1.0.{build}
+
+configuration:
+  - Release
+  - Debug
+
+platform:
+  - x86
+  - x64
+
+clone_folder: c:\projects\kdmp-parser
+
+build:
+  project: c:\projects\kdmp-parser\src\kdmp-parser.sln
+
+# this happens in the clone_folder
+after_build:
+  - cmd: if "%platform%"=="x86" if "%configuration%"=="Release" 7z a -t7z kdmp-parser-x86.release.7z src\%configuration%\*
+  - cmd: if "%platform%"=="x86" if "%configuration%"=="Debug" 7z a -t7z kdmp-parser-x86.debug.7z src\%configuration%\*
+  - cmd: if "%platform%"=="x64" if "%configuration%"=="Release" 7z a -t7z kdmp-parser-x64.release.7z src\x64\%configuration%\*
+  - cmd: if "%platform%"=="x64" if "%configuration%"=="Debug" 7z a -t7z kdmp-parser-x64.debug.7z src\x64\%configuration%\*
+  - cmd: chdir
+
+artifacts:
+  - path: kdmp-parser-.*.7z
+
+# on_finish:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
