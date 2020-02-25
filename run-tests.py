@@ -40,10 +40,9 @@ def main():
         ('x86', 'Debug')
     )
 
-    # If the user doesn't specify an argument, build the matrix. This is an option
-    # so that the AppVeyor bot has a way to skip this part. But at the same time, this
-    # part is useful for local development so keeping it behind this check.
-    if os.getenv('APPVEYOR') is None:
+    appveyor = os.getenv('APPVEYOR') is not None
+    if not appveyor:
+        # Build the matrix if not running from AppVeyor.
         for platform, configuration in matrix:
             if msbuild(sln, platform, configuration) != 0:
                 print('{0}/{1} build failed, bailing.'.format(platform, configuration))
@@ -65,6 +64,14 @@ def main():
     full = os.path.join(archive_dir, 'full.dmp')
     bmp = os.path.join(archive_dir, 'bmp.dmp')
     dmp_paths = (full, bmp)
+
+    # If we run from AppVeyor we only redefine the matrix as only one flavor.
+    if appveyor:
+        platform = os.getenv('platform')
+        configuration = os.getenv('configuration')
+        matrix = (
+            (platform, configuration)
+        )
 
     # Now iterate through all the configurations and run every flavor of test.exe against
     # both dumps.
