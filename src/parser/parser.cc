@@ -267,13 +267,13 @@ int _tmain(int argc, TCHAR *argv[]) {
   // Create the parser instance.
   //
 
-  KernelDumpParser Dmp(Opts.DumpPath);
+  KernelDumpParser Dmp;
 
   //
   // Parse the dump file.
   //
 
-  if (!Dmp.Parse()) {
+  if (!Dmp.Parse(Opts.DumpPath)) {
     _tprintf(_T("Parsing of the dump failed, exiting.\n"));
     return EXIT_FAILURE;
   }

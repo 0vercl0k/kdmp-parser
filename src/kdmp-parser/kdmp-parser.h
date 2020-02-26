@@ -12,14 +12,14 @@ using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
 class KernelDumpParser {
 public:
-  KernelDumpParser(const TCHAR *PathFile);
+  KernelDumpParser();
   ~KernelDumpParser();
 
   //
   // Actually do the parsing of the file.
   //
 
-  bool Parse();
+  bool Parse(const TCHAR *PathFile);
 
   //
   // Give the Context record to the user.

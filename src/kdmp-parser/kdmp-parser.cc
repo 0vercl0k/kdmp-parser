@@ -1,9 +1,9 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #include "kdmp-parser.h"
 
-KernelDumpParser::KernelDumpParser(const TCHAR *PathFile)
+KernelDumpParser::KernelDumpParser()
     : File_(nullptr), FileMap_(nullptr), ViewBase_(nullptr), DmpHdr_(nullptr),
-      PathFile_(PathFile) {}
+      PathFile_(nullptr) {}
 
 KernelDumpParser::~KernelDumpParser() {
 
@@ -41,7 +41,13 @@ KernelDumpParser::~KernelDumpParser() {
   }
 }
 
-bool KernelDumpParser::Parse() {
+bool KernelDumpParser::Parse(const TCHAR *PathFile) {
+
+  //
+  // Copy the path file.
+  //
+
+  PathFile_ = PathFile;
 
   //
   // Map a view of the file.

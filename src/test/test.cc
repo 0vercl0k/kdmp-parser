@@ -8,8 +8,8 @@ int _tmain(int argc, TCHAR *argv[]) {
     return EXIT_FAILURE;
   }
 
-  KernelDumpParser Dmp(argv[1]);
-  if (!Dmp.Parse()) {
+  KernelDumpParser Dmp;
+  if (!Dmp.Parse(argv[1])) {
     return EXIT_FAILURE;
   }
 
