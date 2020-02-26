@@ -208,7 +208,7 @@ int _tmain(int argc, TCHAR *argv[]) {
     } else if (_tcscmp(Arg, _T("-h")) == 0) {
 
       //
-      // Show all the structures.
+      // Show the help.
       //
 
       Opts.ShowHelp = true;
