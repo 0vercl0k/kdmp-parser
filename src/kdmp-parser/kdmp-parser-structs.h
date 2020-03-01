@@ -46,7 +46,7 @@ struct DisplayUtils {
 
   void DisplayHeader(const uint32_t Prefix, const char *FieldName,
                      const void *This, const void *Field) const {
-    _tprintf(_T("%*s+0x%04llx: %-25s"), Prefix, _T(""),
+    _tprintf(_T("%*s+0x%04llx: %-25S"), Prefix, _T(""),
              OffsetFromThis(This, Field), FieldName);
   }
 
