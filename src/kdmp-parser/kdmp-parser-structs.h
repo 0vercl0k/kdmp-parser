@@ -46,8 +46,8 @@ struct DisplayUtils {
 
   void DisplayHeader(const uint32_t Prefix, const char *FieldName,
                      const void *This, const void *Field) const {
-    printf("%*s+0x%04llx: %-25s", Prefix, "", OffsetFromThis(This, Field),
-           FieldName);
+    _tprintf(_T("%*s+0x%04llx: %-25s"), Prefix, _T(""),
+             OffsetFromThis(This, Field), FieldName);
   }
 
   //
@@ -176,7 +176,7 @@ struct KDMP_PARSER_PHYSMEM_DESC : public DisplayUtils {
     DISPLAY_FIELD(NumberOfPages);
     DISPLAY_FIELD(Run);
     if (!LooksGood()) {
-        return;
+      return;
     }
 
     for (uint32_t RunIdx = 0; RunIdx < NumberOfRuns; RunIdx++) {
