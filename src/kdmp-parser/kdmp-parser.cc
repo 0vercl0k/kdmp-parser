@@ -41,7 +41,7 @@ KernelDumpParser::~KernelDumpParser() {
   }
 }
 
-bool KernelDumpParser::Parse(const TCHAR *PathFile) {
+bool KernelDumpParser::Parse(const char *PathFile) {
 
   //
   // Copy the path file.
@@ -54,7 +54,7 @@ bool KernelDumpParser::Parse(const TCHAR *PathFile) {
   //
 
   if (!MapFile()) {
-    _tprintf(_T("MapFile failed.\n"));
+    printf("MapFile failed.\n");
     return false;
   }
 
@@ -63,7 +63,7 @@ bool KernelDumpParser::Parse(const TCHAR *PathFile) {
   //
 
   if (!ParseDmpHeader()) {
-    _tprintf(_T("ParseDmpHeader failed.\n"));
+    printf("ParseDmpHeader failed.\n");
     return false;
   }
 
@@ -73,12 +73,12 @@ bool KernelDumpParser::Parse(const TCHAR *PathFile) {
 
   if (DmpHdr_->DumpType == FullDump) {
     if (!BuildPhysmemFullDump()) {
-      _tprintf(_T("BuildPhysmemFullDump failed.\n"));
+      printf("BuildPhysmemFullDump failed.\n");
       return false;
     }
   } else if (DmpHdr_->DumpType == BMPDump) {
     if (!BuildPhysmemBMPDump()) {
-      _tprintf(_T("BuildPhysmemBMPDump failed.\n"));
+      printf("BuildPhysmemBMPDump failed.\n");
       return false;
     }
   }
@@ -99,7 +99,7 @@ bool KernelDumpParser::ParseDmpHeader() {
   //
 
   if (!DmpHdr_->LooksGood()) {
-    _tprintf(_T("The header looks wrong.\n"));
+    printf("The header looks wrong.\n");
     return false;
   }
 
@@ -125,8 +125,8 @@ bool KernelDumpParser::MapFile() {
   // Open the dump file in read-only.
   //
 
-  File = CreateFile(PathFile_, GENERIC_READ, FILE_SHARE_READ, nullptr,
-                    OPEN_EXISTING, 0, nullptr);
+  File = CreateFileA(PathFile_, GENERIC_READ, FILE_SHARE_READ, nullptr,
+                     OPEN_EXISTING, 0, nullptr);
 
   if (File == NULL) {
 
@@ -135,10 +135,10 @@ bool KernelDumpParser::MapFile() {
     //
 
     const DWORD GLE = GetLastError();
-    _tprintf(_T("CreateFile failed with GLE=%d.\n"), GLE);
+    printf("CreateFile failed with GLE=%d.\n", GLE);
 
     if (GLE == ERROR_FILE_NOT_FOUND) {
-      _tprintf(_T("  The file %s was not found.\n"), PathFile_);
+      printf("  The file %s was not found.\n", PathFile_);
     }
 
     Success = false;
@@ -149,8 +149,8 @@ bool KernelDumpParser::MapFile() {
   // Create the ro file mapping.
   //
 
-  FileMap = CreateFileMapping(File, nullptr, PAGE_READONLY, 0, 0,
-                              _T("Kernel crash-dump."));
+  FileMap = CreateFileMappingA(File, nullptr, PAGE_READONLY, 0, 0,
+                               "Kernel crash-dump.");
 
   if (FileMap == nullptr) {
 
@@ -160,7 +160,7 @@ bool KernelDumpParser::MapFile() {
     //
 
     const DWORD GLE = GetLastError();
-    _tprintf(_T("CreateFileMapping failed with GLE=%d.\n"), GLE);
+    printf("CreateFileMapping failed with GLE=%d.\n", GLE);
     Success = false;
     goto clean;
   }
@@ -178,7 +178,7 @@ bool KernelDumpParser::MapFile() {
     //
 
     const DWORD GLE = GetLastError();
-    _tprintf(_T("MapViewOfFile failed with GLE=%d.\n"), GLE);
+    printf("MapViewOfFile failed with GLE=%d.\n", GLE);
     Success = false;
     goto clean;
   }
@@ -361,64 +361,59 @@ const Physmem_t &KernelDumpParser::GetPhysmem() { return Physmem_; }
 
 void KernelDumpParser::ShowContextRecord(const uint32_t Prefix = 0) const {
   const KDMP_PARSER_CONTEXT &Context = DmpHdr_->ContextRecord;
-  _tprintf(_T("%*srax=%016llx rbx=%016llx rcx=%016llx\n"), Prefix, _T(""),
-           Context.Rax, Context.Rbx, Context.Rcx);
-  _tprintf(_T("%*srdx=%016llx rsi=%016llx rdi=%016llx\n"), Prefix, _T(""),
-           Context.Rdx, Context.Rsi, Context.Rdi);
-  _tprintf(_T("%*srip=%016llx rsp=%016llx rbp=%016llx\n"), Prefix, _T(""),
-           Context.Rip, Context.Rsp, Context.Rbp);
-  _tprintf(_T("%*s r8=%016llx  r9=%016llx r10=%016llx\n"), Prefix, _T(""),
-           Context.R8, Context.R9, Context.R10);
-  _tprintf(_T("%*sr11=%016llx r12=%016llx r13=%016llx\n"), Prefix, _T(""),
-           Context.R11, Context.R12, Context.R13);
-  _tprintf(_T("%*sr14=%016llx r15=%016llx\n"), Prefix, _T(""), Context.R14,
-           Context.R15);
-  _tprintf(_T("%*scs=%04x ss=%04x ds=%04x es=%04x fs=%04x gs=%04x    ")
-           _T("             efl=%08x\n"),
-           Prefix, _T(""), Context.SegCs, Context.SegSs, Context.SegDs,
-           Context.SegEs, Context.SegFs, Context.SegGs, Context.EFlags);
-  _tprintf(_T("%*sfpcw=%04x    fpsw=%04x    fptw=%04x\n"), Prefix, _T(""),
-           Context.ControlWord, Context.StatusWord, 1);
-  _tprintf(_T("%*s  st0=%016llx%016llx       st1=%016llx%016llx\n"), Prefix,
-           _T(""), Context.FloatRegisters[0].High,
-           Context.FloatRegisters[0].Low, Context.FloatRegisters[1].High,
-           Context.FloatRegisters[1].Low);
-  _tprintf(_T("%*s  st2=%016llx%016llx       st3=%016llx%016llx\n"), Prefix,
-           _T(""), Context.FloatRegisters[2].High,
-           Context.FloatRegisters[2].Low, Context.FloatRegisters[3].High,
-           Context.FloatRegisters[3].Low);
-  _tprintf(_T("%*s  st4=%016llx%016llx       st5=%016llx%016llx\n"), Prefix,
-           _T(""), Context.FloatRegisters[4].High,
-           Context.FloatRegisters[4].Low, Context.FloatRegisters[5].High,
-           Context.FloatRegisters[5].Low);
-  _tprintf(_T("%*s  st6=%016llx%016llx       st7=%016llx%016llx\n"), Prefix,
-           _T(""), Context.FloatRegisters[6].High,
-           Context.FloatRegisters[6].Low, Context.FloatRegisters[7].High,
-           Context.FloatRegisters[7].Low);
-  _tprintf(_T("%*s xmm0=%016llx%016llx      xmm1=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm0.High, Context.Xmm0.Low, Context.Xmm1.High,
-           Context.Xmm1.Low);
-  _tprintf(_T("%*s xmm2=%016llx%016llx      xmm3=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm2.High, Context.Xmm2.Low, Context.Xmm3.High,
-           Context.Xmm3.Low);
-  _tprintf(_T("%*s xmm4=%016llx%016llx      xmm5=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm4.High, Context.Xmm4.Low, Context.Xmm5.High,
-           Context.Xmm5.Low);
-  _tprintf(_T("%*s xmm6=%016llx%016llx      xmm7=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm6.High, Context.Xmm6.Low, Context.Xmm7.High,
-           Context.Xmm7.Low);
-  _tprintf(_T("%*s xmm8=%016llx%016llx      xmm9=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm8.High, Context.Xmm8.Low, Context.Xmm9.High,
-           Context.Xmm9.Low);
-  _tprintf(_T("%*sxmm10=%016llx%016llx     xmm11=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm10.High, Context.Xmm10.Low, Context.Xmm11.High,
-           Context.Xmm11.Low);
-  _tprintf(_T("%*sxmm12=%016llx%016llx     xmm13=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm12.High, Context.Xmm12.Low, Context.Xmm13.High,
-           Context.Xmm13.Low);
-  _tprintf(_T("%*sxmm14=%016llx%016llx     xmm15=%016llx%016llx\n"), Prefix,
-           _T(""), Context.Xmm14.High, Context.Xmm14.Low, Context.Xmm15.High,
-           Context.Xmm15.Low);
+  printf("%*srax=%016llx rbx=%016llx rcx=%016llx\n", Prefix, "", Context.Rax,
+         Context.Rbx, Context.Rcx);
+  printf("%*srdx=%016llx rsi=%016llx rdi=%016llx\n", Prefix, "", Context.Rdx,
+         Context.Rsi, Context.Rdi);
+  printf("%*srip=%016llx rsp=%016llx rbp=%016llx\n", Prefix, "", Context.Rip,
+         Context.Rsp, Context.Rbp);
+  printf("%*s r8=%016llx  r9=%016llx r10=%016llx\n", Prefix, "", Context.R8,
+         Context.R9, Context.R10);
+  printf("%*sr11=%016llx r12=%016llx r13=%016llx\n", Prefix, "", Context.R11,
+         Context.R12, Context.R13);
+  printf("%*sr14=%016llx r15=%016llx\n", Prefix, "", Context.R14, Context.R15);
+  printf("%*scs=%04x ss=%04x ds=%04x es=%04x fs=%04x gs=%04x    "
+         "             efl=%08x\n",
+         Prefix, "", Context.SegCs, Context.SegSs, Context.SegDs, Context.SegEs,
+         Context.SegFs, Context.SegGs, Context.EFlags);
+  printf("%*sfpcw=%04x    fpsw=%04x    fptw=%04x\n", Prefix, "",
+         Context.ControlWord, Context.StatusWord, 1);
+  printf("%*s  st0=%016llx%016llx       st1=%016llx%016llx\n", Prefix, "",
+         Context.FloatRegisters[0].High, Context.FloatRegisters[0].Low,
+         Context.FloatRegisters[1].High, Context.FloatRegisters[1].Low);
+  printf("%*s  st2=%016llx%016llx       st3=%016llx%016llx\n", Prefix, "",
+         Context.FloatRegisters[2].High, Context.FloatRegisters[2].Low,
+         Context.FloatRegisters[3].High, Context.FloatRegisters[3].Low);
+  printf("%*s  st4=%016llx%016llx       st5=%016llx%016llx\n", Prefix, "",
+         Context.FloatRegisters[4].High, Context.FloatRegisters[4].Low,
+         Context.FloatRegisters[5].High, Context.FloatRegisters[5].Low);
+  printf("%*s  st6=%016llx%016llx       st7=%016llx%016llx\n", Prefix, "",
+         Context.FloatRegisters[6].High, Context.FloatRegisters[6].Low,
+         Context.FloatRegisters[7].High, Context.FloatRegisters[7].Low);
+  printf("%*s xmm0=%016llx%016llx      xmm1=%016llx%016llx\n", Prefix, "",
+         Context.Xmm0.High, Context.Xmm0.Low, Context.Xmm1.High,
+         Context.Xmm1.Low);
+  printf("%*s xmm2=%016llx%016llx      xmm3=%016llx%016llx\n", Prefix, "",
+         Context.Xmm2.High, Context.Xmm2.Low, Context.Xmm3.High,
+         Context.Xmm3.Low);
+  printf("%*s xmm4=%016llx%016llx      xmm5=%016llx%016llx\n", Prefix, "",
+         Context.Xmm4.High, Context.Xmm4.Low, Context.Xmm5.High,
+         Context.Xmm5.Low);
+  printf("%*s xmm6=%016llx%016llx      xmm7=%016llx%016llx\n", Prefix, "",
+         Context.Xmm6.High, Context.Xmm6.Low, Context.Xmm7.High,
+         Context.Xmm7.Low);
+  printf("%*s xmm8=%016llx%016llx      xmm9=%016llx%016llx\n", Prefix, "",
+         Context.Xmm8.High, Context.Xmm8.Low, Context.Xmm9.High,
+         Context.Xmm9.Low);
+  printf("%*sxmm10=%016llx%016llx     xmm11=%016llx%016llx\n", Prefix, "",
+         Context.Xmm10.High, Context.Xmm10.Low, Context.Xmm11.High,
+         Context.Xmm11.Low);
+  printf("%*sxmm12=%016llx%016llx     xmm13=%016llx%016llx\n", Prefix, "",
+         Context.Xmm12.High, Context.Xmm12.Low, Context.Xmm13.High,
+         Context.Xmm13.Low);
+  printf("%*sxmm14=%016llx%016llx     xmm15=%016llx%016llx\n", Prefix, "",
+         Context.Xmm14.High, Context.Xmm14.Low, Context.Xmm15.High,
+         Context.Xmm15.Low);
 }
 
 void KernelDumpParser::ShowExceptionRecord(const uint32_t Prefix = 0) const {

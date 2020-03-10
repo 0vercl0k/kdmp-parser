@@ -46,8 +46,8 @@ struct DisplayUtils {
 
   void DisplayHeader(const uint32_t Prefix, const char *FieldName,
                      const void *This, const void *Field) const {
-    _tprintf(_T("%*s+0x%04llx: %-25S"), Prefix, _T(""),
-             OffsetFromThis(This, Field), FieldName);
+    printf("%*s+0x%04llx: %-25s", Prefix, "", OffsetFromThis(This, Field),
+           FieldName);
   }
 
   //
@@ -59,15 +59,14 @@ struct DisplayUtils {
 
   //
   // This is the default implementation. If no speciailization is found
-  // this is the function that gets invoked. Note that we don't use _tprintf
-  // here as the preprocessor gives us ascii strings to work with.
+  // this is the function that gets invoked.
   //
 
   template <typename Ty>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const Ty *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    _tprintf(_T(": Unknow representation.\n"));
+    printf(": Unknow representation.\n");
   }
 
   //
@@ -79,59 +78,58 @@ struct DisplayUtils {
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint8_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    _tprintf(_T(": 0x%02x.\n"), *Field);
+    printf(": 0x%02x.\n", *Field);
   }
 
   template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint16_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    _tprintf(_T(": 0x%02x.\n"), *Field);
+    printf(": 0x%02x.\n", *Field);
   }
 
   template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint32_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    _tprintf(_T(": 0x%08x.\n"), *Field);
+    printf(": 0x%08x.\n", *Field);
   }
 
   template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint64_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    _tprintf(_T(": 0x%016llx.\n"), *Field);
+    printf(": 0x%016llx.\n", *Field);
   }
 
   template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint128_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    _tprintf(_T(": 0x%016llx%016llx.\n"), Field->High, Field->Low);
+    printf(": 0x%016llx%016llx.\n", Field->High, Field->Low);
   }
 
   template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const DumpType_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    TCHAR *DumpType = nullptr;
     switch (*Field) {
     case KernelDump: {
-      _tprintf(_T(": Kernel Dump.\n"));
+      printf(": Kernel Dump.\n");
       break;
     }
 
     case FullDump: {
-      _tprintf(_T(": Full Dump.\n"));
+      printf(": Full Dump.\n");
       break;
     }
     case BMPDump: {
-      _tprintf(_T(": BMP Dump.\n"));
+      printf(": BMP Dump.\n");
       break;
     }
 
     default: {
-      _tprintf(_T(": Unknown.\n"));
+      printf(": Unknown.\n");
       break;
     }
     }
@@ -142,8 +140,7 @@ struct DisplayUtils {
 // Display the header of a dump section.
 //
 
-#define DISPLAY_HEADER(Name)                                                   \
-  _tprintf(_T("%*s") _T(Name) _T("\n"), Prefix, _T(""))
+#define DISPLAY_HEADER(Name) printf("%*s" Name "\n", Prefix, "")
 
 //
 // All credit goes to the rekall project for the RE of the file format.
@@ -252,12 +249,12 @@ struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
     //
 
     if (Signature != ExpectedSignature) {
-      _tprintf(_T("KDMP_PARSER_BMP_HEADER64::Signature looks wrong.\n"));
+      printf("KDMP_PARSER_BMP_HEADER64::Signature looks wrong.\n");
       return false;
     }
 
     if (ValidDump != ExpectedValidDump) {
-      _tprintf(_T("KDMP_PARSER_BMP_HEADER64::ValidDump looks wrong.\n"));
+      printf("KDMP_PARSER_BMP_HEADER64::ValidDump looks wrong.\n");
       return false;
     }
 
@@ -417,7 +414,7 @@ struct KDMP_PARSER_CONTEXT : public DisplayUtils {
     //
 
     if (MxCsr != MxCsr2) {
-      _tprintf(_T("KDMP_PARSER_CONTEXT::MxCsr doesn't match MxCsr2.\n"));
+      printf("KDMP_PARSER_CONTEXT::MxCsr doesn't match MxCsr2.\n");
       return false;
     }
 
@@ -672,12 +669,12 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     //
 
     if (Signature != ExpectedSignature) {
-      _tprintf(_T("KDMP_PARSER_HEADER64::Signature looks wrong.\n"));
+      printf("KDMP_PARSER_HEADER64::Signature looks wrong.\n");
       return false;
     }
 
     if (ValidDump != ExpectedValidDump) {
-      _tprintf(_T("KDMP_PARSER_HEADER64::ValidDump looks wrong.\n"));
+      printf("KDMP_PARSER_HEADER64::ValidDump looks wrong.\n");
       return false;
     }
 
@@ -687,12 +684,12 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
 
     if (DumpType == FullDump) {
       if (!PhysicalMemoryBlockBuffer.LooksGood()) {
-        _tprintf(_T("The PhysicalMemoryBlockBuffer looks wrong.\n"));
+        printf("The PhysicalMemoryBlockBuffer looks wrong.\n");
         return false;
       }
     } else if (DumpType == BMPDump) {
       if (!BmpHeader.LooksGood()) {
-        _tprintf(_T("The BmpHeader looks wrong.\n"));
+        printf("The BmpHeader looks wrong.\n");
         return false;
       }
     }

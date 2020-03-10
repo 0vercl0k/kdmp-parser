@@ -3,7 +3,6 @@
 
 #include "kdmp-parser-structs.h"
 #include <cstdint>
-#include <tchar.h>
 #include <windows.h>
 
 #include <unordered_map>
@@ -19,7 +18,7 @@ public:
   // Actually do the parsing of the file.
   //
 
-  bool Parse(const TCHAR *PathFile);
+  bool Parse(const char *PathFile);
 
   //
   // Give the Context record to the user.
@@ -50,7 +49,6 @@ public:
   //
 
   void ShowAllStructures(const uint32_t Prefix) const;
-
 
   //
   // Get the content of a physical address.
@@ -111,7 +109,7 @@ private:
   // File path to the crash-dump.
   //
 
-  const TCHAR *PathFile_;
+  const char *PathFile_;
 
   //
   // Mapping between physical addresses / page data.

@@ -1,17 +1,16 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #include "kdmp-parser.h"
-#include <tchar.h>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 //
 // Delimiter.
 //
 
 #define DELIMITER                                                              \
-  _T("----------------------------------------------------------------------") \
-  _T("----------")
+  "----------------------------------------------------------------------"     \
+  "----------"
 
 //
 // The options available for the parser.
@@ -65,7 +64,7 @@ struct Options_t {
   // The path to the dump file.
   //
 
-  TCHAR *DumpPath;
+  char *DumpPath;
 
   //
   // Initialize all teh things!
@@ -82,26 +81,25 @@ struct Options_t {
 //
 
 void Help() {
-  _tprintf(
-      _T("parser.exe [-p [<physical address>]] [-c] [-e] [-h] <kdump path>\n"));
-  _tprintf(_T("\n"));
-  _tprintf(_T("Examples:\n"));
-  _tprintf(_T("  Show every structures of the dump:\n"));
-  _tprintf(_T("    parser.exe -a full.dmp\n"));
-  _tprintf(_T("\n"));
-  _tprintf(_T("  Show the context record:\n"));
-  _tprintf(_T("    parser.exe -c full.dmp\n"));
-  _tprintf(_T("\n"));
-  _tprintf(_T("  Show the exception record:\n"));
-  _tprintf(_T("    parser.exe -e full.dmp\n"));
-  _tprintf(_T("\n"));
-  _tprintf(_T("  Show all the physical memory (first 16 bytes of every ")
-           _T("pages):\n"));
-  _tprintf(_T("    parser.exe -p full.dmp\n"));
-  _tprintf(_T("\n"));
-  _tprintf(_T("  Show the context record as well as the page at physical ")
-           _T("address 0x1000:\n"));
-  _tprintf(_T("    parser.exe -c -p 0x1000 full.dmp\n"));
+  printf("parser.exe [-p [<physical address>]] [-c] [-e] [-h] <kdump path>\n");
+  printf("\n");
+  printf("Examples:\n");
+  printf("  Show every structures of the dump:\n");
+  printf("    parser.exe -a full.dmp\n");
+  printf("\n");
+  printf("  Show the context record:\n");
+  printf("    parser.exe -c full.dmp\n");
+  printf("\n");
+  printf("  Show the exception record:\n");
+  printf("    parser.exe -e full.dmp\n");
+  printf("\n");
+  printf("  Show all the physical memory (first 16 bytes of every "
+         "pages):\n");
+  printf("    parser.exe -p full.dmp\n");
+  printf("\n");
+  printf("  Show the context record as well as the page at physical "
+         "address 0x1000:\n");
+  printf("    parser.exe -c -p 0x1000 full.dmp\n");
 }
 
 //
@@ -113,23 +111,23 @@ void Hexdump(const uint64_t Address, const void *Buffer, size_t Len) {
   const uint8_t *ptr = (uint8_t *)Buffer;
 
   for (size_t i = 0; i < Len; i += 16) {
-    _tprintf(_T("%08llx: "), Address + i);
+    printf("%08llx: ", Address + i);
     for (int j = 0; j < 16; j++) {
       if (i + j < Len) {
-        _tprintf(_T("%02x "), ptr[i + j]);
+        printf("%02x ", ptr[i + j]);
       } else {
-        _tprintf(_T("   "));
+        printf("   ");
       }
     }
-    _tprintf(_T(" |"));
+    printf(" |");
     for (int j = 0; j < 16; j++) {
       if (i + j < Len) {
-        _tprintf(_T("%c"), isprint(ptr[i + j]) ? (char)ptr[i + j] : '.');
+        printf("%c", isprint(ptr[i + j]) ? (char)ptr[i + j] : '.');
       } else {
-        _tprintf(_T(" "));
+        printf(" ");
       }
     }
-    _tprintf(_T("|\n"));
+    printf("|\n");
   }
 }
 
@@ -137,7 +135,7 @@ void Hexdump(const uint64_t Address, const void *Buffer, size_t Len) {
 // Let's do some work!
 //
 
-int _tmain(int argc, TCHAR *argv[]) {
+int main(int argc, const char *argv[]) {
 
   //
   // This holds the options passed to the program.
@@ -150,17 +148,17 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   for (int ArgIdx = 1; ArgIdx < argc; ArgIdx++) {
-    TCHAR *Arg = argv[ArgIdx];
+    const char *Arg = argv[ArgIdx];
     const int IsLastArg = (ArgIdx + 1) >= argc;
 
-    if (_tcscmp(Arg, _T("-c")) == 0) {
+    if (strcmp(Arg, "-c") == 0) {
 
       //
       // Show the context record.
       //
 
       Opts.ShowContextRecord = 1;
-    } else if (_tcscmp(Arg, _T("-p")) == 0) {
+    } else if (strcmp(Arg, "-p") == 0) {
 
       //
       // Show the physical memory.
@@ -183,7 +181,7 @@ int _tmain(int argc, TCHAR *argv[]) {
         //
 
         Opts.HasPhysicalAddress = true;
-        Opts.PhysicalAddress = _tcstoull(argv[NextArgIdx], nullptr, 0);
+        Opts.PhysicalAddress = strtoull(argv[NextArgIdx], nullptr, 0);
 
         //
         // Skip the next argument.
@@ -191,21 +189,21 @@ int _tmain(int argc, TCHAR *argv[]) {
 
         ArgIdx++;
       }
-    } else if (_tcscmp(Arg, _T("-e")) == 0) {
+    } else if (strcmp(Arg, "-e") == 0) {
 
       //
       // Show the exception record.
       //
 
       Opts.ShowExceptionRecord = 1;
-    } else if (_tcscmp(Arg, _T("-a")) == 0) {
+    } else if (strcmp(Arg, "-a") == 0) {
 
       //
       // Show all the structures.
       //
 
       Opts.ShowAllStructures = true;
-    } else if (_tcscmp(Arg, _T("-h")) == 0) {
+    } else if (strcmp(Arg, "-h") == 0) {
 
       //
       // Show the help.
@@ -218,14 +216,14 @@ int _tmain(int argc, TCHAR *argv[]) {
       // If this is the last argument then this must be the dump path.
       //
 
-      Opts.DumpPath = Arg;
+      Opts.DumpPath = const_cast<char *>(Arg);
     } else {
 
       //
       // Otherwise it seems that the user passed something wrong?
       //
 
-      _tprintf(_T("The argument %s is not recognized.\n\n"), Arg);
+      printf("The argument %s is not recognized.\n\n", Arg);
       Help();
       return EXIT_FAILURE;
     }
@@ -246,7 +244,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   if (!Opts.DumpPath) {
-    _tprintf(_T("You didn't provide the path to the dump file.\n\n"));
+    printf("You didn't provide the path to the dump file.\n\n");
     Help();
     return EXIT_FAILURE;
   }
@@ -258,8 +256,8 @@ int _tmain(int argc, TCHAR *argv[]) {
 
   if (!Opts.ShowContextRecord && !Opts.ShowPhysicalMem &&
       !Opts.ShowAllStructures && !Opts.ShowExceptionRecord) {
-    _tprintf(_T("Forcing to show the context record as no option as been ")
-             _T("passed.\n\n"));
+    printf("Forcing to show the context record as no option as been "
+           "passed.\n\n");
     Opts.ShowContextRecord = 1;
   }
 
@@ -274,7 +272,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   if (!Dmp.Parse(Opts.DumpPath)) {
-    _tprintf(_T("Parsing of the dump failed, exiting.\n"));
+    printf("Parsing of the dump failed, exiting.\n");
     return EXIT_FAILURE;
   }
 
@@ -283,7 +281,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   if (Opts.ShowAllStructures) {
-    _tprintf(DELIMITER _T("\nDump structures:\n"));
+    printf(DELIMITER "\nDump structures:\n");
     Dmp.ShowAllStructures(2);
   }
 
@@ -292,7 +290,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   if (Opts.ShowContextRecord) {
-    _tprintf(DELIMITER _T("\nContext Record:\n"));
+    printf(DELIMITER "\nContext Record:\n");
     Dmp.ShowContextRecord(2);
   }
 
@@ -301,7 +299,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   if (Opts.ShowExceptionRecord) {
-    _tprintf(DELIMITER _T("\nException Record:\n"));
+    printf(DELIMITER "\nException Record:\n");
     Dmp.ShowExceptionRecord(2);
   }
 
@@ -310,7 +308,7 @@ int _tmain(int argc, TCHAR *argv[]) {
   //
 
   if (Opts.ShowPhysicalMem) {
-    _tprintf(DELIMITER _T("\nPhysical memory:\n"));
+    printf(DELIMITER "\nPhysical memory:\n");
 
     //
     // If the user specified a physical address this is the one we
@@ -326,8 +324,8 @@ int _tmain(int argc, TCHAR *argv[]) {
 
       const uint8_t *Page = Dmp.GetPhysicalPage(Opts.PhysicalAddress);
       if (Page == nullptr) {
-        _tprintf(_T("0x%llx is not a valid physical address.\n"),
-                 Opts.PhysicalAddress);
+        printf("0x%llx is not a valid physical address.\n",
+               Opts.PhysicalAddress);
       } else {
         Hexdump(Opts.PhysicalAddress, Page, 0x1000);
       }
@@ -337,8 +335,8 @@ int _tmain(int argc, TCHAR *argv[]) {
       // If the user didn't specify a physical address then dump the first
       // 16 bytes of every physical pages.
       //
-      // Note that as the physmem is unordered, so we order the addresses here so that
-      // it is nicer for the user as they probably don't expect unorder.
+      // Note that as the physmem is unordered, so we order the addresses here
+      // so that it is nicer for the user as they probably don't expect unorder.
       //
 
       const Physmem_t &Physmem = Dmp.GetPhysmem();
@@ -357,7 +355,8 @@ int _tmain(int argc, TCHAR *argv[]) {
       // Sort them.
       //
 
-      std::sort(OrderedPhysicalAddresses.begin(), OrderedPhysicalAddresses.end());
+      std::sort(OrderedPhysicalAddresses.begin(),
+                OrderedPhysicalAddresses.end());
 
       //
       // And now we can iterate through them and get the page content.
