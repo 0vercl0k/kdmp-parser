@@ -1,7 +1,7 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #include "kdmp-parser.h"
 
-int _tmain(int argc, const char *argv[]) {
+int main(int argc, const char *argv[]) {
   if (argc != 2) {
     printf("test.exe <kdump path>\n");
     return EXIT_FAILURE;
