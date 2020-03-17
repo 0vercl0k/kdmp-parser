@@ -135,7 +135,7 @@ bool KernelDumpParser::MapFile() {
     //
 
     const DWORD GLE = GetLastError();
-    printf("CreateFile failed with GLE=%d.\n", GLE);
+    printf("CreateFile failed with GLE=%lu.\n", GLE);
 
     if (GLE == ERROR_FILE_NOT_FOUND) {
       printf("  The file %s was not found.\n", PathFile_);
@@ -160,7 +160,7 @@ bool KernelDumpParser::MapFile() {
     //
 
     const DWORD GLE = GetLastError();
-    printf("CreateFileMapping failed with GLE=%d.\n", GLE);
+    printf("CreateFileMapping failed with GLE=%lu.\n", GLE);
     Success = false;
     goto clean;
   }
@@ -178,7 +178,7 @@ bool KernelDumpParser::MapFile() {
     //
 
     const DWORD GLE = GetLastError();
-    printf("MapViewOfFile failed with GLE=%d.\n", GLE);
+    printf("MapViewOfFile failed with GLE=%lu.\n", GLE);
     Success = false;
     goto clean;
   }
