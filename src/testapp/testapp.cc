@@ -26,87 +26,104 @@ int main(int argc, const char *argv[]) {
 
   const KDMP_PARSER_CONTEXT *C = Dmp.GetContext();
   if (C->Rax != 0x0000000000000003ULL) {
-    printf("Rax(0x%016llx) does not match with 0x0000000000000003.", C->Rax);
+    printf("Rax(0x%016" PRIx64 ") does not match with 0x0000000000000003.",
+           C->Rax);
     return EXIT_FAILURE;
   }
 
   if (C->Rbx != 0xfffff8050f4e9f70ULL) {
-    printf("Rbx(0x%016llx) does not match with 0xfffff8050f4e9f70.", C->Rbx);
+    printf("Rbx(0x%016" PRIx64 ") does not match with 0xfffff8050f4e9f70.",
+           C->Rbx);
     return EXIT_FAILURE;
   }
 
   if (C->Rcx != 0x0000000000000001ULL) {
-    printf("Rcx(0x%016llx) does not match with 0x0000000000000001.", C->Rcx);
+    printf("Rcx(0x%016" PRIx64 ") does not match with 0x0000000000000001.",
+           C->Rcx);
     return EXIT_FAILURE;
   }
 
   if (C->Rdx != 0xfffff805135684d0ULL) {
-    printf("Rdx(0x%016llx) does not match with 0xfffff805135684d0.", C->Rdx);
+    printf("Rdx(0x%016" PRIx64 ") does not match with 0xfffff805135684d0.",
+           C->Rdx);
     return EXIT_FAILURE;
   }
 
   if (C->Rsi != 0x0000000000000100ULL) {
-    printf("Rsi(0x%016llx) does not match with 0x0000000000000100.", C->Rsi);
+    printf("Rsi(0x%016" PRIx64 ") does not match with 0x0000000000000100.",
+           C->Rsi);
     return EXIT_FAILURE;
   }
 
   if (C->Rdi != 0xfffff8050f4e9f80ULL) {
-    printf("Rdi(0x%016llx) does not match with 0xfffff8050f4e9f80.", C->Rdi);
+    printf("Rdi(0x%016" PRIx64 ") does not match with 0xfffff8050f4e9f80.",
+           C->Rdi);
     return EXIT_FAILURE;
   }
 
   if (C->Rip != 0xfffff805108776a0ULL) {
-    printf("Rip(0x%016llx) does not match with 0xfffff805108776a0.", C->Rip);
+    printf("Rip(0x%016" PRIx64 ") does not match with 0xfffff805108776a0.",
+           C->Rip);
     return EXIT_FAILURE;
   }
 
   if (C->Rsp != 0xfffff805135684f8ULL) {
-    printf("Rsp(0x%016llx) does not match with 0xfffff805135684f8.", C->Rsp);
+    printf("Rsp(0x%016" PRIx64 ") does not match with 0xfffff805135684f8.",
+           C->Rsp);
     return EXIT_FAILURE;
   }
 
   if (C->Rbp != 0xfffff80513568600ULL) {
-    printf("Rbp(0x%016llx) does not match with 0xfffff80513568600.", C->Rbp);
+    printf("Rbp(0x%016" PRIx64 ") does not match with 0xfffff80513568600.",
+           C->Rbp);
     return EXIT_FAILURE;
   }
 
   if (C->R8 != 0x0000000000000003ULL) {
-    printf("R8(0x%016llx) does not match with 0x0000000000000003.", C->R8);
+    printf("R8(0x%016" PRIx64 ") does not match with 0x0000000000000003.",
+           C->R8);
     return EXIT_FAILURE;
   }
 
   if (C->R9 != 0xfffff805135684b8ULL) {
-    printf("R9(0x%016llx) does not match with 0xfffff805135684b8.", C->R9);
+    printf("R9(0x%016" PRIx64 ") does not match with 0xfffff805135684b8.",
+           C->R9);
     return EXIT_FAILURE;
   }
 
   if (C->R10 != 0x0000000000000000ULL) {
-    printf("R10(0x%016llx) does not match with 0x0000000000000000.", C->R10);
+    printf("R10(0x%016" PRIx64 ") does not match with 0x0000000000000000.",
+           C->R10);
     return EXIT_FAILURE;
   }
 
   if (C->R11 != 0xffffa8848825e000ULL) {
-    printf("R11(0x%016llx) does not match with 0xffffa8848825e000.", C->R11);
+    printf("R11(0x%016" PRIx64 ") does not match with 0xffffa8848825e000.",
+           C->R11);
     return EXIT_FAILURE;
   }
 
   if (C->R12 != 0xfffff8050f4e9f80ULL) {
-    printf("R12(0x%016llx) does not match with 0xfffff8050f4e9f80.", C->R12);
+    printf("R12(0x%016" PRIx64 ") does not match with 0xfffff8050f4e9f80.",
+           C->R12);
     return EXIT_FAILURE;
   }
 
   if (C->R13 != 0xfffff80510c3c958ULL) {
-    printf("R13(0x%016llx) does not match with 0xfffff80510c3c958.", C->R13);
+    printf("R13(0x%016" PRIx64 ") does not match with 0xfffff80510c3c958.",
+           C->R13);
     return EXIT_FAILURE;
   }
 
   if (C->R14 != 0x0000000000000000ULL) {
-    printf("R14(0x%016llx) does not match with 0x0000000000000000.", C->R14);
+    printf("R14(0x%016" PRIx64 ") does not match with 0x0000000000000000.",
+           C->R14);
     return EXIT_FAILURE;
   }
 
   if (C->R15 != 0x0000000000000052ULL) {
-    printf("R15(0x%016llx) does not match with 0x0000000000000052.", C->R15);
+    printf("R15(0x%016" PRIx64 ") does not match with 0x0000000000000052.",
+           C->R15);
     return EXIT_FAILURE;
   }
 

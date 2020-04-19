@@ -2,8 +2,8 @@
 #include "kdmp-parser.h"
 
 #include <algorithm>
-#include <vector>
 #include <cstring>
+#include <vector>
 
 //
 // Delimiter.
@@ -112,7 +112,7 @@ void Hexdump(const uint64_t Address, const void *Buffer, size_t Len) {
   const uint8_t *ptr = (uint8_t *)Buffer;
 
   for (size_t i = 0; i < Len; i += 16) {
-    printf("%08llx: ", Address + i);
+    printf("%08" PRIx64 ": ", Address + i);
     for (int j = 0; j < 16; j++) {
       if (i + j < Len) {
         printf("%02x ", ptr[i + j]);
@@ -325,7 +325,7 @@ int main(int argc, const char *argv[]) {
 
       const uint8_t *Page = Dmp.GetPhysicalPage(Opts.PhysicalAddress);
       if (Page == nullptr) {
-        printf("0x%llx is not a valid physical address.\n",
+        printf("0x%" PRIx64 " is not a valid physical address.\n",
                Opts.PhysicalAddress);
       } else {
         Hexdump(Opts.PhysicalAddress, Page, 0x1000);
