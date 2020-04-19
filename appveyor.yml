@@ -16,7 +16,7 @@ clone_folder: c:\projects\kdmp-parser
 before_build:
   - cmd: cd build
   - cmd: mkdir %platform%-%configuration%
-  - cmd: cmake -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=%APPVEYOR_BUILD_FOLDER%\bin\%platform%-%configuration% -DCMAKE_BUILD_TYPE=%configuration% -GNinja %APPVEYOR_BUILD_FOLDER%
+  - cmd: cmake -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=%APPVEYOR_BUILD_FOLDER%\bin\%platform%-%configuration% -DCMAKE_BUILD_TYPE=%configuration% -GNinja %APPVEYOR_BUILD_FOLDER%
   - cmd: cmake --build .
 
 # this happens in the clone_folder
