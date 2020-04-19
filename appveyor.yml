@@ -15,16 +15,17 @@ clone_folder: c:\projects\kdmp-parser
 
 before_build:
   - cmd: call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %platform%
+  - cmd: pushd .
   - cmd: cd build
   - cmd: mkdir %platform%-%configuration%
   - cmd: cmake -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=%APPVEYOR_BUILD_FOLDER%\bin\%platform%-%configuration% -DCMAKE_BUILD_TYPE=%configuration% -GNinja %APPVEYOR_BUILD_FOLDER%
+  - cmd: popd
 
 build_script:
   - cmd: cmake --build .
 
 # this happens in the clone_folder
 after_build:
-  - cmd: tree bin
   - cmd: 7z a -t7z kdmp-parser-%platform%.%configuration%.7z bin\%platform%-%configuration%\*
   - cmd: C:\Python38-x64\python.exe run-tests.py
   - cmd: chdir
