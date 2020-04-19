@@ -2,7 +2,7 @@
 #include "kdmp-parser.h"
 
 KernelDumpParser::KernelDumpParser()
-    : File_(nullptr), FileMap_(nullptr), ViewBase_(nullptr), DmpHdr_(nullptr),
+    : DmpHdr_(nullptr),
       PathFile_(nullptr) {}
 
 KernelDumpParser::~KernelDumpParser() {
@@ -12,33 +12,6 @@ KernelDumpParser::~KernelDumpParser() {
   //
 
   Physmem_.clear();
-
-  //
-  // Unmap the view of the mapping..
-  //
-
-  if (ViewBase_ != nullptr) {
-    UnmapViewOfFile(ViewBase_);
-    ViewBase_ = nullptr;
-  }
-
-  //
-  // Close the handle to the file mapping..
-  //
-
-  if (FileMap_ != nullptr) {
-    CloseHandle(FileMap_);
-    FileMap_ = nullptr;
-  }
-
-  //
-  // And finally the file itself.
-  //
-
-  if (File_ != nullptr) {
-    CloseHandle(File_);
-    File_ = nullptr;
-  }
 }
 
 bool KernelDumpParser::Parse(const char *PathFile) {
@@ -92,7 +65,7 @@ bool KernelDumpParser::ParseDmpHeader() {
   // The base of the view points on the DMP_HEADER64.
   //
 
-  DmpHdr_ = (KDMP_PARSER_HEADER64 *)ViewBase_;
+  DmpHdr_ = (KDMP_PARSER_HEADER64 *)FileMap_.ViewBase();
 
   //
   // Now let's make sure the structures look right.
@@ -116,120 +89,10 @@ const KDMP_PARSER_CONTEXT *KernelDumpParser::GetContext() {
 }
 
 bool KernelDumpParser::MapFile() {
-  bool Success = true;
-  HANDLE File = nullptr;
-  HANDLE FileMap = nullptr;
-  PVOID ViewBase = nullptr;
-
-  //
-  // Open the dump file in read-only.
-  //
-
-  File = CreateFileA(PathFile_, GENERIC_READ, FILE_SHARE_READ, nullptr,
-                     OPEN_EXISTING, 0, nullptr);
-
-  if (File == NULL) {
-
-    //
-    // If we fail to open the file, let the user know.
-    //
-
-    const DWORD GLE = GetLastError();
-    printf("CreateFile failed with GLE=%lu.\n", GLE);
-
-    if (GLE == ERROR_FILE_NOT_FOUND) {
-      printf("  The file %s was not found.\n", PathFile_);
-    }
-
-    Success = false;
-    goto clean;
-  }
-
-  //
-  // Create the ro file mapping.
-  //
-
-  FileMap = CreateFileMappingA(File, nullptr, PAGE_READONLY, 0, 0, nullptr);
-
-  if (FileMap == nullptr) {
-
-    //
-    // If we fail to create a file mapping, let
-    // the user know.
-    //
-
-    const DWORD GLE = GetLastError();
-    printf("CreateFileMapping failed with GLE=%lu.\n", GLE);
-    Success = false;
-    goto clean;
-  }
-
-  //
-  // Map a view of the file in memory.
-  //
-
-  ViewBase = MapViewOfFile(FileMap, FILE_MAP_READ, 0, 0, 0);
-
-  if (ViewBase == nullptr) {
-
-    //
-    // If we fail to map the view, let the user know.
-    //
-
-    const DWORD GLE = GetLastError();
-    printf("MapViewOfFile failed with GLE=%lu.\n", GLE);
-    Success = false;
-    goto clean;
-  }
-
-  //
-  // Everything went well, so grab a copy of the handles for
-  // our class and null-out the temporary variables.
-  //
-
-  File_ = File;
-  File = nullptr;
-
-  FileMap_ = FileMap;
-  FileMap = nullptr;
-
-  ViewBase_ = ViewBase;
-  ViewBase = nullptr;
-
-clean:
-
-  //
-  // Unmap the view of the mapping..
-  //
-
-  if (ViewBase != nullptr) {
-    UnmapViewOfFile(ViewBase);
-    ViewBase = nullptr;
-  }
-
-  //
-  // Close the handle to the file mapping..
-  //
-
-  if (FileMap != nullptr) {
-    CloseHandle(FileMap);
-    FileMap = nullptr;
-  }
-
-  //
-  // And finally the file itself.
-  //
-
-  if (File != nullptr) {
-    CloseHandle(File);
-    File = nullptr;
-  }
-
-  return Success;
+  return FileMap_.MapFile(PathFile_);
 }
 
 bool KernelDumpParser::BuildPhysmemBMPDump() {
-
   const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->BmpHeader.FirstPage;
   const uint64_t BitmapSize = DmpHdr_->BmpHeader.Pages / 8;
   const uint8_t *Bitmap = DmpHdr_->BmpHeader.Bitmap;

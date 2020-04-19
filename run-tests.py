@@ -5,17 +5,20 @@ import sys
 import zipfile
 import subprocess
 import itertools
+import platform
 
+os_prefix = '' if 'Windows' in platform.platform(terse = 1) else 'lin'
 testdatas_url = 'https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip'
 
 def build(platform, configuration):
-    build_dir = os.path.join('build', f'{platform}-{configuration}')
+    dir_name = f'{os_prefix}{platform}-{configuration}'
+    build_dir = os.path.join('build', dir_name)
     if not os.path.isdir(build_dir):
         os.mkdir(build_dir)
 
     # We build an absolute path here because otherwise Ninja ends up creating a 'bin' directory
     # in build\<target>\bin.
-    output_dir = os.path.abspath(os.path.join('bin', f'{platform}-{configuration}'))
+    output_dir = os.path.abspath(os.path.join('bin', dir_name))
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -37,9 +40,10 @@ def build(platform, configuration):
     return ret
 
 def test(platform, configuration, dmp_path):
-    bin_dir = os.path.join('bin', f'{platform}-{configuration}')
+    dir_name = f'{os_prefix}{platform}-{configuration}'
+    bin_dir = os.path.join('bin', dir_name)
     cmd = (
-        os.path.join(bin_dir, 'test.exe'),
+        os.path.join(bin_dir, 'testapp'),
         dmp_path
     )
 
