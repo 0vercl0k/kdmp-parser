@@ -14,12 +14,10 @@ before_install:
   - sudo apt-get -y install ninja-build
 
 env:
-  - CONFIGURATION=Debug
-  - CONFIGURATION=RelWithDebInfo
-
-env:
-  - ARCH=x64
-  - ARCH=x86
+  - CONFIGURATION=Debug ARCH=x86
+  - CONFIGURATION=RelWithDebInfo ARCH=x86
+  - CONFIGURATION=Debug ARCH=x64
+  - CONFIGURATION=RelWithDebInfo ARCH=x64
 
 script:
   - python3 builder.py --configuration $CONFIGURATION --arch $ARCH --run-tests
