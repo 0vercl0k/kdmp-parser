@@ -12,6 +12,7 @@ sudo: required
 dist: bionic
 
 before_install:
+  - sudo apt-get -y install ninja-build
   - mkdir -p build/linx64-RelWithDebInfo
 
 script:
