@@ -1,5 +1,6 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #include "kdmp-parser.h"
+#include <cstring>
 
 int main(int argc, const char *argv[]) {
   if (argc != 2) {
@@ -129,5 +130,19 @@ int main(int argc, const char *argv[]) {
 
   printf("GPRs matches the testdatas.\n");
 
+  const uint64_t Address = 0x6d4d22;
+  const uint64_t AddressAligned = Address & 0xfffffffffffff000;
+  const uint64_t AddressOffset = Address & 0xfff;
+  const uint8_t ExpectedContent[] = {0x6d, 0x00, 0x00, 0x00, 0x00, 0x0a,
+                                     0x63, 0x88, 0x75, 0x00, 0x00, 0x00,
+                                     0x00, 0x0a, 0x63, 0x98};
+  const uint8_t *Page = Dmp.GetPhysicalPage(AddressAligned);
+  if (memcmp(Page + AddressOffset, ExpectedContent, sizeof(ExpectedContent)) !=
+      0) {
+    printf("Physical memory is broken.\n");
+    return EXIT_FAILURE;
+  }
+
+  printf("Physical memory page matches the testdatas.\n");
   return EXIT_SUCCESS;
 }
