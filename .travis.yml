@@ -1,0 +1,20 @@
+# Axel '0vercl0k' Souchet - April 19 2020
+language: cpp
+
+compiler:
+  - clang++
+
+os:
+  - linux
+
+sudo: required
+dist: bionic
+
+before_install:
+  - sudo apt-get -y install ninja-build
+  - mkdir -p build/linx64-RelWithDebInfo
+
+script:
+  - cd build/linx64-RelWithDebInfo
+  - cmake --DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja ../../
+  - cmake --build .

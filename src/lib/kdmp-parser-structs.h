@@ -1,10 +1,23 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #pragma once
 
+#include "platform.h"
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <tchar.h>
-#include <windows.h>
+
+#ifndef EXCEPTION_MAXIMUM_PARAMETERS
+#define EXCEPTION_MAXIMUM_PARAMETERS 15
+struct EXCEPTION_RECORD64 {
+  uint32_t ExceptionCode;
+  uint32_t ExceptionFlags;
+  uint64_t ExceptionRecord;
+  uint64_t ExceptionAddress;
+  uint32_t NumberParameters;
+  uint32_t __unusedAlignment;
+  uint64_t ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+};
+#endif
 
 //
 // Save off the alignement setting and disable
@@ -57,59 +70,44 @@ struct DisplayUtils {
 #define DISPLAY_FIELD(FieldName)                                               \
   DisplayField(Prefix + 2, #FieldName, this, &FieldName)
 
-  //
-  // This is the default implementation. If no speciailization is found
-  // this is the function that gets invoked.
-  //
-
-  template <typename Ty>
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const Ty *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
-    printf(": Unknow representation.\n");
-  }
+#define DISPLAY_FIELD_OFFSET(FieldName)                                        \
+  DisplayHeader(Prefix + 2, #FieldName, this, &FieldName)
 
   //
   // What follows are all the specializations we support. Basically,
   // taking care of displaying basic types.
   //
 
-  template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint8_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
     printf(": 0x%02x.\n", *Field);
   }
 
-  template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint16_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
     printf(": 0x%02x.\n", *Field);
   }
 
-  template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint32_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
     printf(": 0x%08x.\n", *Field);
   }
 
-  template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint64_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
     printf(": 0x%016llx.\n", *Field);
   }
 
-  template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint128_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
     printf(": 0x%016llx%016llx.\n", Field->High, Field->Low);
   }
 
-  template <>
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const DumpType_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
@@ -171,7 +169,7 @@ struct KDMP_PARSER_PHYSMEM_DESC : public DisplayUtils {
     DISPLAY_HEADER("PHYSICAL_MEMORY_DESCRIPTOR");
     DISPLAY_FIELD(NumberOfRuns);
     DISPLAY_FIELD(NumberOfPages);
-    DISPLAY_FIELD(Run);
+    DISPLAY_FIELD_OFFSET(Run);
     if (!LooksGood()) {
       return;
     }
@@ -268,11 +266,11 @@ struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(FirstPage);
     DISPLAY_FIELD(TotalPresentPages);
     DISPLAY_FIELD(Pages);
-    DISPLAY_FIELD(Bitmap);
+    DISPLAY_FIELD_OFFSET(Bitmap);
   }
 };
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_BMP_HEADER64, FirstPage) == 0x20,
+static_assert(offsetof(KDMP_PARSER_BMP_HEADER64, FirstPage) == 0x20,
               "First page offset looks wrong.");
 
 struct KDMP_PARSER_CONTEXT : public DisplayUtils {
@@ -546,7 +544,7 @@ struct KDMP_PARSER_CONTEXT : public DisplayUtils {
   }
 };
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_CONTEXT, Xmm0) == 0x1a0,
+static_assert(offsetof(KDMP_PARSER_CONTEXT, Xmm0) == 0x1a0,
               "The offset of Xmm0 looks wrong.");
 
 struct KDMP_PARSER_EXCEPTION_RECORD64 : public DisplayUtils {
@@ -718,18 +716,18 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(MachineImageType);
     DISPLAY_FIELD(NumberProcessors);
     DISPLAY_FIELD(BugCheckCode);
-    DISPLAY_FIELD(BugCheckCodeParameter);
+    DISPLAY_FIELD_OFFSET(BugCheckCodeParameter);
     DISPLAY_FIELD(KdDebuggerDataBlock);
-    DISPLAY_FIELD(PhysicalMemoryBlockBuffer);
+    DISPLAY_FIELD_OFFSET(PhysicalMemoryBlockBuffer);
     PhysicalMemoryBlockBuffer.Show(Prefix + 2);
-    DISPLAY_FIELD(ContextRecord);
+    DISPLAY_FIELD_OFFSET(ContextRecord);
     ContextRecord.Show(Prefix + 2);
-    DISPLAY_FIELD(Exception);
+    DISPLAY_FIELD_OFFSET(Exception);
     Exception.Show(Prefix + 2);
     DISPLAY_FIELD(DumpType);
     DISPLAY_FIELD(RequiredDumpSpace);
     DISPLAY_FIELD(SystemTime);
-    DISPLAY_FIELD(Comment);
+    DISPLAY_FIELD_OFFSET(Comment);
     DISPLAY_FIELD(SystemUpTime);
     DISPLAY_FIELD(MiniDumpFields);
     DISPLAY_FIELD(SecondaryDataState);
@@ -738,7 +736,7 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(WriterStatus);
     DISPLAY_FIELD(KdSecondaryVersion);
     if (DumpType == BMPDump) {
-      DISPLAY_FIELD(BmpHeader);
+      DISPLAY_FIELD_OFFSET(BmpHeader);
       BmpHeader.Show();
     }
   }
@@ -762,20 +760,20 @@ struct KDMP_PARSER_HEADER64 : public DisplayUtils {
 // layout, so hopefully they prevent any regressions regarding the layout.
 //
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_HEADER64, BugCheckCodeParameter) == 0x40,
+static_assert(offsetof(KDMP_PARSER_HEADER64, BugCheckCodeParameter) == 0x40,
               "The offset of KdDebuggerDataBlock looks wrong.");
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_HEADER64, KdDebuggerDataBlock) == 0x80,
+static_assert(offsetof(KDMP_PARSER_HEADER64, KdDebuggerDataBlock) == 0x80,
               "The offset of KdDebuggerDataBlock looks wrong.");
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_HEADER64, ContextRecord) == 0x348,
+static_assert(offsetof(KDMP_PARSER_HEADER64, ContextRecord) == 0x348,
               "The offset of ContextRecord looks wrong.");
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_HEADER64, Exception) == 0xf00,
+static_assert(offsetof(KDMP_PARSER_HEADER64, Exception) == 0xf00,
               "The offset of Exception looks wrong.");
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_HEADER64, Comment) == 0xfb0,
+static_assert(offsetof(KDMP_PARSER_HEADER64, Comment) == 0xfb0,
               "The offset of Comment looks wrong.");
 
-static_assert(FIELD_OFFSET(KDMP_PARSER_HEADER64, BmpHeader) == 0x2000,
+static_assert(offsetof(KDMP_PARSER_HEADER64, BmpHeader) == 0x2000,
               "The offset of BmpHeaders looks wrong.");

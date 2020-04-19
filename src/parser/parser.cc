@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cstring>
 
 //
 // Delimiter.

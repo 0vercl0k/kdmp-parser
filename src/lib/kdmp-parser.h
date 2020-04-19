@@ -3,9 +3,8 @@
 
 #include "kdmp-parser-structs.h"
 #include <cstdint>
-#include <windows.h>
-
 #include <unordered_map>
+#include "filemap.h"
 
 using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
@@ -82,22 +81,10 @@ private:
   bool MapFile();
 
   //
-  // Handle to the input file.
+  // The mapped file.
   //
 
-  HANDLE File_;
-
-  //
-  // Handle to the file mapping.
-  //
-
-  HANDLE FileMap_;
-
-  //
-  // Base address of the file view.
-  //
-
-  PVOID ViewBase_;
+  FileMap FileMap_;
 
   //
   // Header of the crash-dump.

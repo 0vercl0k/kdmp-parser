@@ -1,6 +1,7 @@
 # kdmp-parser
 
 [![Build status](https://ci.appveyor.com/api/projects/status/rokkikt05y8fmk5b?svg=true)](https://ci.appveyor.com/project/0vercl0k/kdmp-parser)
+[![Build Status](https://travis-ci.org/0vercl0k/kdmp-parser.svg?branch=master)](https://travis-ci.org/0vercl0k/kdmp-parser)
 
 This is a small C++ library able to parse Windows kernel full dump (`.dump /f` in WinDbg) as well as BMP dump (`.dump /ka` in WinDbg). The format has been introduced around Windows 8 timeframe according to the [rekall](https://github.com/google/rekall) project. Note that most of the structures used in [kdmp-parser-structs.h](https://github.com/0vercl0k/kdmp-parser/blob/master/src/kdmp-parser/kdmp-parser-structs.h) have been adapted / taken from the [rekall](https://github.com/google/rekall) project and their [Python implementation](https://github.com/google/rekall/blob/master/rekall-core/rekall/plugins/overlays/windows/crashdump.py).
 
@@ -88,6 +89,38 @@ Physical memory:
 
 ## Building
 
+### Linux
+
+You can build it via the command line using `cmake` (also works in WSL):
+
+```text
+over@oof:/kdmp-parser/$ cd build/
+over@oof:/kdmp-parser/build$ mkdir linx64-RelWithDebInfo/
+over@oof:/kdmp-parser/build$ cd linx64-RelWithDebInfo/
+over@oof:/kdmp-parser/build/linx64-RelWithDebInfo$ cmake --DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/mnt/c/work/codes/kdmp-parser/bin/linx64-RelWithDebInfo -DCMAKE_BUILD_TYPE=RelWithDebInfo ../../
+-- The C compiler identification is GNU 7.4.0
+-- The CXX compiler identification is GNU 7.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /kdmp-parser/build/linx64-RelWithDebInfo
+
+over@oof:/kdmp-parser/build/linx64-RelWithDebInfo$ cmake --build .
+```
+
+### Windows
+
 You can build it using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) by either using the "Open the folder" option or via command line using `cmake` (from a Visual Studio shell):
 
 ```text
@@ -111,12 +144,12 @@ kdmp-parser\build\x64-RelWithDebInfo>cmake -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=c:\k
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: C:/work/codes/kdmp-parser/build/x64-RelWithDebInfo
+-- Build files have been written to: kdmp-parser/build/x64-RelWithDebInfo
 
-(base) c:\work\codes\kdmp-parser\build\x64-RelWithDebInfo>cmake --build .
+kdmp-parser\build\x64-RelWithDebInfo>cmake --build .
 [6/6] Linking CXX executable ..\..\bin\x64-RelWithDebInfo\parser.exe
 
-(base) c:\work\codes\kdmp-parser\build\x64-RelWithDebInfo>c:\work\codes\kdmp-parser\bin\x64-RelWithDebInfo\parser.exe
+kdmp-parser\build\x64-RelWithDebInfo>..\..\bin\x64-RelWithDebInfo\parser.exe
 You didn't provide the path to the dump file.
 
 parser.exe [-p [<physical address>]] [-c] [-e] [-h] <kdump path>
