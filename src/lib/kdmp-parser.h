@@ -26,6 +26,12 @@ public:
   const KDMP_PARSER_CONTEXT *GetContext();
 
   //
+  // Get the type of dump.
+  //
+
+  DumpType_t GetDumpType();
+
+  //
   // Get the physmem.
   //
 

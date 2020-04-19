@@ -86,6 +86,10 @@ const KDMP_PARSER_CONTEXT *KernelDumpParser::GetContext() {
   return &DmpHdr_->ContextRecord;
 }
 
+DumpType_t KernelDumpParser::GetDumpType() {
+    return DmpHdr_->DumpType;
+}
+
 bool KernelDumpParser::MapFile() { return FileMap_.MapFile(PathFile_); }
 
 bool KernelDumpParser::BuildPhysmemBMPDump() {

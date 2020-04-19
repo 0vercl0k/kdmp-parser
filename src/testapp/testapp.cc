@@ -130,6 +130,23 @@ int main(int argc, const char *argv[]) {
 
   printf("GPRs matches the testdatas.\n");
 
+  const DumpType_t Type = Dmp.GetDumpType();
+  const auto &Physmem = Dmp.GetPhysmem();
+  if (Type == DumpType_t::BMPDump) {
+    if (Physmem.size() != 0x544b) {
+      printf("0x544b pages are expected but found %zd.\n", Physmem.size());
+      return EXIT_FAILURE;
+    }
+  } else if (Type == DumpType_t::FullDump) {
+    if (Physmem.size() != 0x3fbe6) {
+      printf("0x3fbe6 pages are expected but found %zd.\n", Physmem.size());
+      return EXIT_FAILURE;
+    }
+  } else {
+    printf("Unknown dump.\n");
+    return EXIT_FAILURE;
+  }
+
   const uint64_t Address = 0x6d4d22;
   const uint64_t AddressAligned = Address & 0xfffffffffffff000;
   const uint64_t AddressOffset = Address & 0xfff;
