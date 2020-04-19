@@ -1,6 +1,7 @@
 # kdmp-parser
 
 [![Build status](https://ci.appveyor.com/api/projects/status/rokkikt05y8fmk5b?svg=true)](https://ci.appveyor.com/project/0vercl0k/kdmp-parser)
+[![Build Status](https://travis-ci.org/0vercl0k/kdmp-parser.svg?branch=master)](https://travis-ci.org/0vercl0k/kdmp-parser)
 
 This is a small C++ library able to parse Windows kernel full dump (`.dump /f` in WinDbg) as well as BMP dump (`.dump /ka` in WinDbg). The format has been introduced around Windows 8 timeframe according to the [rekall](https://github.com/google/rekall) project. Note that most of the structures used in [kdmp-parser-structs.h](https://github.com/0vercl0k/kdmp-parser/blob/master/src/kdmp-parser/kdmp-parser-structs.h) have been adapted / taken from the [rekall](https://github.com/google/rekall) project and their [Python implementation](https://github.com/google/rekall/blob/master/rekall-core/rekall/plugins/overlays/windows/crashdump.py).
 
