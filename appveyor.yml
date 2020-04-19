@@ -15,7 +15,7 @@ platform:
 clone_folder: c:\projects\kdmp-parser
 
 build_script:
-  - cmd: C:\Python38-x64\python.exe builder.py --configuration %configuration% --arch %arch% --run-tests
+  - cmd: C:\Python38-x64\python.exe builder.py --configuration %configuration% --arch %platform% --run-tests
 
 after_build:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
