@@ -6,26 +6,40 @@ import zipfile
 import subprocess
 import itertools
 
-sln = r'src\kdmp-parser.sln'
 testdatas_url = 'https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip'
 
-def msbuild(sln, platform, configuration):
-    cmd = (
-        'msbuild',
-        '/t:Build',
-        '/p:Platform={0};Configuration={1}'.format(platform, configuration),
-        sln
-    )
+def build(platform, configuration):
+    build_dir = os.path.join('build', f'{platform}-{configuration}')
+    if not os.path.isdir(build_dir):
+        os.mkdir(build_dir)
 
-    return subprocess.call(cmd)
+    # We build an absolute path here because otherwise Ninja ends up creating a 'bin' directory
+    # in build\<target>\bin.
+    output_dir = os.path.abspath(os.path.join('bin', f'{platform}-{configuration}'))
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    ret = subprocess.call((
+        'cmake',
+        f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={output_dir}',
+        f'-DCMAKE_BUILD_TYPE={configuration}',
+        '-GNinja',
+        os.path.join('..', '..')
+    ), cwd = build_dir)
+
+    if ret != 0: return ret
+    ret = subprocess.call((
+        'cmake',
+        '--build',
+        '.'
+    ), cwd = build_dir)
+
+    return ret
 
 def test(platform, configuration, dmp_path):
-    dir_path = os.path.join(platform, configuration)
-    if platform == 'x86':
-        dir_path = configuration
-
+    bin_dir = os.path.join('bin', f'{platform}-{configuration}')
     cmd = (
-        os.path.join('src', dir_path, 'test.exe'),
+        os.path.join(bin_dir, 'test.exe'),
         dmp_path
     )
 
@@ -35,14 +49,14 @@ def test(platform, configuration, dmp_path):
 def main():
     matrix = tuple(itertools.product(
         ('x64', 'x86'),
-        ('Debug', 'Release')
+        ('Debug', 'RelWithDebInfo')
     ))
 
     appveyor = os.getenv('APPVEYOR') is not None
     if not appveyor:
         # Build the matrix if not running from AppVeyor.
         for platform, configuration in matrix:
-            if msbuild(sln, platform, configuration) != 0:
+            if build(platform, configuration) != 0:
                 print('{0}/{1} build failed, bailing.'.format(platform, configuration))
                 return 1
 

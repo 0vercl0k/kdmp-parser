@@ -44,3 +44,9 @@
 
 # user files
 *.vcxproj.user
+
+# Bin output
+bin/
+
+# Build output
+build/

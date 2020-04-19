@@ -149,8 +149,7 @@ bool KernelDumpParser::MapFile() {
   // Create the ro file mapping.
   //
 
-  FileMap = CreateFileMappingA(File, nullptr, PAGE_READONLY, 0, 0,
-                               "Kernel crash-dump.");
+  FileMap = CreateFileMappingA(File, nullptr, PAGE_READONLY, 0, 0, nullptr);
 
   if (FileMap == nullptr) {
 

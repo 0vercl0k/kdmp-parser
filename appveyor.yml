@@ -4,7 +4,7 @@ image:
   - Visual Studio 2019
 
 configuration:
-  - Release
+  - RelWithDebInfo
   - Debug
 
 platform:
@@ -13,16 +13,21 @@ platform:
 
 clone_folder: c:\projects\kdmp-parser
 
+before_build:
+  - cmd: cd build
+  - cmd: mkdir %platform%-%configuration%
+  - cmd: cmake -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=%APPVEYOR_BUILD_FOLDER%\bin\%platform%-%configuration% -DCMAKE_BUILD_TYPE=%configuration% -GNinja %APPVEYOR_BUILD_FOLDER%
+
 build:
-  project: c:\projects\kdmp-parser\src\kdmp-parser.sln
+  - cmd: cmake --build .
 
 # this happens in the clone_folder
 after_build:
-  - cmd: if "%platform%"=="x86" if "%configuration%"=="Release" 7z a -t7z kdmp-parser-x86.release.7z src\%configuration%\*
-  - cmd: if "%platform%"=="x86" if "%configuration%"=="Debug" 7z a -t7z kdmp-parser-x86.debug.7z src\%configuration%\*
-  - cmd: if "%platform%"=="x64" if "%configuration%"=="Release" 7z a -t7z kdmp-parser-x64.release.7z src\x64\%configuration%\*
-  - cmd: if "%platform%"=="x64" if "%configuration%"=="Debug" 7z a -t7z kdmp-parser-x64.debug.7z src\x64\%configuration%\*
-  - cmd: C:\Python38-x64\python.exe run-tests.py
+  - cmd: if "%platform%"=="x86" if "%configuration%"=="RelWithDebInfo" 7z a -t7z kdmp-parser-x86.release.7z bin\%platform%-%configuration%\*
+  - cmd: if "%platform%"=="x86" if "%configuration%"=="Debug" 7z a -t7z kdmp-parser-x86.debug.7z bin\%platform%-%configuration%\*
+  - cmd: if "%platform%"=="x64" if "%configuration%"=="RelWithDebInfo" 7z a -t7z kdmp-parser-x64.release.7z bin\%platform%-%configuration%\*
+  - cmd: if "%platform%"=="x64" if "%configuration%"=="Debug" 7z a -t7z kdmp-parser-x64.debug.7z bin\%platform%-%configuration%\*
+ - cmd: C:\Python38-x64\python.exe run-tests.py
   - cmd: chdir
 
 artifacts:
