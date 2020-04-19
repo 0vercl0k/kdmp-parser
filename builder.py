@@ -9,6 +9,10 @@ import platform
 import argparse
 
 os_prefix = '' if 'Windows' in platform.platform(terse = 1) else 'lin'
+is_windows = os_prefix == ''
+is_linux = not is_windows
+is_linux64 = is_linux and platform.architecture()[0] == '64bit'
+
 testdatas_url = 'https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip'
 vsdevprompt = r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'
 
@@ -32,10 +36,10 @@ def source_bat(bat_file, arch):
 
     return result
 
-def build(platform, configuration):
-    # Grab the environment needed for the appropriate platform on Windows.
-    env = source_bat(vsdevprompt, platform) if os_prefix == '' else os.environ
-    dir_name = f'{os_prefix}{platform}-{configuration}'
+def build(arch, configuration):
+    # Grab the environment needed for the appropriate arch on Windows.
+    env = source_bat(vsdevprompt, arch) if is_windows else os.environ
+    dir_name = f'{os_prefix}{arch}-{configuration}'
     build_dir = os.path.join('build', dir_name)
     if not os.path.isdir(build_dir):
         os.mkdir(build_dir)
@@ -46,13 +50,26 @@ def build(platform, configuration):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    ret = subprocess.call((
+    extra_opts = ()
+    if is_linux64 and arch == 'x86':
+        # To support 32b binary on a 64b host on Linux.
+        extra_opts = (
+            f'-DCMAKE_CXX_FLAGS=-m32',
+            f'-DCMAKE_C_FLAGS=-m32'
+        )
+
+    cmake_config = (
         'cmake',
         f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={output_dir}',
         f'-DCMAKE_BUILD_TYPE={configuration}',
+    )
+    cmake_config += extra_opts
+    cmake_config += (
         '-GNinja',
         os.path.join('..', '..')
-    ), cwd = build_dir, env = env)
+    )
+
+    ret = subprocess.call(cmake_config, cwd = build_dir, env = env)
 
     if ret != 0: return ret
 

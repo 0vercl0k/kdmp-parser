@@ -12,7 +12,7 @@ sudo: required
 dist: bionic
 
 before_install:
-  - sudo apt-get -y install ninja-build
+  - sudo apt-get -y install ninja-build g++-multilib
 
 env:
   - CONFIGURATION=Debug ARCH=x86
