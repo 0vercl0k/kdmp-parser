@@ -12,9 +12,6 @@ dist: bionic
 
 before_install:
   - sudo apt-get -y install ninja-build
-  - mkdir -p build/linx64-RelWithDebInfo
 
 script:
-  - cd build/linx64-RelWithDebInfo
-  - cmake --DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja ../../
-  - cmake --build .
+  - python3 builder.py --configuration RelWithDebInfo --arch x64 --run-tests
