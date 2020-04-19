@@ -97,7 +97,7 @@ You can build it via the command line using `cmake` (also works in WSL):
 over@oof:/kdmp-parser/$ cd build/
 over@oof:/kdmp-parser/build$ mkdir linx64-RelWithDebInfo/
 over@oof:/kdmp-parser/build$ cd linx64-RelWithDebInfo/
-over@oof:/kdmp-parser/build/linx64-RelWithDebInfo$ cmake --DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/mnt/c/work/codes/kdmp-parser/bin/linx64-RelWithDebInfo -DCMAKE_BUILD_TYPE=RelWithDebInfo ../../
+over@oof:/kdmp-parser/build/linx64-RelWithDebInfo$ cmake --DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/kdmp-parser/bin/linx64-RelWithDebInfo -DCMAKE_BUILD_TYPE=RelWithDebInfo ../../
 -- The C compiler identification is GNU 7.4.0
 -- The CXX compiler identification is GNU 7.4.0
 -- Check for working C compiler: /usr/bin/cc
