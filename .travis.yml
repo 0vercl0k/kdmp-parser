@@ -14,4 +14,4 @@ before_install:
   - sudo apt-get -y install ninja-build
 
 script:
-  - python3 builder.py --configuration RelWithDebInfo --arch x64 --run-tests
+  - python3 builder.py --run-tests

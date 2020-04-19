@@ -137,6 +137,11 @@ int main(int argc, const char *argv[]) {
                                      0x63, 0x88, 0x75, 0x00, 0x00, 0x00,
                                      0x00, 0x0a, 0x63, 0x98};
   const uint8_t *Page = Dmp.GetPhysicalPage(AddressAligned);
+  if (Page == nullptr) {
+    printf("GetPhysicalPage failed for %p\n", Page);
+    return EXIT_FAILURE;
+  }
+
   if (memcmp(Page + AddressOffset, ExpectedContent, sizeof(ExpectedContent)) !=
       0) {
     printf("Physical memory is broken.\n");
