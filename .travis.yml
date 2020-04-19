@@ -6,7 +6,6 @@ compiler:
 
 os:
   - linux
-  - osx
 
 sudo: required
 dist: bionic
