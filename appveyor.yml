@@ -19,7 +19,7 @@ before_build:
   - cmd: cmake -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=%APPVEYOR_BUILD_FOLDER%\bin\%platform%-%configuration% -DCMAKE_BUILD_TYPE=%configuration% -GNinja %APPVEYOR_BUILD_FOLDER%
 
 build:
-  - cmd: cmake --build .
+  - verbosity: normal
 
 # this happens in the clone_folder
 after_build:
