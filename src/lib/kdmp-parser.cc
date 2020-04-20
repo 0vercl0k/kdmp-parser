@@ -86,9 +86,7 @@ const KDMP_PARSER_CONTEXT *KernelDumpParser::GetContext() {
   return &DmpHdr_->ContextRecord;
 }
 
-DumpType_t KernelDumpParser::GetDumpType() {
-    return DmpHdr_->DumpType;
-}
+DumpType_t KernelDumpParser::GetDumpType() { return DmpHdr_->DumpType; }
 
 bool KernelDumpParser::MapFile() { return FileMap_.MapFile(PathFile_); }
 
@@ -153,7 +151,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
     //
 
     const KDMP_PARSER_PHYSMEM_RUN *Run =
-        &DmpHdr_->PhysicalMemoryBlockBuffer.Run[RunIdx];
+        DmpHdr_->PhysicalMemoryBlockBuffer.Run + RunIdx;
 
     const uint64_t BasePage = Run->BasePage;
     const uint64_t PageCount = Run->PageCount;
@@ -162,7 +160,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
     // Walk the pages from the run.
     //
 
-    for (uint32_t PageIdx = 0; PageIdx < PageCount; PageIdx++) {
+    for (uint64_t PageIdx = 0; PageIdx < PageCount; PageIdx++) {
 
       //
       // Compute the current PFN as well as the actual physical address of the
@@ -200,7 +198,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
       // That is the reason why the computation below is RunBase + (PageIdx *
       // 0x1000) instead of RunBase + (Pfn * 0x1000).
 
-      const uint8_t *PageBase = RunBase + (uint64_t(PageIdx) * 0x1000);
+      const uint8_t *PageBase = RunBase + (PageIdx * 0x1000);
 
       //
       // Map the Pfn to a page.

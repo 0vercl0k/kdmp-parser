@@ -72,7 +72,8 @@ struct DisplayUtils {
   DisplayField(Prefix + 2, #FieldName, this, &FieldName)
 
 #define DISPLAY_FIELD_OFFSET(FieldName)                                        \
-  DisplayHeader(Prefix + 2, #FieldName, this, &FieldName)
+  DisplayHeader(Prefix + 2, #FieldName, this, &FieldName);                     \
+  printf("\n")
 
   //
   // What follows are all the specializations we support. Basically,
