@@ -2,6 +2,7 @@
 #pragma once
 
 #include "platform.h"
+#include <cinttypes>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -59,8 +60,8 @@ struct DisplayUtils {
 
   void DisplayHeader(const uint32_t Prefix, const char *FieldName,
                      const void *This, const void *Field) const {
-    printf("%*s+0x%04llx: %-25s", Prefix, "", OffsetFromThis(This, Field),
-           FieldName);
+    printf("%*s+0x%04" PRIx64 ": %-25s", Prefix, "",
+           OffsetFromThis(This, Field), FieldName);
   }
 
   //
@@ -71,7 +72,8 @@ struct DisplayUtils {
   DisplayField(Prefix + 2, #FieldName, this, &FieldName)
 
 #define DISPLAY_FIELD_OFFSET(FieldName)                                        \
-  DisplayHeader(Prefix + 2, #FieldName, this, &FieldName)
+  DisplayHeader(Prefix + 2, #FieldName, this, &FieldName);                     \
+  printf("\n")
 
   //
   // What follows are all the specializations we support. Basically,
@@ -99,13 +101,13 @@ struct DisplayUtils {
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint64_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    printf(": 0x%016llx.\n", *Field);
+    printf(": 0x%016" PRIx64 ".\n", *Field);
   }
 
   void DisplayField(const uint32_t Prefix, const char *FieldName,
                     const void *This, const uint128_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
-    printf(": 0x%016llx%016llx.\n", Field->High, Field->Low);
+    printf(": 0x%016" PRIx64 "%016" PRIx64 ".\n", Field->High, Field->Low);
   }
 
   void DisplayField(const uint32_t Prefix, const char *FieldName,
@@ -180,7 +182,7 @@ struct KDMP_PARSER_PHYSMEM_DESC : public DisplayUtils {
   }
 
   bool LooksGood() const {
-    if (NumberOfRuns == 'EGAP' || NumberOfPages == 0x4547415045474150ULL) {
+    if (NumberOfRuns == 0x45474150 || NumberOfPages == 0x4547415045474150ULL) {
       return false;
     }
 
@@ -192,8 +194,8 @@ static_assert(sizeof(KDMP_PARSER_PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
 struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
-  static const uint32_t ExpectedSignature = 'PMDS';
-  static const uint32_t ExpectedValidDump = 'PMUD';
+  static const uint32_t ExpectedSignature = 0x504D4453; // 'PMDS'
+  static const uint32_t ExpectedValidDump = 0x504D5544; // 'PMUD'
 
   //
   // Should be FDMP.
@@ -586,8 +588,8 @@ static_assert(sizeof(KDMP_PARSER_EXCEPTION_RECORD64) ==
               "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
 
 struct KDMP_PARSER_HEADER64 : public DisplayUtils {
-  static const uint32_t ExpectedSignature = 'EGAP';
-  static const uint32_t ExpectedValidDump = '46UD';
+  static const uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
+  static const uint32_t ExpectedValidDump = 0x34365544; // '46UD'
 
   uint32_t Signature;
   uint32_t ValidDump;

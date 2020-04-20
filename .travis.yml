@@ -2,7 +2,8 @@
 language: cpp
 
 compiler:
-  - clang++
+  - clang
+  - gcc
 
 os:
   - linux
@@ -11,10 +12,13 @@ sudo: required
 dist: bionic
 
 before_install:
-  - sudo apt-get -y install ninja-build
-  - mkdir -p build/linx64-RelWithDebInfo
+  - sudo apt-get -y install ninja-build g++-multilib
+
+env:
+  - CONFIGURATION=Debug ARCH=x86
+  - CONFIGURATION=RelWithDebInfo ARCH=x86
+  - CONFIGURATION=Debug ARCH=x64
+  - CONFIGURATION=RelWithDebInfo ARCH=x64
 
 script:
-  - cd build/linx64-RelWithDebInfo
-  - cmake --DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja ../../
-  - cmake --build .
+  - python3 builder.py --configuration $CONFIGURATION --arch $ARCH --run-tests
