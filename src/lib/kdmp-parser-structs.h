@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <cstdio>
 
-#ifndef EXCEPTION_MAXIMUM_PARAMETERS
+#ifndef WINDOWS
 #define EXCEPTION_MAXIMUM_PARAMETERS 15
 struct EXCEPTION_RECORD64 {
   uint32_t ExceptionCode;
