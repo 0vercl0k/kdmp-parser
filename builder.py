@@ -8,8 +8,8 @@ import itertools
 import platform
 import argparse
 
-os_prefix = '' if 'Windows' in platform.platform(terse = 1) else 'lin'
-is_windows = os_prefix == ''
+os_prefix = 'win' if 'Windows' in platform.platform(terse = 1) else 'lin'
+is_windows = os_prefix == 'win'
 is_linux = not is_windows
 is_linux64 = is_linux and platform.architecture()[0] == '64bit'
 
