@@ -1,6 +1,6 @@
 # Axel '0vercl0k' Souchet - July 25 2020
 find_package(Python3 COMPONENTS Interpreter)
-if(not Python3_Interpreter_FOUND)
+if(NOT Python3_Interpreter_FOUND)
     message(FATAL_ERROR "Python3 interpreter could not be located")
 endif()
 
