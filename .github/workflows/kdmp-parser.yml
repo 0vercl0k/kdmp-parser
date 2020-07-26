@@ -19,3 +19,13 @@ jobs:
     - name: Build
       run: |
         python3 builder.py --run-tests
+
+  Windows:
+    name: Windows latest
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: python3 builder.py --run-tests
