@@ -36,7 +36,7 @@ def source_bat(bat_file, arch):
 
     return result
 
-def build(arch, configuration):
+def build(arch, configuration, tests_on):
     # Grab the environment needed for the appropriate arch on Windows.
     env = source_bat(vsdevprompt, arch) if is_windows else os.environ
     dir_name = f'{os_prefix}{arch}-{configuration}'
@@ -62,6 +62,7 @@ def build(arch, configuration):
         'cmake',
         f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={output_dir}',
         f'-DCMAKE_BUILD_TYPE={configuration}',
+        f'-DBUILD_TESTS={tests_on}'
     )
     cmake_config += extra_opts
     cmake_config += (
@@ -81,17 +82,6 @@ def build(arch, configuration):
 
     return ret
 
-def test(arch, configuration, dmp_path):
-    dir_name = f'{os_prefix}{arch}-{configuration}'
-    bin_dir = os.path.join('bin', dir_name)
-    cmd = (
-        os.path.join(bin_dir, 'testapp'),
-        dmp_path
-    )
-
-    print('Launching "{0}"..'.format(' '.join(cmd)))
-    return subprocess.call(cmd)
-
 def main():
     parser = argparse.ArgumentParser('Build and run test')
     parser.add_argument('--run-tests', action = 'store_true', default = False)
@@ -110,41 +100,11 @@ def main():
         args.configuration
     ))
 
+    tests_on = 'ON' if args.run_tests else 'OFF'
     for arch, configuration in matrix:
-        if build(arch, configuration) != 0:
+        if build(arch, configuration, tests_on) != 0:
             print(f'{arch}/{configuration} build failed, bailing.')
             return 1
-
-    if not args.run_tests:
-        return 0
-
-    # Download the test datas off github.
-    print(f'Downloading {testdatas_url}..')
-    archive_path, _ = urllib.request.urlretrieve(testdatas_url)
-    print(f'Successfully downloaded the test datas in {archive_path}, extracting..')
-
-    # Unzip its content in the same temp directory.
-    archive_dir, _ = os.path.split(archive_path)
-    zipfile.ZipFile(archive_path).extractall(archive_dir)
-
-    # Once we have extracted the archive content, we can delete it.
-    os.remove(archive_path)
-
-    # Build full path for both the full / bitmap dumps.
-    full = os.path.join(archive_dir, 'full.dmp')
-    bmp = os.path.join(archive_dir, 'bmp.dmp')
-    dmp_paths = (full, bmp)
-
-    # Now iterate through all the configurations and run every flavor of test.exe against
-    # both dumps.
-    for dmp_path in dmp_paths:
-        for arch, configuration in matrix:
-            if test(arch, configuration, dmp_path) != 0:
-                print(f'{arch}/{configuration}/{dmp_path} test failed, bailing.')
-                return 1
-
-        # We've run this dump against all the flavor of the test application so we can delete it now.
-        os.remove(dmp_path)
 
     print('All good!')
     return 0
