@@ -33,6 +33,9 @@ jobs:
         python-version: '3.x'
         architecture: 'x64'
 
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.0
+
     - name: Build
       run: python builder.py --run-tests
 
