@@ -19,7 +19,7 @@ build_script:
 
 after_build:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
-  - cmd: 7z a -t7z kdmp-parser-%platform%.%configuration%.7z bin\%platform%-%configuration%\*
+  - cmd: 7z a -t7z kdmp-parser-%platform%.%configuration%.7z bin\win%platform%-%configuration%\*
   - cmd: chdir
 
 artifacts:
