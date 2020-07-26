@@ -1,3 +1,4 @@
+# Axel '0vercl0k' Souchet - July 26 2020
 name: Builds
 
 on: [push, pull_request]
@@ -12,9 +13,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         sudo apt-get -y update
-        sudo apt install -y g++-10 ninja-build
+        sudo apt install -y g++-multilib ninja-build
 
     - name: Build
       run: |
