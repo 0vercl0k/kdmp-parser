@@ -13,7 +13,6 @@ is_windows = os_prefix == ''
 is_linux = not is_windows
 is_linux64 = is_linux and platform.architecture()[0] == '64bit'
 
-testdatas_url = 'https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip'
 vsdevprompt = r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'
 
 def source_bat(bat_file, arch):
