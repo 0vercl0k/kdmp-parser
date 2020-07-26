@@ -18,5 +18,4 @@ jobs:
 
     - name: Build
       run: |
-        python3 builder.py --configuration RelWithDebInfo --arch x64 --run-tests
-        python3 builder.py --configuration RelWithDebInfo --arch x86 --run-tests
+        python3 builder.py --run-tests

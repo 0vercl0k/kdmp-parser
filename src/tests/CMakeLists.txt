@@ -6,5 +6,5 @@ endif()
 
 add_custom_target(
     NativeTests ALL
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests.py --bindir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests.py --bindir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 )
