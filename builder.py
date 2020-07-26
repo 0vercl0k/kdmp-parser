@@ -89,10 +89,10 @@ def main():
     args = parser.parse_args()
 
     if args.configuration is None:
-        args.configuration = ['Debug', 'RelWithDebInfo']
+        args.configuration = ('Debug', 'RelWithDebInfo')
 
     if args.arch is None:
-        args.arch = ['x64', 'x86']
+        args.arch = ('x64', 'x86')
 
     matrix = tuple(itertools.product(
         args.arch,
