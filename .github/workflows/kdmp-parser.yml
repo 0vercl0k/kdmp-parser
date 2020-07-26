@@ -24,7 +24,7 @@ jobs:
     name: Windows latest
     runs-on: windows-latest
     steps:
-    - name: Checkout and setup
+    - name: Checkout
       uses: actions/checkout@v2
 
     - name: Setup Python3
@@ -34,7 +34,7 @@ jobs:
         architecture: 'x64'
 
     - name: Build
-      run: python3 builder.py --run-tests
+      run: python builder.py --run-tests
 
     # - name: Upload artifacts
     #   uses: actions/upload-artifact@v2
