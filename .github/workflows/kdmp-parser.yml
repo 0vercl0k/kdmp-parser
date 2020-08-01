@@ -17,8 +17,19 @@ jobs:
         sudo apt install -y g++-multilib ninja-build
 
     - name: Build
-      run: |
-        python3 builder.py --run-tests
+      run: python3 builder.py --run-tests
+
+    - name: Upload artifacts for rel/x64
+      uses: actions/upload-artifact@v2
+      with:
+        name: linx64-RelWithDebInfo
+        path: bin/linx64-RelWithDebInfo
+
+    - name: Upload artifacts for dbg/x64
+      uses: actions/upload-artifact@v2
+      with:
+        name: linx64-Debug
+        path: bin/linx64-Debug
 
   Windows:
     name: Windows latest
