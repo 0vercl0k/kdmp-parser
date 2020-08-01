@@ -38,3 +38,15 @@ jobs:
 
     - name: Build
       run: python builder.py --run-tests
+
+    - name: Upload artifacts for rel/x64
+      uses: actions/upload-artifact@v2
+      with:
+        name: winx64-RelWithDebInfo
+        path: bin/winx64-RelWithDebInfo
+
+    - name: Upload artifacts for dbg/x64
+      uses: actions/upload-artifact@v2
+      with:
+        name: winx64-Debug
+        path: bin/winx64-Debug
