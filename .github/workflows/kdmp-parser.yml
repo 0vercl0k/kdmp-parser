@@ -20,23 +20,33 @@ jobs:
       run: |
         python3 builder.py --run-tests
 
-  # Windows:
-  #   name: Windows latest
-  #   runs-on: windows-latest
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
+  Windows:
+    name: Windows latest
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
 
-  #   - name: Setup Python3
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: '3.x'
-  #       architecture: 'x64'
+    - name: Setup Python3
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
 
-  #   - name: Add msbuild to PATH
-  #     uses: microsoft/setup-msbuild@v1.0.0
+    - name: Setup vs prompt
+      uses: ilammy/msvc-dev-cmd@v1
 
-  #   - name: Build
-  #     run: python builder.py --run-tests
+    - name: Build
+      run: python builder.py --run-tests
 
-  #     # TODO: Get ninja on the runner somehow + Artifacts
+    - name: Upload artifacts for rel/x64
+      uses: actions/upload-artifact@v2
+      with:
+        name: winx64-RelWithDebInfo
+        path: bin/winx64-RelWithDebInfo
+
+    - name: Upload artifacts for dbg/x64
+      uses: actions/upload-artifact@v2
+      with:
+        name: winx64-Debug
+        path: bin/winx64-Debug
