@@ -8,6 +8,11 @@
 
 using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
+struct BugCheckParameters_t { 
+  uint32_t BugCheckCode; 
+  uint64_t BugCheckCodeParameter[4]; 
+};
+
 class KernelDumpParser {
 public:
   KernelDumpParser();
@@ -24,6 +29,12 @@ public:
   //
 
   const KDMP_PARSER_CONTEXT *GetContext();
+
+  //
+  // Give the bugcheck parameters to the user.
+  //
+
+  const BugCheckParameters_t GetBugCheckParameters();
 
   //
   // Get the type of dump.
@@ -61,7 +72,30 @@ public:
 
   const uint8_t *GetPhysicalPage(const uint64_t PhysicalAddress) const;
 
+  //
+  // Get the directory table base.
+  //
+
+  const uint64_t GetDirectoryTableBase() const;
+
+  //
+  // Translate a virtual address to physical address using a directory table base.
+  //
+
+  const uint64_t VirtTranslate(const uint64_t VirtualAddress, const uint64_t DirectoryTableBase = 0) const;
+
+  //
+  // Get the content of a virtual address.
+  //
+
+  const uint8_t *GetVirtualPage(const uint64_t VirtualAddress, const uint64_t DirectoryTableBase = 0) const;
+
 private:
+  //
+  // Utility function to read an uint64_t from a physical address.
+  //
+
+  const uint64_t PhyRead8(const uint64_t PhysicalAddress) const;
   //
   // Build a map of physical addresses / page data pointers for full dump.
   //

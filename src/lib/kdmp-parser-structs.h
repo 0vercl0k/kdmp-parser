@@ -194,8 +194,9 @@ static_assert(sizeof(KDMP_PARSER_PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
 struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
-  static const uint32_t ExpectedSignature = 0x504D4453; // 'PMDS'
-  static const uint32_t ExpectedValidDump = 0x504D5544; // 'PMUD'
+  static const uint32_t ExpectedSignature  = 0x504D4453; // 'PMDS'
+  static const uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
+  static const uint32_t ExpectedValidDump  = 0x504D5544; // 'PMUD'
 
   //
   // Should be FDMP.
@@ -248,7 +249,7 @@ struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
     // Integrity check the headers.
     //
 
-    if (Signature != ExpectedSignature) {
+    if (Signature != ExpectedSignature && Signature != ExpectedSignature2) {
       printf("KDMP_PARSER_BMP_HEADER64::Signature looks wrong.\n");
       return false;
     }
@@ -779,3 +780,72 @@ static_assert(offsetof(KDMP_PARSER_HEADER64, Comment) == 0xfb0,
 
 static_assert(offsetof(KDMP_PARSER_HEADER64, BmpHeader) == 0x2000,
               "The offset of BmpHeaders looks wrong.");
+
+
+struct Page {
+
+  //
+  // Page size.
+  //
+
+  static const uint64_t Size = 0x1000;
+
+  //
+  // Page align an address.
+  //
+
+  static uint64_t Align(const uint64_t Address) { return Address & ~0xfff; }
+
+  //
+  // Extract the page offset off an address.
+  //
+
+  static uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
+};
+
+
+//
+// Structure for parsing a PTE.
+//
+
+union MMPTE_HARDWARE {
+  struct {
+    uint64_t Present : 1;
+    uint64_t Write : 1;
+    uint64_t UserAccessible : 1;
+    uint64_t WriteThrough : 1;
+    uint64_t CacheDisable : 1;
+    uint64_t Accessed : 1;
+    uint64_t Dirty : 1;
+    uint64_t LargePage : 1;
+    uint64_t Available : 4;
+    uint64_t PageFrameNumber : 36;
+    uint64_t ReservedForHardware : 4;
+    uint64_t ReservedForSoftware : 11;
+    uint64_t NoExecute : 1;
+  };
+
+  uint64_t AsUINT64;
+
+  MMPTE_HARDWARE(const uint64_t Value) : AsUINT64(Value) {}
+};
+
+//
+// Structure to parse a virtual address.
+//
+
+union VIRTUAL_ADDRESS {
+  struct {
+    uint64_t Offset : 12;
+    uint64_t PtIndex : 9;
+    uint64_t PdIndex : 9;
+    uint64_t PdPtIndex : 9;
+    uint64_t Pml4Index : 9;
+    uint64_t Reserved : 16;
+  };
+  uint64_t AsUINT64;
+  VIRTUAL_ADDRESS(const uint64_t Value) : AsUINT64(Value) {}
+};
+
+static_assert(sizeof(MMPTE_HARDWARE) == 8);
+static_assert(sizeof(VIRTUAL_ADDRESS) == 8);

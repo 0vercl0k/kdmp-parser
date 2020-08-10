@@ -60,6 +60,7 @@ def build(arch, configuration, tests_on):
     cmake_config = (
         'cmake',
         f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={output_dir}',
+        f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={output_dir}',
         f'-DCMAKE_BUILD_TYPE={configuration}',
         f'-DBUILD_TESTS={tests_on}'
     )

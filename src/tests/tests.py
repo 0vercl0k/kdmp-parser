@@ -19,9 +19,27 @@ def test(bin_dir, dmp_path):
     print('Launching "{0}"..'.format(' '.join(cmd)))
     return subprocess.call(cmd)
 
+def test_python(script_dir, bin_dir, dmp_path, pymodule):
+    py_exe = sys.executable
+    if pymodule == 'kdmp_d':
+        if py_exe.endswith('3.exe'):
+            py_exe = py_exe.replace('3.exe', '_d.exe')
+        else:
+            py_exe = py_exe.replace('.exe', '_d.exe')
+    cmd = (
+        py_exe,
+        os.path.join(script_dir, 'tests_bindings.py'),
+        os.path.abspath(bin_dir),
+        dmp_path
+    )
+
+    print('Launching "{0}"..'.format(' '.join(cmd)))
+    return subprocess.call(cmd)
+
 def main():
     parser = argparse.ArgumentParser('Run test')
     parser.add_argument('--bindir', required = True)
+    parser.add_argument('--pymodule', required = True, nargs = '?')
     args = parser.parse_args()
 
     script_dir = os.path.dirname(__file__)
@@ -49,6 +67,12 @@ def main():
         if test(args.bindir, dmp_path) != 0:
             print(f'{args.bindir}/{dmp_path} test failed, bailing.')
             return 1
+    
+        # Run python bindings tests
+        if args.pymodule:
+            if test_python(script_dir, args.bindir, dmp_path, args.pymodule) != 0:
+                print(f'{args.bindir}/{dmp_path} python test failed, bailing.')
+                return 1
 
     print('All good!')
     return 0
