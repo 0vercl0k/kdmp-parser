@@ -194,9 +194,9 @@ static_assert(sizeof(KDMP_PARSER_PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
 struct KDMP_PARSER_BMP_HEADER64 : public DisplayUtils {
-  static const uint32_t ExpectedSignature  = 0x504D4453; // 'PMDS'
+  static const uint32_t ExpectedSignature = 0x504D4453;  // 'PMDS'
   static const uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
-  static const uint32_t ExpectedValidDump  = 0x504D5544; // 'PMUD'
+  static const uint32_t ExpectedValidDump = 0x504D5544;  // 'PMUD'
 
   //
   // Should be FDMP.
@@ -781,7 +781,6 @@ static_assert(offsetof(KDMP_PARSER_HEADER64, Comment) == 0xfb0,
 static_assert(offsetof(KDMP_PARSER_HEADER64, BmpHeader) == 0x2000,
               "The offset of BmpHeaders looks wrong.");
 
-
 struct Page {
 
   //
@@ -802,7 +801,6 @@ struct Page {
 
   static uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
 };
-
 
 //
 // Structure for parsing a PTE.

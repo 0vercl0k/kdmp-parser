@@ -1,16 +1,16 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #pragma once
 
+#include "filemap.h"
 #include "kdmp-parser-structs.h"
 #include <cstdint>
 #include <unordered_map>
-#include "filemap.h"
 
 using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
-struct BugCheckParameters_t { 
-  uint32_t BugCheckCode; 
-  uint64_t BugCheckCodeParameter[4]; 
+struct BugCheckParameters_t {
+  uint32_t BugCheckCode;
+  uint64_t BugCheckCodeParameter[4];
 };
 
 class KernelDumpParser {
@@ -79,16 +79,19 @@ public:
   const uint64_t GetDirectoryTableBase() const;
 
   //
-  // Translate a virtual address to physical address using a directory table base.
+  // Translate a virtual address to physical address using a directory table
+  // base.
   //
 
-  const uint64_t VirtTranslate(const uint64_t VirtualAddress, const uint64_t DirectoryTableBase = 0) const;
+  const uint64_t VirtTranslate(const uint64_t VirtualAddress,
+                               const uint64_t DirectoryTableBase = 0) const;
 
   //
   // Get the content of a virtual address.
   //
 
-  const uint8_t *GetVirtualPage(const uint64_t VirtualAddress, const uint64_t DirectoryTableBase = 0) const;
+  const uint8_t *GetVirtualPage(const uint64_t VirtualAddress,
+                                const uint64_t DirectoryTableBase = 0) const;
 
 private:
   //
