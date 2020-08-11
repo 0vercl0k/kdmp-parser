@@ -1,5 +1,6 @@
 // Axel '0vercl0k' Souchet - April 28 2020
 #include "platform.h"
+#include <cstdio>
 
 #if defined(WINDOWS)
 class FileMap {
@@ -173,9 +174,9 @@ public:
 
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
 class FileMap {
