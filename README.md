@@ -16,7 +16,7 @@ Special cheers to [yrp604](https://github.com/yrp604) for being knowledgeable ab
 
 ## Python 3 bindings
 
-The project includes Python 3 bindings (courtesy of [@masthoon](https://github.com/masthoon)) that allows you to do virtual memory translation as well reading physical memory pages.
+The project includes Python 3 bindings (courtesy of [@masthoon](https://github.com/masthoon)) that allows you to: read the context, read physical memory as well as to do virtual memory translations.
 
 If you don't want to compile them yourself, you can grab binaries directly from the CI [artifacts](https://github.com/0vercl0k/kdmp-parser/actions).
 
