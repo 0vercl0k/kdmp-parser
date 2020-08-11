@@ -92,11 +92,11 @@ const BugCheckParameters_t KernelDumpParser::GetBugCheckParameters() {
   // Give the user a view of the bugcheck parameters.
   //
   BugCheckParameters_t Parameters = {
-    DmpHdr_->BugCheckCode,
-    DmpHdr_->BugCheckCodeParameter[0],
-    DmpHdr_->BugCheckCodeParameter[1],
-    DmpHdr_->BugCheckCodeParameter[2],
-    DmpHdr_->BugCheckCodeParameter[3],
+      DmpHdr_->BugCheckCode,
+      DmpHdr_->BugCheckCodeParameter[0],
+      DmpHdr_->BugCheckCodeParameter[1],
+      DmpHdr_->BugCheckCodeParameter[2],
+      DmpHdr_->BugCheckCodeParameter[3],
   };
 
   return Parameters;
@@ -233,21 +233,22 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
   return true;
 }
 
-const uint64_t KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
-  
+const uint64_t
+KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
+
   //
   // Get the physical page and read from the offset.
   //
 
-  const uint8_t * PhysicalPage = GetPhysicalPage(Page::Align(PhysicalAddress));
+  const uint8_t *PhysicalPage = GetPhysicalPage(Page::Align(PhysicalAddress));
 
   if (!PhysicalPage) {
     printf("Internal page table parsing failed!\n");
     return 0;
   }
 
-  return *reinterpret_cast<const uint64_t*>(PhysicalPage + Page::Offset(PhysicalAddress));
-
+  return *reinterpret_cast<const uint64_t *>(PhysicalPage +
+                                             Page::Offset(PhysicalAddress));
 }
 
 const Physmem_t &KernelDumpParser::GetPhysmem() { return Physmem_; }
@@ -362,11 +363,13 @@ KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
   return Pair->second;
 }
 
-const uint64_t 
-KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress, const uint64_t DirectoryTableBase) const {
+const uint64_t
+KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
+                                const uint64_t DirectoryTableBase) const {
 
   //
-  // If DirectoryTableBase is null ; use the one from the dump header and clear PCID bits (bits 11:0).
+  // If DirectoryTableBase is null ; use the one from the dump header and clear
+  // PCID bits (bits 11:0).
   //
 
   uint64_t LocalDTB = Page::Align(GetDirectoryTableBase());
@@ -393,7 +396,8 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress, const uint64_t Di
   const uint64_t PdpteGpa = PdptBase + GuestAddress.PdPtIndex * 8;
   const MMPTE_HARDWARE Pdpte(PhyRead8(PdpteGpa));
   if (!Pdpte.Present) {
-    printf("Invalid page directory pointer table, address translation failed!\n");
+    printf(
+        "Invalid page directory pointer table, address translation failed!\n");
     return 0;
   }
 
@@ -437,15 +441,16 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress, const uint64_t Di
   return PageBase + GuestAddress.Offset;
 }
 
-
 const uint8_t *
-KernelDumpParser::GetVirtualPage(const uint64_t VirtualAddress, const uint64_t DirectoryTableBase) const {
-  
+KernelDumpParser::GetVirtualPage(const uint64_t VirtualAddress,
+                                 const uint64_t DirectoryTableBase) const {
+
   //
   // First remove offset and translate the virtual address.
   //
 
-  const uint64_t PhysicalAddress = VirtTranslate(Page::Align(VirtualAddress), DirectoryTableBase);
+  const uint64_t PhysicalAddress =
+      VirtTranslate(Page::Align(VirtualAddress), DirectoryTableBase);
 
   if (!PhysicalAddress) {
     return nullptr;

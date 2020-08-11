@@ -14,6 +14,39 @@ The library supports only loading 64-bit dumps (but either x86 or x64 build can 
 
 Special cheers to [yrp604](https://github.com/yrp604) for being knowledgeable about it.
 
+## Python 3 bindings
+
+The project includes Python 3 bindings (courtesy of [@masthoon](https://github.com/masthoon)) that allows you to: read the context, read physical memory as well as to do virtual memory translations.
+
+If you don't want to compile them yourself, you can grab binaries directly from the CI [artifacts](https://github.com/0vercl0k/kdmp-parser/actions).
+
+Here is an example:
+
+```py
+from kdmp import Dump, FullDump, BMPDump
+
+dmp = Dump(sys.argv[2])
+assert(dmp.type() == FullDump or dmp.type() == BMPDump)
+
+ctx = dmp.context()
+dtb = ctx['dtb'] & ~0xfff # remove PCID
+
+assert(ctx['rip'] == 0xfffff805108776a0)
+assert(dtb == 0x6d4000)
+
+page = dmp.get_physical_page(0x5000)
+assert(page[0x34:0x38] == b'MSFT')
+
+assert(dmp.virt_translate(0xfffff78000000000) == 0x0000000000c2f000)
+assert(dmp.virt_translate(0xfffff80513370000) == 0x000000003d555000)
+
+assert(dmp.get_virtual_page(0xfffff78000000000) == dmp.get_physical_page(0x0000000000c2f000))
+assert(dmp.get_virtual_page(0xfffff80513370000) == dmp.get_physical_page(0x000000003d555000))
+
+v = 0xfffff80513568000
+assert(dmp.get_virtual_page(v) == dmp.get_physical_page(dmp.virt_translate(v)))
+```
+
 ## Parser
 
 The `parser.exe` application is a small utility made to dump various information about the dump file: exception record, context record, etc.
