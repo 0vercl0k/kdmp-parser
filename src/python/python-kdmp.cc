@@ -30,7 +30,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *Kwds) {
   // Initialize the internal KernelDumpParser and validate the dump file.
   //
 
-  Self->DumpParser = new KernelDumpParser();
+  Self->DumpParser = new kdmpparser::KernelDumpParser();
   if (!Self->DumpParser->Parse(DumpPath)) {
     DeleteDumpParser(reinterpret_cast<PyObject *>(Self));
     return PyErr_Format(PyExc_ValueError, "dump() invalid path");
@@ -96,7 +96,7 @@ PyObject *DumpParserGetContext(PyObject *Object, PyObject *NotUsed) {
 
   PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
 
-  const KDMP_PARSER_CONTEXT *C = Self->DumpParser->GetContext();
+  const auto *C = Self->DumpParser->GetContext();
 
   //
   // Create a Python dict object with lowercase register name and value.
@@ -146,8 +146,7 @@ PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *NotUsed) {
 
   PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
 
-  const BugCheckParameters_t Parameters =
-      Self->DumpParser->GetBugCheckParameters();
+  const auto Parameters = Self->DumpParser->GetBugCheckParameters();
 
   PyObject *PythonParamsList = PyList_New(4);
 
@@ -200,7 +199,7 @@ PyObject *DumpParserGetPhysicalPage(PyObject *Object, PyObject *Args) {
   }
 
   return PyBytes_FromStringAndSize(reinterpret_cast<const char *>(Page),
-                                   Page::Size);
+                                   kdmpparser::Page::Size);
 }
 
 //
@@ -267,7 +266,7 @@ PyObject *DumpParserGetVirtualPage(PyObject *Object, PyObject *Args) {
   }
 
   return PyBytes_FromStringAndSize(reinterpret_cast<const char *>(Page),
-                                   Page::Size);
+                                   kdmpparser::Page::Size);
 }
 
 //
@@ -316,9 +315,9 @@ PyMODINIT_FUNC PyInit_kdmp(void) {
   //  >>> kdmp.FullDump ...
   //
 
-  PyModule_AddIntConstant(Module, "FullDump", DumpType_t::FullDump);
-  PyModule_AddIntConstant(Module, "KernelDump", DumpType_t::KernelDump);
-  PyModule_AddIntConstant(Module, "BMPDump", DumpType_t::BMPDump);
+  PyModule_AddIntConstant(Module, "FullDump", kdmpparser::DumpType_t::FullDump);
+  PyModule_AddIntConstant(Module, "KernelDump", kdmpparser::DumpType_t::KernelDump);
+  PyModule_AddIntConstant(Module, "BMPDump", kdmpparser::DumpType_t::BMPDump);
 
   return Module;
 }

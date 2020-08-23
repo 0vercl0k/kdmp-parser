@@ -1,5 +1,4 @@
 // Mastho - 2020
-
 #define PY_SSIZE_T_CLEAN
 
 #include "kdmp-parser.h"
@@ -16,7 +15,7 @@
 //
 
 typedef struct {
-  PyObject_HEAD KernelDumpParser *DumpParser;
+  PyObject_HEAD kdmpparser::KernelDumpParser *DumpParser;
 } PythonDumpParser;
 
 //
