@@ -545,7 +545,7 @@ struct EXCEPTION_RECORD64 : public DisplayUtils {
   uint64_t ExceptionAddress;
   uint32_t NumberParameters;
   uint32_t __unusedAlignment;
-  uint64_t ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+  uint64_t ExceptionInformation[15];
 
   void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("KDMP_PARSER_EXCEPTION_RECORD64");
