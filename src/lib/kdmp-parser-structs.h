@@ -7,19 +7,6 @@
 #include <cstdint>
 #include <cstdio>
 
-#ifndef WINDOWS
-#define EXCEPTION_MAXIMUM_PARAMETERS 15
-struct EXCEPTION_RECORD64 {
-  uint32_t ExceptionCode;
-  uint32_t ExceptionFlags;
-  uint64_t ExceptionRecord;
-  uint64_t ExceptionAddress;
-  uint32_t NumberParameters;
-  uint32_t __unusedAlignment;
-  uint64_t ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
-};
-#endif
-
 namespace kdmpparser {
 
 //
@@ -160,8 +147,7 @@ struct PHYSMEM_RUN : public DisplayUtils {
   }
 };
 
-static_assert(sizeof(PHYSMEM_RUN) == 0x10,
-              "PHYSMEM_RUN's size looks wrong.");
+static_assert(sizeof(PHYSMEM_RUN) == 0x10, "PHYSMEM_RUN's size looks wrong.");
 
 struct PHYSMEM_DESC : public DisplayUtils {
   uint32_t NumberOfRuns;
@@ -552,7 +538,7 @@ struct CONTEXT : public DisplayUtils {
 static_assert(offsetof(CONTEXT, Xmm0) == 0x1a0,
               "The offset of Xmm0 looks wrong.");
 
-struct KDMP_PARSER_EXCEPTION_RECORD64 : public DisplayUtils {
+struct EXCEPTION_RECORD64 : public DisplayUtils {
   uint32_t ExceptionCode;
   uint32_t ExceptionFlags;
   uint64_t ExceptionRecord;
@@ -586,8 +572,7 @@ struct KDMP_PARSER_EXCEPTION_RECORD64 : public DisplayUtils {
   }
 };
 
-static_assert(sizeof(KDMP_PARSER_EXCEPTION_RECORD64) ==
-                  sizeof(EXCEPTION_RECORD64),
+static_assert(sizeof(EXCEPTION_RECORD64) == 0x98,
               "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
 
 struct HEADER64 : public DisplayUtils {
@@ -641,7 +626,7 @@ struct HEADER64 : public DisplayUtils {
   //
 
   uint8_t Padding3[0xf00 - (0x348 + sizeof(ContextRecord))];
-  KDMP_PARSER_EXCEPTION_RECORD64 Exception;
+  EXCEPTION_RECORD64 Exception;
   DumpType_t DumpType;
 
   //
