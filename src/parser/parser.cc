@@ -266,7 +266,7 @@ int main(int argc, const char *argv[]) {
   // Create the parser instance.
   //
 
-  KernelDumpParser Dmp;
+  kdmpparser::KernelDumpParser Dmp;
 
   //
   // Parse the dump file.
@@ -340,8 +340,8 @@ int main(int argc, const char *argv[]) {
       // so that it is nicer for the user as they probably don't expect unorder.
       //
 
-      const Physmem_t &Physmem = Dmp.GetPhysmem();
-      std::vector<Physmem_t::key_type> OrderedPhysicalAddresses;
+      const kdmpparser::Physmem_t &Physmem = Dmp.GetPhysmem();
+      std::vector<kdmpparser::Physmem_t::key_type> OrderedPhysicalAddresses;
       OrderedPhysicalAddresses.reserve(Physmem.size());
 
       //

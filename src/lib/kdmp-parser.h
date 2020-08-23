@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <unordered_map>
 
+namespace kdmpparser {
+
 using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
 struct BugCheckParameters_t {
@@ -28,7 +30,7 @@ public:
   // Give the Context record to the user.
   //
 
-  const KDMP_PARSER_CONTEXT *GetContext();
+  const CONTEXT *GetContext();
 
   //
   // Give the bugcheck parameters to the user.
@@ -133,7 +135,7 @@ private:
   // Header of the crash-dump.
   //
 
-  KDMP_PARSER_HEADER64 *DmpHdr_;
+  HEADER64 *DmpHdr_;
 
   //
   // File path to the crash-dump.
@@ -147,3 +149,4 @@ private:
 
   Physmem_t Physmem_;
 };
+} // namespace kdmpparser
