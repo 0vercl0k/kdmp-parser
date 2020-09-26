@@ -80,13 +80,11 @@ const BugCheckParameters_t KernelDumpParser::GetBugCheckParameters() {
   //
   // Give the user a view of the bugcheck parameters.
   //
+
   BugCheckParameters_t Parameters = {
       DmpHdr_->BugCheckCode,
-      DmpHdr_->BugCheckCodeParameter[0],
-      DmpHdr_->BugCheckCodeParameter[1],
-      DmpHdr_->BugCheckCodeParameter[2],
-      DmpHdr_->BugCheckCodeParameter[3],
-  };
+      {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
+       DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
 
   return Parameters;
 }
