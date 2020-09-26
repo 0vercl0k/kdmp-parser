@@ -15,8 +15,6 @@ struct BugCheckParameters_t {
 
 class KernelDumpParser {
 public:
-  KernelDumpParser();
-  ~KernelDumpParser();
 
   //
   // Actually do the parsing of the file.
@@ -127,19 +125,19 @@ private:
   // The mapped file.
   //
 
-  FileMap FileMap_;
+  FileMap_t FileMap_;
 
   //
   // Header of the crash-dump.
   //
 
-  KDMP_PARSER_HEADER64 *DmpHdr_;
+  KDMP_PARSER_HEADER64 *DmpHdr_ = nullptr;
 
   //
   // File path to the crash-dump.
   //
 
-  const char *PathFile_;
+  const char *PathFile_ = nullptr;
 
   //
   // Mapping between physical addresses / page data.

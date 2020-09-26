@@ -1,17 +1,6 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #include "kdmp-parser.h"
 
-KernelDumpParser::KernelDumpParser() : DmpHdr_(nullptr), PathFile_(nullptr) {}
-
-KernelDumpParser::~KernelDumpParser() {
-
-  //
-  // Empty out the physmem.
-  //
-
-  Physmem_.clear();
-}
-
 bool KernelDumpParser::Parse(const char *PathFile) {
 
   //
