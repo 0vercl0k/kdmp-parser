@@ -7,6 +7,12 @@
 #include <cstdint>
 #include <cstdio>
 
+//
+// Disable: warning C4201: nonstandard extension used: nameless struct/union
+//
+
+#pragma warning(disable : 4201)
+
 #ifndef WINDOWS
 #define EXCEPTION_MAXIMUM_PARAMETERS 15
 struct EXCEPTION_RECORD64 {
