@@ -140,15 +140,6 @@ public:
   clean:
 
     //
-    // Unmap the view of the mapping..
-    //
-
-    if (ViewBase != nullptr) {
-      UnmapViewOfFile(ViewBase);
-      ViewBase = nullptr;
-    }
-
-    //
     // Close the handle to the file mapping..
     //
 
