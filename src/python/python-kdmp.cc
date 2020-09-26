@@ -7,10 +7,12 @@
 //
 
 PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *Kwds) {
+  UNREFERENCED_PARAMETER(Kwds);
 
   //
   // Allocate and zero PythonDumpParser.
   //
+
   PythonDumpParser *Self =
       reinterpret_cast<PythonDumpParser *>(Type->tp_alloc(Type, 0));
   Self->DumpParser = nullptr;
@@ -74,6 +76,7 @@ void DeleteDumpParser(PyObject *Object) {
 //
 
 PyObject *DumpParserGetType(PyObject *Object, PyObject *NotUsed) {
+  UNREFERENCED_PARAMETER(NotUsed);
 
   //
   // Get the dump type (FullDump, KernelDump or BMPDump).
@@ -89,6 +92,7 @@ PyObject *DumpParserGetType(PyObject *Object, PyObject *NotUsed) {
 //
 
 PyObject *DumpParserGetContext(PyObject *Object, PyObject *NotUsed) {
+  UNREFERENCED_PARAMETER(NotUsed);
 
   //
   // Get the dump context (commons registers).
@@ -139,6 +143,7 @@ PyObject *DumpParserGetContext(PyObject *Object, PyObject *NotUsed) {
 //
 
 PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *NotUsed) {
+  UNREFERENCED_PARAMETER(NotUsed);
 
   //
   // Retrieve the bugcheck parameters.
