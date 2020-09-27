@@ -339,7 +339,7 @@ int main(int argc, const char *argv[]) {
       // Stuff the physical addresses in a vector.
       //
 
-      for (const auto [PhysicalAddress, _] : Dmp.GetPhysmem()) {
+      for (const auto &[PhysicalAddress, _] : Dmp.GetPhysmem()) {
         OrderedPhysicalAddresses.emplace_back(PhysicalAddress);
       }
 

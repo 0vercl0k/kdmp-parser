@@ -98,14 +98,14 @@ public:
   // Get the directory table base.
   //
 
-  const uint64_t GetDirectoryTableBase() const;
+  uint64_t GetDirectoryTableBase() const;
 
   //
   // Translate a virtual address to physical address using a directory table
   // base.
   //
 
-  const uint64_t VirtTranslate(const uint64_t VirtualAddress,
+  uint64_t VirtTranslate(const uint64_t VirtualAddress,
                                const uint64_t DirectoryTableBase = 0) const;
 
   //
@@ -120,7 +120,8 @@ private:
   // Utility function to read an uint64_t from a physical address.
   //
 
-  const uint64_t PhyRead8(const uint64_t PhysicalAddress) const;
+  uint64_t PhyRead8(const uint64_t PhysicalAddress) const;
+ 
   //
   // Build a map of physical addresses / page data pointers for full dump.
   //

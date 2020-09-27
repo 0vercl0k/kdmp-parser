@@ -81,7 +81,8 @@ PyObject *DumpParserGetType(PyObject *Object, PyObject *) {
   //
 
   PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
-  return PyLong_FromUnsignedLong(Self->DumpParser->GetDumpType());
+  const DumpType_t DumpType = Self->DumpParser->GetDumpType();
+  return PyLong_FromUnsignedLong(static_cast<unsigned long>(DumpType));
 }
 
 //
@@ -320,9 +321,9 @@ PyMODINIT_FUNC PyInit_kdmp(void) {
   //  >>> kdmp.FullDump ...
   //
 
-  PyModule_AddIntConstant(Module, "FullDump", DumpType_t::FullDump);
-  PyModule_AddIntConstant(Module, "KernelDump", DumpType_t::KernelDump);
-  PyModule_AddIntConstant(Module, "BMPDump", DumpType_t::BMPDump);
+  PyModule_AddIntConstant(Module, "FullDump", long(DumpType_t::FullDump));
+  PyModule_AddIntConstant(Module, "KernelDump", long(DumpType_t::KernelDump));
+  PyModule_AddIntConstant(Module, "BMPDump", long(DumpType_t::BMPDump));
 
   return Module;
 }

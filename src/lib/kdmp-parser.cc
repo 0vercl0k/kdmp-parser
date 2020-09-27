@@ -31,12 +31,12 @@ bool KernelDumpParser::Parse(const char *PathFile) {
   // Retrieve the physical memory according to the type of dump we have.
   //
 
-  if (DmpHdr_->DumpType == FullDump) {
+  if (DmpHdr_->DumpType == DumpType_t::FullDump) {
     if (!BuildPhysmemFullDump()) {
       printf("BuildPhysmemFullDump failed.\n");
       return false;
     }
-  } else if (DmpHdr_->DumpType == BMPDump) {
+  } else if (DmpHdr_->DumpType == DumpType_t::BMPDump) {
     if (!BuildPhysmemBMPDump()) {
       printf("BuildPhysmemBMPDump failed.\n");
       return false;
@@ -220,7 +220,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
   return true;
 }
 
-const uint64_t
+uint64_t
 KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
 
   //
@@ -322,7 +322,7 @@ void KernelDumpParser::ShowAllStructures(const uint32_t Prefix = 0) const {
   DmpHdr_->Show(Prefix);
 }
 
-const uint64_t KernelDumpParser::GetDirectoryTableBase() const {
+uint64_t KernelDumpParser::GetDirectoryTableBase() const {
   return DmpHdr_->DirectoryTableBase;
 }
 
@@ -333,7 +333,7 @@ KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
   // Attempt to find the physical address.
   //
 
-  Physmem_t::const_iterator Pair = Physmem_.find(PhysicalAddress);
+  const Physmem_t::const_iterator Pair = Physmem_.find(PhysicalAddress);
 
   //
   // If it doesn't exist then return nullptr.
@@ -350,7 +350,7 @@ KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
   return Pair->second;
 }
 
-const uint64_t
+uint64_t
 KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
                                 const uint64_t DirectoryTableBase) const {
 
