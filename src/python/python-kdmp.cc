@@ -150,12 +150,15 @@ PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *) {
   const BugCheckParameters_t Parameters =
       Self->DumpParser->GetBugCheckParameters();
 
-  PyObject *PythonParamsList = PyList_New(4);
+  const uint64_t NumberParams = sizeof(Parameters.BugCheckCodeParameter) /
+                                sizeof(Parameters.BugCheckCodeParameter[0]);
+  PyObject *PythonParamsList = PyList_New(NumberParams);
 
-  for (uint64_t idx = 0; idx < 4; idx++)
+  for (uint64_t Idx = 0; Idx < NumberParams; Idx++) {
     PyList_SetItem(
-        PythonParamsList, idx,
-        PyLong_FromUnsignedLongLong(Parameters.BugCheckCodeParameter[idx]));
+        PythonParamsList, Idx,
+        PyLong_FromUnsignedLongLong(Parameters.BugCheckCodeParameter[Idx]));
+  }
 
   //
   // Create a Python dict object with code and parameters.
