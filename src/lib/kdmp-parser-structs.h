@@ -7,7 +7,26 @@
 #include <cstdint>
 #include <cstdio>
 
+//
+// Disable: warning C4201: nonstandard extension used: nameless struct/union
+//
+
+#pragma warning(disable : 4201)
+
 namespace kdmpparser {
+
+//
+// We need a way to represent 128-bits integers so here goes.
+//
+
+struct uint128_t {
+  uint64_t Low;
+  uint64_t High;
+};
+
+static_assert(sizeof(uint128_t) == 16, "uint128_t's size looks wrong.");
+
+enum class DumpType_t : uint32_t { FullDump = 1, KernelDump = 2, BMPDump = 5 };
 
 //
 // Save off the alignement setting and disable
@@ -18,21 +37,8 @@ namespace kdmpparser {
 #pragma pack(1)
 
 //
-// We need a way to represent 128bits integers so here goes.
-//
-
-struct uint128_t {
-  uint64_t Low;
-  uint64_t High;
-};
-
-static_assert(sizeof(uint128_t) == 16, "uint128_t's size looks wrong.");
-
-enum DumpType_t : uint32_t { FullDump = 1, KernelDump = 2, BMPDump = 5 };
-
-//
 // All the display utilities are in this class because long story short template
-// functions were breaking my balls. If you know a cleaner way to do this, hit
+// functions were not cooperating. If you know a cleaner way to do this, hit
 // me up :)
 //
 
@@ -103,16 +109,16 @@ struct DisplayUtils {
                     const void *This, const DumpType_t *Field) const {
     DisplayHeader(Prefix, FieldName, This, Field);
     switch (*Field) {
-    case KernelDump: {
+    case DumpType_t::KernelDump: {
       printf(": Kernel Dump.\n");
       break;
     }
 
-    case FullDump: {
+    case DumpType_t::FullDump: {
       printf(": Full Dump.\n");
       break;
     }
-    case BMPDump: {
+    case DumpType_t::BMPDump: {
       printf(": BMP Dump.\n");
       break;
     }
@@ -670,12 +676,12 @@ struct HEADER64 : public DisplayUtils {
     // Make sure it's a dump type we know how to handle.
     //
 
-    if (DumpType == FullDump) {
+    if (DumpType == DumpType_t::FullDump) {
       if (!PhysicalMemoryBlockBuffer.LooksGood()) {
         printf("The PhysicalMemoryBlockBuffer looks wrong.\n");
         return false;
       }
-    } else if (DumpType == BMPDump) {
+    } else if (DumpType == DumpType_t::BMPDump) {
       if (!BmpHeader.LooksGood()) {
         printf("The BmpHeader looks wrong.\n");
         return false;
@@ -725,7 +731,7 @@ struct HEADER64 : public DisplayUtils {
     DISPLAY_FIELD(SuiteMask);
     DISPLAY_FIELD(WriterStatus);
     DISPLAY_FIELD(KdSecondaryVersion);
-    if (DumpType == BMPDump) {
+    if (DumpType == DumpType_t::BMPDump) {
       DISPLAY_FIELD_OFFSET(BmpHeader);
       BmpHeader.Show();
     }

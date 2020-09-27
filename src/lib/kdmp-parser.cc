@@ -3,17 +3,6 @@
 
 namespace kdmpparser {
 
-KernelDumpParser::KernelDumpParser() : DmpHdr_(nullptr), PathFile_(nullptr) {}
-
-KernelDumpParser::~KernelDumpParser() {
-
-  //
-  // Empty out the physmem.
-  //
-
-  Physmem_.clear();
-}
-
 bool KernelDumpParser::Parse(const char *PathFile) {
 
   //
@@ -44,12 +33,12 @@ bool KernelDumpParser::Parse(const char *PathFile) {
   // Retrieve the physical memory according to the type of dump we have.
   //
 
-  if (DmpHdr_->DumpType == FullDump) {
+  if (DmpHdr_->DumpType == DumpType_t::FullDump) {
     if (!BuildPhysmemFullDump()) {
       printf("BuildPhysmemFullDump failed.\n");
       return false;
     }
-  } else if (DmpHdr_->DumpType == BMPDump) {
+  } else if (DmpHdr_->DumpType == DumpType_t::BMPDump) {
     if (!BuildPhysmemBMPDump()) {
       printf("BuildPhysmemBMPDump failed.\n");
       return false;
@@ -62,7 +51,7 @@ bool KernelDumpParser::Parse(const char *PathFile) {
 bool KernelDumpParser::ParseDmpHeader() {
 
   //
-  // The base of the view points on the DMP_HEADER64.
+  // The base of the view points on the HEADER64.
   //
 
   DmpHdr_ = (HEADER64 *)FileMap_.ViewBase();
@@ -93,13 +82,11 @@ const BugCheckParameters_t KernelDumpParser::GetBugCheckParameters() {
   //
   // Give the user a view of the bugcheck parameters.
   //
+
   BugCheckParameters_t Parameters = {
       DmpHdr_->BugCheckCode,
-      DmpHdr_->BugCheckCodeParameter[0],
-      DmpHdr_->BugCheckCodeParameter[1],
-      DmpHdr_->BugCheckCodeParameter[2],
-      DmpHdr_->BugCheckCodeParameter[3],
-  };
+      {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
+       DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
 
   return Parameters;
 }
@@ -235,7 +222,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
   return true;
 }
 
-const uint64_t
+uint64_t
 KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
 
   //
@@ -337,7 +324,7 @@ void KernelDumpParser::ShowAllStructures(const uint32_t Prefix = 0) const {
   DmpHdr_->Show(Prefix);
 }
 
-const uint64_t KernelDumpParser::GetDirectoryTableBase() const {
+uint64_t KernelDumpParser::GetDirectoryTableBase() const {
   return DmpHdr_->DirectoryTableBase;
 }
 
@@ -348,7 +335,7 @@ KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
   // Attempt to find the physical address.
   //
 
-  Physmem_t::const_iterator Pair = Physmem_.find(PhysicalAddress);
+  const Physmem_t::const_iterator Pair = Physmem_.find(PhysicalAddress);
 
   //
   // If it doesn't exist then return nullptr.
@@ -365,7 +352,7 @@ KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
   return Pair->second;
 }
 
-const uint64_t
+uint64_t
 KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
                                 const uint64_t DirectoryTableBase) const {
 

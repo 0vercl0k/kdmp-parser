@@ -16,10 +16,32 @@ struct BugCheckParameters_t {
 };
 
 class KernelDumpParser {
-public:
-  KernelDumpParser();
-  ~KernelDumpParser();
+private:
+  //
+  // The mapped file.
+  //
 
+  FileMap_t FileMap_;
+
+  //
+  // Header of the crash-dump.
+  //
+
+  HEADER64 *DmpHdr_ = nullptr;
+
+  //
+  // File path to the crash-dump.
+  //
+
+  const char *PathFile_ = nullptr;
+
+  //
+  // Mapping between physical addresses / page data.
+  //
+
+  Physmem_t Physmem_;
+
+public:
   //
   // Actually do the parsing of the file.
   //
@@ -78,15 +100,15 @@ public:
   // Get the directory table base.
   //
 
-  const uint64_t GetDirectoryTableBase() const;
+  uint64_t GetDirectoryTableBase() const;
 
   //
   // Translate a virtual address to physical address using a directory table
   // base.
   //
 
-  const uint64_t VirtTranslate(const uint64_t VirtualAddress,
-                               const uint64_t DirectoryTableBase = 0) const;
+  uint64_t VirtTranslate(const uint64_t VirtualAddress,
+                         const uint64_t DirectoryTableBase = 0) const;
 
   //
   // Get the content of a virtual address.
@@ -100,7 +122,8 @@ private:
   // Utility function to read an uint64_t from a physical address.
   //
 
-  const uint64_t PhyRead8(const uint64_t PhysicalAddress) const;
+  uint64_t PhyRead8(const uint64_t PhysicalAddress) const;
+
   //
   // Build a map of physical addresses / page data pointers for full dump.
   //
@@ -124,29 +147,5 @@ private:
   //
 
   bool MapFile();
-
-  //
-  // The mapped file.
-  //
-
-  FileMap FileMap_;
-
-  //
-  // Header of the crash-dump.
-  //
-
-  HEADER64 *DmpHdr_;
-
-  //
-  // File path to the crash-dump.
-  //
-
-  const char *PathFile_;
-
-  //
-  // Mapping between physical addresses / page data.
-  //
-
-  Physmem_t Physmem_;
 };
 } // namespace kdmpparser

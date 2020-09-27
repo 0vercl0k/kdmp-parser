@@ -6,11 +6,12 @@
 //   >>> Dump(filepath)
 //
 
-PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *Kwds) {
+PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
 
   //
   // Allocate and zero PythonDumpParser.
   //
+
   PythonDumpParser *Self =
       reinterpret_cast<PythonDumpParser *>(Type->tp_alloc(Type, 0));
   Self->DumpParser = nullptr;
@@ -73,14 +74,15 @@ void DeleteDumpParser(PyObject *Object) {
 //  >>> dump_instance.type() # return int
 //
 
-PyObject *DumpParserGetType(PyObject *Object, PyObject *NotUsed) {
+PyObject *DumpParserGetType(PyObject *Object, PyObject *) {
 
   //
   // Get the dump type (FullDump, KernelDump or BMPDump).
   //
 
   PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
-  return PyLong_FromUnsignedLong(Self->DumpParser->GetDumpType());
+  const auto DumpType = Self->DumpParser->GetDumpType();
+  return PyLong_FromUnsignedLong(static_cast<unsigned long>(DumpType));
 }
 
 //
@@ -88,7 +90,7 @@ PyObject *DumpParserGetType(PyObject *Object, PyObject *NotUsed) {
 //  >>> dump_instance.context() # return dict(str -> int)
 //
 
-PyObject *DumpParserGetContext(PyObject *Object, PyObject *NotUsed) {
+PyObject *DumpParserGetContext(PyObject *Object, PyObject *) {
 
   //
   // Get the dump context (commons registers).
@@ -138,7 +140,7 @@ PyObject *DumpParserGetContext(PyObject *Object, PyObject *NotUsed) {
 //  >>> dump_instance.bugcheck() # return dict
 //
 
-PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *NotUsed) {
+PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *) {
 
   //
   // Retrieve the bugcheck parameters.
@@ -148,12 +150,15 @@ PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *NotUsed) {
 
   const auto Parameters = Self->DumpParser->GetBugCheckParameters();
 
-  PyObject *PythonParamsList = PyList_New(4);
+  const uint64_t NumberParams = sizeof(Parameters.BugCheckCodeParameter) /
+                                sizeof(Parameters.BugCheckCodeParameter[0]);
+  PyObject *PythonParamsList = PyList_New(NumberParams);
 
-  for (uint64_t idx = 0; idx < 4; idx++)
+  for (uint64_t Idx = 0; Idx < NumberParams; Idx++) {
     PyList_SetItem(
-        PythonParamsList, idx,
-        PyLong_FromUnsignedLongLong(Parameters.BugCheckCodeParameter[idx]));
+        PythonParamsList, Idx,
+        PyLong_FromUnsignedLongLong(Parameters.BugCheckCodeParameter[Idx]));
+  }
 
   //
   // Create a Python dict object with code and parameters.
@@ -315,9 +320,12 @@ PyMODINIT_FUNC PyInit_kdmp(void) {
   //  >>> kdmp.FullDump ...
   //
 
-  PyModule_AddIntConstant(Module, "FullDump", kdmpparser::DumpType_t::FullDump);
-  PyModule_AddIntConstant(Module, "KernelDump", kdmpparser::DumpType_t::KernelDump);
-  PyModule_AddIntConstant(Module, "BMPDump", kdmpparser::DumpType_t::BMPDump);
+  PyModule_AddIntConstant(Module, "FullDump",
+                          long(kdmpparser::DumpType_t::FullDump));
+  PyModule_AddIntConstant(Module, "KernelDump",
+                          long(kdmpparser::DumpType_t::KernelDump));
+  PyModule_AddIntConstant(Module, "BMPDump",
+                          long(kdmpparser::DumpType_t::BMPDump));
 
   return Module;
 }

@@ -5,7 +5,7 @@ on: [push, pull_request]
 
 jobs:
   Linux2004Gcc:
-    name: Ubuntu 20.04 / GCC10
+    name: Ubuntu 20.04
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout
