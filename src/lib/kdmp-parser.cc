@@ -1,6 +1,8 @@
 // Axel '0vercl0k' Souchet - February 15 2019
 #include "kdmp-parser.h"
 
+namespace kdmpparser {
+
 bool KernelDumpParser::Parse(const char *PathFile) {
 
   //
@@ -49,10 +51,10 @@ bool KernelDumpParser::Parse(const char *PathFile) {
 bool KernelDumpParser::ParseDmpHeader() {
 
   //
-  // The base of the view points on the DMP_HEADER64.
+  // The base of the view points on the HEADER64.
   //
 
-  DmpHdr_ = (KDMP_PARSER_HEADER64 *)FileMap_.ViewBase();
+  DmpHdr_ = (HEADER64 *)FileMap_.ViewBase();
 
   //
   // Now let's make sure the structures look right.
@@ -66,7 +68,7 @@ bool KernelDumpParser::ParseDmpHeader() {
   return true;
 }
 
-const KDMP_PARSER_CONTEXT *KernelDumpParser::GetContext() {
+const CONTEXT *KernelDumpParser::GetContext() {
 
   //
   // Give the user a view of the context record.
@@ -153,7 +155,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
     // Grab the current run as well as its base page and page count.
     //
 
-    const KDMP_PARSER_PHYSMEM_RUN *Run =
+    const PHYSMEM_RUN *Run =
         DmpHdr_->PhysicalMemoryBlockBuffer.Run + RunIdx;
 
     const uint64_t BasePage = Run->BasePage;
@@ -241,7 +243,7 @@ KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
 const Physmem_t &KernelDumpParser::GetPhysmem() { return Physmem_; }
 
 void KernelDumpParser::ShowContextRecord(const uint32_t Prefix = 0) const {
-  const KDMP_PARSER_CONTEXT &Context = DmpHdr_->ContextRecord;
+  const CONTEXT &Context = DmpHdr_->ContextRecord;
   printf("%*srax=%016" PRIx64 " rbx=%016" PRIx64 " rcx=%016" PRIx64 "\n",
          Prefix, "", Context.Rax, Context.Rbx, Context.Rcx);
   printf("%*srdx=%016" PRIx64 " rsi=%016" PRIx64 " rdi=%016" PRIx64 "\n",
@@ -449,3 +451,4 @@ KernelDumpParser::GetVirtualPage(const uint64_t VirtualAddress,
 
   return GetPhysicalPage(PhysicalAddress);
 }
+} // namespace kdmpparser

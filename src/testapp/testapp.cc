@@ -8,7 +8,7 @@ int main(int argc, const char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  KernelDumpParser Dmp;
+  kdmpparser::KernelDumpParser Dmp;
   if (!Dmp.Parse(argv[1])) {
     return EXIT_FAILURE;
   }
@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
   // cs=0010  ss=0018  ds=002b  es=002b  fs=0053  gs=002b efl=00040202
   //
 
-  const KDMP_PARSER_CONTEXT *C = Dmp.GetContext();
+  const kdmpparser::CONTEXT *C = Dmp.GetContext();
   if (C->Rax != 0x0000000000000003ULL) {
     printf("Rax(0x%016" PRIx64 ") does not match with 0x0000000000000003.",
            C->Rax);
@@ -130,14 +130,14 @@ int main(int argc, const char *argv[]) {
 
   printf("GPRs matches the testdatas.\n");
 
-  const DumpType_t Type = Dmp.GetDumpType();
+  const kdmpparser::DumpType_t Type = Dmp.GetDumpType();
   const auto &Physmem = Dmp.GetPhysmem();
-  if (Type == DumpType_t::BMPDump) {
+  if (Type == kdmpparser::DumpType_t::BMPDump) {
     if (Physmem.size() != 0x544b) {
       printf("0x544b pages are expected but found %zd.\n", Physmem.size());
       return EXIT_FAILURE;
     }
-  } else if (Type == DumpType_t::FullDump) {
+  } else if (Type == kdmpparser::DumpType_t::FullDump) {
     if (Physmem.size() != 0x3fbe6) {
       printf("0x3fbe6 pages are expected but found %zd.\n", Physmem.size());
       return EXIT_FAILURE;

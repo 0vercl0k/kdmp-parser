@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <unordered_map>
 
+namespace kdmpparser {
+
 using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
 struct BugCheckParameters_t {
@@ -25,7 +27,7 @@ private:
   // Header of the crash-dump.
   //
 
-  KDMP_PARSER_HEADER64 *DmpHdr_ = nullptr;
+  HEADER64 *DmpHdr_ = nullptr;
 
   //
   // File path to the crash-dump.
@@ -50,7 +52,7 @@ public:
   // Give the Context record to the user.
   //
 
-  const KDMP_PARSER_CONTEXT *GetContext();
+  const CONTEXT *GetContext();
 
   //
   // Give the bugcheck parameters to the user.
@@ -106,7 +108,7 @@ public:
   //
 
   uint64_t VirtTranslate(const uint64_t VirtualAddress,
-                               const uint64_t DirectoryTableBase = 0) const;
+                         const uint64_t DirectoryTableBase = 0) const;
 
   //
   // Get the content of a virtual address.
@@ -121,7 +123,7 @@ private:
   //
 
   uint64_t PhyRead8(const uint64_t PhysicalAddress) const;
- 
+
   //
   // Build a map of physical addresses / page data pointers for full dump.
   //
@@ -146,3 +148,4 @@ private:
 
   bool MapFile();
 };
+} // namespace kdmpparser
