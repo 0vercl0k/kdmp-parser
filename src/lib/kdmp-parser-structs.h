@@ -15,19 +15,6 @@
 
 namespace kdmpparser {
 
-#ifndef WINDOWS
-#define EXCEPTION_MAXIMUM_PARAMETERS 15
-struct EXCEPTION_RECORD64 {
-  uint32_t ExceptionCode;
-  uint32_t ExceptionFlags;
-  uint64_t ExceptionRecord;
-  uint64_t ExceptionAddress;
-  uint32_t NumberParameters;
-  uint32_t __unusedAlignment;
-  uint64_t ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
-};
-#endif
-
 //
 // We need a way to represent 128-bits integers so here goes.
 //
