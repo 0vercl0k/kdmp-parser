@@ -6,7 +6,7 @@ This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/w
 
 ![parser](pics/parser.jpg)
 
-The library supports loading 64-bit dumps and provides read access (not write) to:
+The library supports loading 64-bit dumps and provides read access to things like:
 
 - The context record,
 - The exception record,
@@ -21,7 +21,7 @@ Special thanks to:
 
 ## Python 3 bindings
 
-The bindings (contributed by [@masthoon](https://github.com/masthoon)) allow you to: read the context, read physical memory as well as to do virtual memory translations.
+The bindings (contributed by [@masthoon](https://github.com/masthoon)) allow you to: read the context, read physical memory and to do virtual memory translations:
 
 ```py
 from kdmp import Dump, FullDump, BMPDump
@@ -50,7 +50,7 @@ assert(dmp.get_virtual_page(v) == dmp.get_physical_page(dmp.virt_translate(v)))
 
 ## Parser
 
-The `parser.exe` application is a utility able to dump various information about the dump file: exception record, context record, etc.
+The `parser.exe` application is able to dump various information about the dump file: exception record, context record, etc.
 
 ```text
 kdmp-parser\src>x64\Debug\parser.exe -c -e -p 0x1000 full.dmp
