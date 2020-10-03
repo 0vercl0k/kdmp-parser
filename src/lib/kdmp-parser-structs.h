@@ -816,10 +816,8 @@ union MMPTE_HARDWARE {
     uint64_t ReservedForHardware : 4;
     uint64_t ReservedForSoftware : 11;
     uint64_t NoExecute : 1;
-  };
-
+  } u;
   uint64_t AsUINT64;
-
   MMPTE_HARDWARE(const uint64_t Value) : AsUINT64(Value) {}
 };
 
@@ -835,7 +833,7 @@ union VIRTUAL_ADDRESS {
     uint64_t PdPtIndex : 9;
     uint64_t Pml4Index : 9;
     uint64_t Reserved : 16;
-  };
+  } u;
   uint64_t AsUINT64;
   VIRTUAL_ADDRESS(const uint64_t Value) : AsUINT64(Value) {}
 };
