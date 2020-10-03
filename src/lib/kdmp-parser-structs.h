@@ -11,7 +11,9 @@
 // Disable: warning C4201: nonstandard extension used: nameless struct/union
 //
 
+#ifdef WINDOWS
 #pragma warning(disable : 4201)
+#endif
 
 namespace kdmpparser {
 
