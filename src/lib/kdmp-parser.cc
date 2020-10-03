@@ -155,8 +155,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
     // Grab the current run as well as its base page and page count.
     //
 
-    const PHYSMEM_RUN *Run =
-        DmpHdr_->PhysicalMemoryBlockBuffer.Run + RunIdx;
+    const PHYSMEM_RUN *Run = DmpHdr_->PhysicalMemoryBlockBuffer.Run + RunIdx;
 
     const uint64_t BasePage = Run->BasePage;
     const uint64_t PageCount = Run->PageCount;
@@ -222,8 +221,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
   return true;
 }
 
-uint64_t
-KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
+uint64_t KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
 
   //
   // Get the physical page and read from the offset.
@@ -373,18 +371,18 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
 
   const VIRTUAL_ADDRESS GuestAddress(VirtualAddress);
   const MMPTE_HARDWARE Pml4(LocalDTB);
-  const uint64_t Pml4Base = Pml4.PageFrameNumber * Page::Size;
-  const uint64_t Pml4eGpa = Pml4Base + GuestAddress.Pml4Index * 8;
+  const uint64_t Pml4Base = Pml4.u.PageFrameNumber * Page::Size;
+  const uint64_t Pml4eGpa = Pml4Base + GuestAddress.u.Pml4Index * 8;
   const MMPTE_HARDWARE Pml4e(PhyRead8(Pml4eGpa));
-  if (!Pml4e.Present) {
+  if (!Pml4e.u.Present) {
     printf("Invalid page map level 4, address translation failed!\n");
     return 0;
   }
 
-  const uint64_t PdptBase = Pml4e.PageFrameNumber * Page::Size;
-  const uint64_t PdpteGpa = PdptBase + GuestAddress.PdPtIndex * 8;
+  const uint64_t PdptBase = Pml4e.u.PageFrameNumber * Page::Size;
+  const uint64_t PdpteGpa = PdptBase + GuestAddress.u.PdPtIndex * 8;
   const MMPTE_HARDWARE Pdpte(PhyRead8(PdpteGpa));
-  if (!Pdpte.Present) {
+  if (!Pdpte.u.Present) {
     printf(
         "Invalid page directory pointer table, address translation failed!\n");
     return 0;
@@ -396,14 +394,14 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
   // directory; see Table 4-1
   //
 
-  const uint64_t PdBase = Pdpte.PageFrameNumber * Page::Size;
-  if (Pdpte.LargePage) {
+  const uint64_t PdBase = Pdpte.u.PageFrameNumber * Page::Size;
+  if (Pdpte.u.LargePage) {
     return (PdBase & 0xffff'ffff'c000'0000) + (VirtualAddress & 0x3fff'ffff);
   }
 
-  const uint64_t PdeGpa = PdBase + GuestAddress.PdIndex * 8;
+  const uint64_t PdeGpa = PdBase + GuestAddress.u.PdIndex * 8;
   const MMPTE_HARDWARE Pde(PhyRead8(PdeGpa));
-  if (!Pde.Present) {
+  if (!Pde.u.Present) {
     printf("Invalid page directory entry, address translation failed!\n");
     return 0;
   }
@@ -414,20 +412,20 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
   // table; see Table 4-18
   //
 
-  const uint64_t PtBase = Pde.PageFrameNumber * Page::Size;
-  if (Pde.LargePage) {
+  const uint64_t PtBase = Pde.u.PageFrameNumber * Page::Size;
+  if (Pde.u.LargePage) {
     return (PtBase & 0xffff'ffff'ffe0'0000) + (VirtualAddress & 0x1f'ffff);
   }
 
-  const uint64_t PteGpa = PtBase + GuestAddress.PtIndex * 8;
+  const uint64_t PteGpa = PtBase + GuestAddress.u.PtIndex * 8;
   const MMPTE_HARDWARE Pte(PhyRead8(PteGpa));
-  if (!Pte.Present) {
+  if (!Pte.u.Present) {
     printf("Invalid page table entry, address translation failed!\n");
     return 0;
   }
 
-  const uint64_t PageBase = Pte.PageFrameNumber * 0x1000;
-  return PageBase + GuestAddress.Offset;
+  const uint64_t PageBase = Pte.u.PageFrameNumber * 0x1000;
+  return PageBase + GuestAddress.u.Offset;
 }
 
 const uint8_t *

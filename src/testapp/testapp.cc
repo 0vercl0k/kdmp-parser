@@ -155,7 +155,7 @@ int main(int argc, const char *argv[]) {
                                      0x00, 0x0a, 0x63, 0x98};
   const uint8_t *Page = Dmp.GetPhysicalPage(AddressAligned);
   if (Page == nullptr) {
-    printf("GetPhysicalPage failed for %p\n", Page);
+    printf("GetPhysicalPage failed for %p\n", (void *)Page);
     return EXIT_FAILURE;
   }
 

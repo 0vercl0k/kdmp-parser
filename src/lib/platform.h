@@ -29,6 +29,9 @@
 #error An error occured
 #endif
 
+#define EXIT_FAILURE 1
+#define EXIT_SUCCESS 0
+
 #if defined ARCH_X86
 #define LINUX_X86
 #elif defined ARCH_X64
