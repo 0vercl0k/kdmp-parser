@@ -2,6 +2,7 @@
 #include "kdmp-parser.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <vector>
 
