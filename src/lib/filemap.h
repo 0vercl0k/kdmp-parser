@@ -23,8 +23,6 @@ class FileMap_t {
   PVOID ViewBase_ = nullptr;
 
 public:
-  explicit FileMap_t() = default;
-
   ~FileMap_t() {
     //
     // Unmap the view of the mapping..
@@ -54,6 +52,7 @@ public:
     }
   }
 
+  FileMap_t() = default;
   FileMap_t(const FileMap_t &) = delete;
   FileMap_t &operator=(const FileMap_t &) = delete;
 
@@ -179,8 +178,6 @@ class FileMap_t {
   int Fd_ = -1;
 
 public:
-  explicit FileMap_t() = default;
-
   ~FileMap_t() {
     if (ViewBase_) {
       munmap(ViewBase_, ViewSize_);
@@ -194,6 +191,7 @@ public:
     }
   }
 
+  FileMap_t() = default;
   FileMap_t(const FileMap_t &) = delete;
   FileMap_t &operator=(const FileMap_t &) = delete;
 
