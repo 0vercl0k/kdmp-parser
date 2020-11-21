@@ -4,12 +4,6 @@
 #include "kdmp-parser.h"
 #include <Python.h>
 
-#if PY_MINOR_VERSION >= 8
-#define IS_PY3_8 1
-#else
-#define IS_PY3_8 0
-#endif
-
 //
 // Python object handling all interactions with the library.
 //
@@ -65,11 +59,7 @@ static PyTypeObject PythonDumpParserType = {
     sizeof(PythonDumpParser),                           /* tp_basicsize */
     0,                                                  /* tp_itemsize */
     DeleteDumpParser,                                   /* tp_dealloc */
-#if IS_PY3_8
-    0, /* tp_vectorcall_offset */
-#else
-    nullptr, /* tp_print */
-#endif
+    0,                  /* tp_vectorcall_offset */
     nullptr,            /* tp_getattr */
     nullptr,            /* tp_setattr */
     nullptr,            /* tp_compare */
@@ -112,10 +102,7 @@ static PyTypeObject PythonDumpParserType = {
     nullptr,            /* tp_del */
     0,                  /* tp_version_tag */
     nullptr,            /* tp_finalize */
-#if IS_PY3_8
-    nullptr, /* tp_vectorcall */
-    0, /* bpo-37250: kept for backwards compatibility in CPython 3.8 only */
-#endif
+    nullptr,            /* tp_vectorcall */
 };
 
 //
