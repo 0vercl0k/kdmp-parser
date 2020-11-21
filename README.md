@@ -189,7 +189,7 @@ kdmp-parser\build\x64-RelWithDebInfo>cmake --build .
 
 # Authors
 
-* Axel Souchet ([@0vercl0k](https://twitter.com/0vercl0k))
+* Axel '[@0vercl0k](https://twitter.com/0vercl0k)' Souchet
 
 With contributions from:
   - [@masthoon](https://github.com/masthoon).
