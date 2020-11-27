@@ -58,8 +58,7 @@ static void DisplayHeader(const uint32_t Prefix, const char *FieldName,
   printf("\n")
 
 //
-// What follows are all the specializations we support. Basically,
-// taking care of displaying basic types.
+// This takes care of displaying basic types.
 //
 
 template <typename Field_t>
@@ -94,7 +93,7 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
     }
     printf(": Unknown.\n");
   } else {
-    std::abort();
+    static_assert(false, "DisplayField: Unknown type trying to be displayed.");
   }
 }
 
@@ -741,30 +740,26 @@ static_assert(offsetof(HEADER64, Comment) == 0xfb0,
 static_assert(offsetof(HEADER64, BmpHeader) == 0x2000,
               "The offset of BmpHeaders looks wrong.");
 
-struct Page {
+namespace Page {
 
-  //
-  // Page size.
-  //
+//
+// Page size.
+//
 
-  static constexpr uint64_t Size = 0x1000;
+constexpr uint64_t Size = 0x1000;
 
-  //
-  // Page align an address.
-  //
+//
+// Page align an address.
+//
 
-  static constexpr uint64_t Align(const uint64_t Address) {
-    return Address & ~0xfff;
-  }
+constexpr uint64_t Align(const uint64_t Address) { return Address & ~0xfff; }
 
-  //
-  // Extract the page offset off an address.
-  //
+//
+// Extract the page offset off an address.
+//
 
-  static constexpr uint64_t Offset(const uint64_t Address) {
-    return Address & 0xfff;
-  }
-};
+constexpr uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
+}; // namespace Page
 
 //
 // Structure for parsing a PTE.

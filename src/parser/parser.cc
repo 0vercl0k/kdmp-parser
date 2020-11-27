@@ -67,7 +67,7 @@ struct Options_t {
   // The path to the dump file.
   //
 
-  std::string_view DumpPath = nullptr;
+  std::string_view DumpPath;
 };
 
 //
