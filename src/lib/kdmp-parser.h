@@ -52,25 +52,42 @@ public:
   // Give the Context record to the user.
   //
 
-  const CONTEXT *GetContext();
+  constexpr const CONTEXT *GetContext() const {
+
+    //
+    // Give the user a view of the context record.
+    //
+
+    return &DmpHdr_->ContextRecord;
+  }
 
   //
   // Give the bugcheck parameters to the user.
   //
 
-  const BugCheckParameters_t GetBugCheckParameters();
+  constexpr BugCheckParameters_t GetBugCheckParameters() const {
+
+    //
+    // Give the user a view of the bugcheck parameters.
+    //
+
+    return {
+        DmpHdr_->BugCheckCode,
+        {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
+         DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
+  }
 
   //
   // Get the type of dump.
   //
 
-  DumpType_t GetDumpType();
+  constexpr DumpType_t GetDumpType() const { return DmpHdr_->DumpType; }
 
   //
   // Get the physmem.
   //
 
-  const Physmem_t &GetPhysmem();
+  constexpr const Physmem_t &GetPhysmem() const { return Physmem_; }
 
   //
   // Show the exception record.
@@ -100,7 +117,9 @@ public:
   // Get the directory table base.
   //
 
-  uint64_t GetDirectoryTableBase() const;
+  constexpr uint64_t GetDirectoryTableBase() const {
+    return DmpHdr_->DirectoryTableBase;
+  }
 
   //
   // Translate a virtual address to physical address using a directory table

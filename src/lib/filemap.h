@@ -56,7 +56,7 @@ public:
   FileMap_t(const FileMap_t &) = delete;
   FileMap_t &operator=(const FileMap_t &) = delete;
 
-  void *ViewBase() { return ViewBase_; }
+  constexpr void *ViewBase() const { return ViewBase_; }
 
   bool MapFile(const char *PathFile) {
     bool Success = true;
@@ -195,7 +195,7 @@ public:
   FileMap_t(const FileMap_t &) = delete;
   FileMap_t &operator=(const FileMap_t &) = delete;
 
-  void *ViewBase() { return ViewBase_; }
+  constexpr void *ViewBase() const { return ViewBase_; }
 
   bool MapFile(const char *PathFile) {
     Fd_ = open(PathFile, O_RDONLY);

@@ -68,31 +68,6 @@ bool KernelDumpParser::ParseDmpHeader() {
   return true;
 }
 
-const CONTEXT *KernelDumpParser::GetContext() {
-
-  //
-  // Give the user a view of the context record.
-  //
-
-  return &DmpHdr_->ContextRecord;
-}
-
-const BugCheckParameters_t KernelDumpParser::GetBugCheckParameters() {
-
-  //
-  // Give the user a view of the bugcheck parameters.
-  //
-
-  BugCheckParameters_t Parameters = {
-      DmpHdr_->BugCheckCode,
-      {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
-       DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
-
-  return Parameters;
-}
-
-DumpType_t KernelDumpParser::GetDumpType() { return DmpHdr_->DumpType; }
-
 bool KernelDumpParser::MapFile() { return FileMap_.MapFile(PathFile_); }
 
 bool KernelDumpParser::BuildPhysmemBMPDump() {
@@ -238,8 +213,6 @@ uint64_t KernelDumpParser::PhyRead8(const uint64_t PhysicalAddress) const {
                                              Page::Offset(PhysicalAddress));
 }
 
-const Physmem_t &KernelDumpParser::GetPhysmem() { return Physmem_; }
-
 void KernelDumpParser::ShowContextRecord(const uint32_t Prefix = 0) const {
   const CONTEXT &Context = DmpHdr_->ContextRecord;
   printf("%*srax=%016" PRIx64 " rbx=%016" PRIx64 " rcx=%016" PRIx64 "\n",
@@ -322,10 +295,6 @@ void KernelDumpParser::ShowAllStructures(const uint32_t Prefix = 0) const {
   DmpHdr_->Show(Prefix);
 }
 
-uint64_t KernelDumpParser::GetDirectoryTableBase() const {
-  return DmpHdr_->DirectoryTableBase;
-}
-
 const uint8_t *
 KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
 
@@ -333,7 +302,7 @@ KernelDumpParser::GetPhysicalPage(const uint64_t PhysicalAddress) const {
   // Attempt to find the physical address.
   //
 
-  const Physmem_t::const_iterator Pair = Physmem_.find(PhysicalAddress);
+  const auto &Pair = Physmem_.find(PhysicalAddress);
 
   //
   // If it doesn't exist then return nullptr.

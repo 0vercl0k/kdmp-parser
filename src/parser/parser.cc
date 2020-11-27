@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <string_view>
 #include <vector>
 
 //
@@ -66,7 +67,7 @@ struct Options_t {
   // The path to the dump file.
   //
 
-  char *DumpPath = nullptr;
+  std::string_view DumpPath = nullptr;
 };
 
 //
@@ -141,17 +142,17 @@ int main(int argc, const char *argv[]) {
   //
 
   for (int ArgIdx = 1; ArgIdx < argc; ArgIdx++) {
-    const char *Arg = argv[ArgIdx];
+    const std::string_view Arg(argv[ArgIdx]);
     const int IsLastArg = (ArgIdx + 1) >= argc;
 
-    if (strcmp(Arg, "-c") == 0) {
+    if (Arg == "-c") {
 
       //
       // Show the context record.
       //
 
       Opts.ShowContextRecord = 1;
-    } else if (strcmp(Arg, "-p") == 0) {
+    } else if (Arg == "-p") {
 
       //
       // Show the physical memory.
@@ -182,21 +183,21 @@ int main(int argc, const char *argv[]) {
 
         ArgIdx++;
       }
-    } else if (strcmp(Arg, "-e") == 0) {
+    } else if (Arg == "-e") {
 
       //
       // Show the exception record.
       //
 
       Opts.ShowExceptionRecord = 1;
-    } else if (strcmp(Arg, "-a") == 0) {
+    } else if (Arg == "-a") {
 
       //
       // Show all the structures.
       //
 
       Opts.ShowAllStructures = true;
-    } else if (strcmp(Arg, "-h") == 0) {
+    } else if (Arg == "-h") {
 
       //
       // Show the help.
@@ -209,14 +210,14 @@ int main(int argc, const char *argv[]) {
       // If this is the last argument then this must be the dump path.
       //
 
-      Opts.DumpPath = const_cast<char *>(Arg);
+      Opts.DumpPath = Arg;
     } else {
 
       //
       // Otherwise it seems that the user passed something wrong?
       //
 
-      printf("The argument %s is not recognized.\n\n", Arg);
+      printf("The argument %s is not recognized.\n\n", Arg.data());
       Help();
       return EXIT_FAILURE;
     }
@@ -236,7 +237,7 @@ int main(int argc, const char *argv[]) {
   // have one.
   //
 
-  if (!Opts.DumpPath) {
+  if (Opts.DumpPath.empty()) {
     printf("You didn't provide the path to the dump file.\n\n");
     Help();
     return EXIT_FAILURE;
@@ -264,7 +265,7 @@ int main(int argc, const char *argv[]) {
   // Parse the dump file.
   //
 
-  if (!Dmp.Parse(Opts.DumpPath)) {
+  if (!Dmp.Parse(Opts.DumpPath.data())) {
     printf("Parsing of the dump failed, exiting.\n");
     return EXIT_FAILURE;
   }
@@ -332,7 +333,7 @@ int main(int argc, const char *argv[]) {
       // so that it is nicer for the user as they probably don't expect unorder.
       //
 
-      const kdmpparser::Physmem_t &Physmem = Dmp.GetPhysmem();
+      const auto &Physmem = Dmp.GetPhysmem();
       std::vector<kdmpparser::Physmem_t::key_type> OrderedPhysicalAddresses;
       OrderedPhysicalAddresses.reserve(Physmem.size());
 

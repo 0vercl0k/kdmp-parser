@@ -52,8 +52,9 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
 void DeleteDumpParser(PyObject *Object) {
 
   //
-  // Release internal KernelDumpParser object .
+  // Release internal KernelDumpParser object.
   //
+
   PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
 
   if (Self->DumpParser) {
