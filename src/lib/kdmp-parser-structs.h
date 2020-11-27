@@ -100,7 +100,7 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
     // So we kind of trick the compiler into doing what we want.
     //
 
-    static_assert(std::is_same<T, uint8_t>::value,
+    static_assert(std::is_same<Field_t, uint8_t>::value,
                   "DisplayField: Unknown type trying to be displayed.");
   }
 }
