@@ -154,9 +154,9 @@ static_assert(sizeof(PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
 struct BMP_HEADER64 {
-  static const uint32_t ExpectedSignature = 0x504D4453;  // 'PMDS'
-  static const uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
-  static const uint32_t ExpectedValidDump = 0x504D5544;  // 'PMUD'
+  static constexpr uint32_t ExpectedSignature = 0x504D4453;  // 'PMDS'
+  static constexpr uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
+  static constexpr uint32_t ExpectedValidDump = 0x504D5544;  // 'PMUD'
 
   //
   // Should be FDMP.

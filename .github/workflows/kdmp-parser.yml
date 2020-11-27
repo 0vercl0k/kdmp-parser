@@ -5,8 +5,8 @@ on: [push, pull_request]
 
 jobs:
   Linux2004Gcc:
-    name: Ubuntu 20.04
-    runs-on: ubuntu-20.04
+    name: Ubuntu 20.10
+    runs-on: ubuntu-20.10
     steps:
     - name: Checkout
       uses: actions/checkout@v2
