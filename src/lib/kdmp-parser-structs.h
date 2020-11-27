@@ -93,7 +93,15 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
     }
     printf(": Unknown.\n");
   } else {
-    static_assert(false, "DisplayField: Unknown type trying to be displayed.");
+
+    //
+    // We use std::is_same<> here because otherwise the static_assert fires
+    // immediately on g++/clang++ without even instantiating FieldType_t.
+    // So we kind of trick the compiler into doing what we want.
+    //
+
+    static_assert(std::is_same<T, uint8_t>::value,
+                  "DisplayField: Unknown type trying to be displayed.");
   }
 }
 
@@ -759,7 +767,7 @@ constexpr uint64_t Align(const uint64_t Address) { return Address & ~0xfff; }
 //
 
 constexpr uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
-}; // namespace Page
+} // namespace Page
 
 //
 // Structure for parsing a PTE.

@@ -19,12 +19,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         sudo apt-get -y update
-        sudo apt install -y g++-10 g++-multilib ninja-build
+        sudo apt install -y g++-multilib ninja-build
 
     - name: Build
-      run: CC=gcc-10 CXX=g++-10 python3 builder.py --run-tests
+      run: python3 builder.py --run-tests
 
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
