@@ -102,9 +102,9 @@ bool KernelDumpParser::BuildPhysmemBMPDump() {
       //
 
       const uint64_t Pfn = (BitmapIdx * 8) + BitIdx;
-      const uint64_t Pa = Pfn * 0x1000;
+      const uint64_t Pa = Pfn * Page::Size;
       Physmem_.try_emplace(Pa, Page);
-      Page += 0x1000;
+      Page += Page::Size;
     }
   }
 
@@ -147,7 +147,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
       //
 
       const uint64_t Pfn = BasePage + PageIdx;
-      const uint64_t Pa = Pfn * 0x1000;
+      const uint64_t Pa = Pfn * Page::Size;
 
       //
       // Now one thing to understand is that the Runs structure allows to skip
@@ -177,7 +177,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
       // That is the reason why the computation below is RunBase + (PageIdx *
       // 0x1000) instead of RunBase + (Pfn * 0x1000).
 
-      const uint8_t *PageBase = RunBase + (PageIdx * 0x1000);
+      const uint8_t *PageBase = RunBase + (PageIdx * Page::Size);
 
       //
       // Map the Pfn to a page.
@@ -190,7 +190,7 @@ bool KernelDumpParser::BuildPhysmemFullDump() {
     // Move the run base past all the pages in the current run.
     //
 
-    RunBase += PageCount * 0x1000;
+    RunBase += PageCount * Page::Size;
   }
 
   return true;
@@ -393,7 +393,7 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
     return 0;
   }
 
-  const uint64_t PageBase = Pte.u.PageFrameNumber * 0x1000;
+  const uint64_t PageBase = Pte.u.PageFrameNumber * Page::Size;
   return PageBase + GuestAddress.u.Offset;
 }
 
