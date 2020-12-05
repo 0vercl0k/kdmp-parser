@@ -212,7 +212,12 @@ public:
 
     ViewSize_ = Stat.st_size;
     ViewBase_ = mmap(nullptr, ViewSize_, PROT_READ, MAP_SHARED, Fd_, 0);
-    return ViewBase_ != MAP_FAILED;
+    if (ViewBase_ == MAP_FAILED) {
+      perror("Could not mmap.\n");
+      return false;
+    }
+
+    return true;
   }
 };
 
