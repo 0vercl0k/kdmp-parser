@@ -200,20 +200,20 @@ public:
   bool MapFile(const char *PathFile) {
     Fd_ = open(PathFile, O_RDONLY);
     if (Fd_ < 0) {
-      perror("Could not open dump file.\n");
+      perror("Could not open dump file");
       return false;
     }
 
     struct stat Stat;
     if (fstat(Fd_, &Stat) < 0) {
-      perror("Could not stat dump file.\n");
+      perror("Could not stat dump file");
       return false;
     }
 
     ViewSize_ = Stat.st_size;
     ViewBase_ = mmap(nullptr, ViewSize_, PROT_READ, MAP_SHARED, Fd_, 0);
     if (ViewBase_ == MAP_FAILED) {
-      perror("Could not mmap.\n");
+      perror("Could not mmap");
       return false;
     }
 
