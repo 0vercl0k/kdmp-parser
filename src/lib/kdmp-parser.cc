@@ -365,7 +365,7 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
 
   const uint64_t PdBase = Pdpte.u.PageFrameNumber * Page::Size;
   if (Pdpte.u.LargePage) {
-    return (PdBase & 0xffff'ffff'c000'0000) + (VirtualAddress & 0x3fff'ffff);
+    return PdBase + (VirtualAddress & 0x3fff'ffff);
   }
 
   const uint64_t PdeGpa = PdBase + GuestAddress.u.PdIndex * 8;
@@ -383,7 +383,7 @@ KernelDumpParser::VirtTranslate(const uint64_t VirtualAddress,
 
   const uint64_t PtBase = Pde.u.PageFrameNumber * Page::Size;
   if (Pde.u.LargePage) {
-    return (PtBase & 0xffff'ffff'ffe0'0000) + (VirtualAddress & 0x1f'ffff);
+    return PtBase + (VirtualAddress & 0x1f'ffff);
   }
 
   const uint64_t PteGpa = PtBase + GuestAddress.u.PtIndex * 8;
