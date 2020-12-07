@@ -54,56 +54,18 @@ PyMethodDef DumpObjectMethod[] = {
 // functions and object methods).
 //
 
-static PyTypeObject PythonDumpParserType = {
-    PyVarObject_HEAD_INIT(&PyType_Type, 0) "kdmp.Dump", /* tp_name */
-    sizeof(PythonDumpParser),                           /* tp_basicsize */
-    0,                                                  /* tp_itemsize */
-    DeleteDumpParser,                                   /* tp_dealloc */
-    0,                  /* tp_vectorcall_offset */
-    nullptr,            /* tp_getattr */
-    nullptr,            /* tp_setattr */
-    nullptr,            /* tp_compare */
-    nullptr,            /* tp_repr */
-    nullptr,            /* tp_as_number */
-    nullptr,            /* tp_as_sequence */
-    nullptr,            /* tp_as_mapping */
-    nullptr,            /* tp_hash */
-    nullptr,            /* tp_call */
-    nullptr,            /* tp_str */
-    nullptr,            /* tp_getattro */
-    nullptr,            /* tp_setattro */
-    nullptr,            /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT, /* tp_flags */
-    "Dump object",      /* tp_doc */
-    nullptr,            /* tp_traverse */
-    nullptr,            /* tp_clear */
-    nullptr,            /* tp_richcompare */
-    0,                  /* tp_weaklistoffset */
-    nullptr,            /* tp_iter */
-    nullptr,            /* tp_iternext */
-    DumpObjectMethod,   /* tp_methods */
-    nullptr,            /* tp_members */
-    nullptr,            /* tp_getset */
-    nullptr,            /* tp_base */
-    nullptr,            /* tp_dict */
-    nullptr,            /* tp_descr_get */
-    nullptr,            /* tp_descr_set */
-    0,                  /* tp_dictoffset */
-    nullptr,            /* tp_init */
-    nullptr,            /* tp_alloc */
-    NewDumpParser,      /* tp_new */
-    nullptr,            /* tp_free */
-    nullptr,            /* tp_is_gc */
-    nullptr,            /* tp_bases */
-    nullptr,            /* tp_mro */
-    nullptr,            /* tp_cache */
-    nullptr,            /* tp_subclasses */
-    nullptr,            /* tp_weaklist */
-    nullptr,            /* tp_del */
-    0,                  /* tp_version_tag */
-    nullptr,            /* tp_finalize */
-    nullptr,            /* tp_vectorcall */
-};
+static PyTypeObject PythonDumpParserType = []() {
+  PyTypeObject Ty = {
+      PyVarObject_HEAD_INIT(&PyType_Type, 0) "kdmp.Dump", /* tp_name */
+  };
+  Ty.tp_basicsize = sizeof(PythonDumpParser);
+  Ty.tp_dealloc = DeleteDumpParser;
+  Ty.tp_flags = Py_TPFLAGS_DEFAULT;
+  Ty.tp_doc = "Dump object";
+  Ty.tp_methods = DumpObjectMethod;
+  Ty.tp_new = NewDumpParser;
+  return Ty;
+}();
 
 //
 // KDMP Module definition.
