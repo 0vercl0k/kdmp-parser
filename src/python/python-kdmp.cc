@@ -1,3 +1,5 @@
+// Mastho - 2020
+// Axel '0vercl0k' Souchet - December 27 2020
 #include "python-kdmp.h"
 
 //
@@ -12,8 +14,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
   // Allocate and zero PythonDumpParser.
   //
 
-  PythonDumpParser *Self =
-      reinterpret_cast<PythonDumpParser *>(Type->tp_alloc(Type, 0));
+  PythonDumpParser *Self = PyObject_New(PythonDumpParser, Type);
   Self->DumpParser = nullptr;
 
   //
@@ -23,7 +24,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
 
   char *DumpPath = nullptr;
   if (!PyArg_ParseTuple(Args, "s", &DumpPath)) {
-    DeleteDumpParser(reinterpret_cast<PyObject *>(Self));
+    DeleteDumpParser((PyObject *)Self);
     return PyErr_Format(PyExc_TypeError, "dump() expected a string");
   }
 
@@ -33,7 +34,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
 
   Self->DumpParser = new kdmpparser::KernelDumpParser();
   if (!Self->DumpParser->Parse(DumpPath)) {
-    DeleteDumpParser(reinterpret_cast<PyObject *>(Self));
+    DeleteDumpParser((PyObject *)Self);
     return PyErr_Format(PyExc_ValueError, "dump() invalid path");
   }
 
@@ -41,7 +42,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
   // Return the new instance of PythonDumpParser to Python.
   //
 
-  return reinterpret_cast<PyObject *>(Self);
+  return (PyObject *)Self;
 }
 
 //
@@ -55,19 +56,18 @@ void DeleteDumpParser(PyObject *Object) {
   // Release internal KernelDumpParser object.
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
+  PythonDumpParser *Self = (PythonDumpParser *)Object;
 
   if (Self->DumpParser) {
     delete Self->DumpParser;
-    Self->DumpParser = NULL;
+    Self->DumpParser = nullptr;
   }
 
   //
   // Free type reference and self.
   //
 
-  PyTypeObject *Type = Py_TYPE(Self);
-  Type->tp_free(Self);
+  PyObject_Del(Object);
 }
 
 //
@@ -81,7 +81,7 @@ PyObject *DumpParserGetType(PyObject *Object, PyObject *) {
   // Get the dump type (FullDump, KernelDump or BMPDump).
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
+  PythonDumpParser *Self = (PythonDumpParser *)Object;
   const auto DumpType = Self->DumpParser->GetDumpType();
   return PyLong_FromUnsignedLong(static_cast<unsigned long>(DumpType));
 }
@@ -97,7 +97,7 @@ PyObject *DumpParserGetContext(PyObject *Object, PyObject *) {
   // Get the dump context (commons registers).
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
+  PythonDumpParser *Self = (PythonDumpParser *)Object;
 
   const auto *C = Self->DumpParser->GetContext();
 
@@ -279,7 +279,7 @@ PyObject *DumpParserGetVirtualPage(PyObject *Object, PyObject *Args) {
 // KDMP Module initialization function.
 //
 
-PyMODINIT_FUNC PyInit_kdmp(void) {
+PyMODINIT_FUNC PyInit_kdmp() {
 
   //
   // Initialize python.
@@ -288,32 +288,35 @@ PyMODINIT_FUNC PyInit_kdmp(void) {
   Py_Initialize();
 
   //
-  // Register PythonDumpParserType.
-  //
-
-  if (PyType_Ready(&PythonDumpParserType) < 0)
-    return nullptr;
-
-  //
   // Expose the kdmp module.
   //
 
-  PyObject *Module = PyModule_Create(&KDMPModule);
-  if (!Module) {
+  PyObject *M = PyModule_Create(&KDMPModule);
+  if (!M) {
     return nullptr;
   }
+
+  //
+  // Register PythonDumpParserType.
+  //
+
+  PyObject *Ty = PyType_FromSpec(&TySpec);
+  if (Ty == nullptr) {
+    return nullptr;
+  }
+
+  KDMPState(M)->PythonDumpParserType = (PyTypeObject *)Ty;
 
   //
   // Expose the PythonDumpParserType to Python in kdmp module.
   //  >>> kdmp.Dump class
   //
 
-  Py_INCREF(&PythonDumpParserType);
-  if (PyModule_AddObject(Module, "Dump", (PyObject *)&PythonDumpParserType) <
-      0) {
-    Py_DECREF(&PythonDumpParserType);
-    Py_DECREF(Module);
-    return NULL;
+  Py_INCREF(Ty);
+  if (PyModule_AddObject(M, "Dump", Ty) < 0) {
+    Py_DECREF(Ty);
+    Py_DECREF(M);
+    return nullptr;
   }
 
   //
@@ -321,12 +324,11 @@ PyMODINIT_FUNC PyInit_kdmp(void) {
   //  >>> kdmp.FullDump ...
   //
 
-  PyModule_AddIntConstant(Module, "FullDump",
+  PyModule_AddIntConstant(M, "FullDump",
                           long(kdmpparser::DumpType_t::FullDump));
-  PyModule_AddIntConstant(Module, "KernelDump",
+  PyModule_AddIntConstant(M, "KernelDump",
                           long(kdmpparser::DumpType_t::KernelDump));
-  PyModule_AddIntConstant(Module, "BMPDump",
-                          long(kdmpparser::DumpType_t::BMPDump));
+  PyModule_AddIntConstant(M, "BMPDump", long(kdmpparser::DumpType_t::BMPDump));
 
-  return Module;
+  return M;
 }

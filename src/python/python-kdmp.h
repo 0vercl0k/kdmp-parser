@@ -1,16 +1,26 @@
 // Mastho - 2020
-#define PY_SSIZE_T_CLEAN
+// Axel '0vercl0k' Souchet - December 27 2020
+#pragma once
+
+//
+// PEP-384
+// """
+// Applications shall only include the header file Python.h (before including
+// any system headers).
+//
+
+#define Py_LIMITED_API
+#include <Python.h>
 
 #include "kdmp-parser.h"
-#include <Python.h>
 
 //
 // Python object handling all interactions with the library.
 //
 
-typedef struct {
-  PyObject_HEAD kdmpparser::KernelDumpParser *DumpParser;
-} PythonDumpParser;
+struct PythonDumpParser {
+  PyObject_HEAD kdmpparser::KernelDumpParser *DumpParser = nullptr;
+};
 
 //
 // Python Dump type functions declarations (class instance creation and instance
@@ -24,12 +34,12 @@ void DeleteDumpParser(PyObject *Object);
 // Python Dump object methods functions declarations.
 //
 
-PyObject *DumpParserGetType(PyObject *Object, PyObject *NotUsed);
-PyObject *DumpParserGetContext(PyObject *Object, PyObject *NotUsed);
+PyObject *DumpParserGetType(PyObject *Object, PyObject *);
+PyObject *DumpParserGetContext(PyObject *Object, PyObject *);
 PyObject *DumpParserGetPhysicalPage(PyObject *Object, PyObject *Args);
 PyObject *DumpParserVirtTranslate(PyObject *Object, PyObject *Args);
 PyObject *DumpParserGetVirtualPage(PyObject *Object, PyObject *Args);
-PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *NotUsed);
+PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *);
 
 //
 // Object methods of Python Dump type.
@@ -37,7 +47,7 @@ PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *NotUsed);
 
 PyMethodDef DumpObjectMethod[] = {
     {"type", DumpParserGetType, METH_NOARGS,
-     "Show Dump Type (FullDump, KernelDump)"},
+     "Show Dump Type (FullDump, KernelDump, BMPDump)"},
     {"context", DumpParserGetContext, METH_NOARGS, "Get Register Context"},
     {"get_physical_page", DumpParserGetPhysicalPage, METH_VARARGS,
      "Get Physical Page Content"},
@@ -50,32 +60,34 @@ PyMethodDef DumpObjectMethod[] = {
     {nullptr, nullptr, 0, nullptr}};
 
 //
-// Define PythonDumpParserType (size, name, initialization & destruction
+// Define Slots/Spec (name, initialization & destruction
 // functions and object methods).
 //
 
-static PyTypeObject PythonDumpParserType = []() {
-  PyTypeObject Ty = {
-      PyVarObject_HEAD_INIT(&PyType_Type, 0) "kdmp.Dump", /* tp_name */
-  };
-  Ty.tp_basicsize = sizeof(PythonDumpParser);
-  Ty.tp_dealloc = DeleteDumpParser;
-  Ty.tp_flags = Py_TPFLAGS_DEFAULT;
-  Ty.tp_doc = "Dump object";
-  Ty.tp_methods = DumpObjectMethod;
-  Ty.tp_new = NewDumpParser;
-  return Ty;
-}();
+static PyType_Slot TySlots[] = {
+    {Py_tp_doc, "Dump object"},
+    {Py_tp_new, NewDumpParser},
+    {Py_tp_dealloc, DeleteDumpParser},
+    {Py_tp_methods, DumpObjectMethod},
+    {0, 0},
+};
+
+static PyType_Spec TySpec = {"kdmp.Dump", sizeof(PythonDumpParser), 0,
+                             Py_TPFLAGS_DEFAULT, TySlots};
 
 //
 // KDMP Module definition.
 //
 
+struct KDMPState {
+  PyTypeObject *PythonDumpParserType = nullptr;
+};
+
 static struct PyModuleDef KDMPModule = {
     PyModuleDef_HEAD_INIT, /* m_base */
     "kdmp",                /* m_name */
     nullptr,               /* m_doc */
-    -1,                    /* m_size */
+    sizeof(KDMPState),     /* m_size */
     nullptr,               /* m_methods */
     nullptr,               /* m_slots */
     nullptr,               /* m_traverse */
@@ -87,4 +99,6 @@ static struct PyModuleDef KDMPModule = {
 // KDMP Module initialization function.
 //
 
-PyMODINIT_FUNC PyInit_kdmp(void);
+PyMODINIT_FUNC PyInit_kdmp();
+
+#define KDMPState(o) ((KDMPState *)PyModule_GetState(o))
