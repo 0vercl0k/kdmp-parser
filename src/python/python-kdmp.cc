@@ -3,8 +3,7 @@
 #include "python-kdmp.h"
 
 //
-// Python Dump instance creation (allocate and initialize kernel dump object
-// with .dmp path).
+// Python Dump instance creation (allocate and initialize kernel dump object).
 //   >>> Dump(filepath)
 //
 
@@ -14,7 +13,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
   // Allocate and zero PythonDumpParser.
   //
 
-  PythonDumpParser *Self = PyObject_New(PythonDumpParser, Type);
+  auto *Self = PyObject_New(PythonDumpParser, Type);
   Self->DumpParser = nullptr;
 
   //
@@ -25,7 +24,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
   char *DumpPath = nullptr;
   if (!PyArg_ParseTuple(Args, "s", &DumpPath)) {
     DeleteDumpParser((PyObject *)Self);
-    return PyErr_Format(PyExc_TypeError, "dump() expected a string");
+    return PyErr_Format(PyExc_TypeError, "Dump() expected a string");
   }
 
   //
@@ -35,7 +34,7 @@ PyObject *NewDumpParser(PyTypeObject *Type, PyObject *Args, PyObject *) {
   Self->DumpParser = new kdmpparser::KernelDumpParser();
   if (!Self->DumpParser->Parse(DumpPath)) {
     DeleteDumpParser((PyObject *)Self);
-    return PyErr_Format(PyExc_ValueError, "dump() invalid path");
+    return PyErr_Format(PyExc_ValueError, "Dump() invalid path");
   }
 
   //
@@ -56,7 +55,7 @@ void DeleteDumpParser(PyObject *Object) {
   // Release internal KernelDumpParser object.
   //
 
-  PythonDumpParser *Self = (PythonDumpParser *)Object;
+  auto *Self = (PythonDumpParser *)Object;
 
   if (Self->DumpParser) {
     delete Self->DumpParser;
@@ -81,7 +80,7 @@ PyObject *DumpParserGetType(PyObject *Object, PyObject *) {
   // Get the dump type (FullDump, KernelDump or BMPDump).
   //
 
-  PythonDumpParser *Self = (PythonDumpParser *)Object;
+  const auto *Self = (PythonDumpParser *)Object;
   const auto DumpType = Self->DumpParser->GetDumpType();
   return PyLong_FromUnsignedLong(static_cast<unsigned long>(DumpType));
 }
@@ -97,8 +96,7 @@ PyObject *DumpParserGetContext(PyObject *Object, PyObject *) {
   // Get the dump context (commons registers).
   //
 
-  PythonDumpParser *Self = (PythonDumpParser *)Object;
-
+  const auto *Self = (PythonDumpParser *)Object;
   const auto *C = Self->DumpParser->GetContext();
 
   //
@@ -147,8 +145,7 @@ PyObject *DumpParserGetBugCheckParameters(PyObject *Object, PyObject *) {
   // Retrieve the bugcheck parameters.
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
-
+  const auto *Self = (PythonDumpParser *)Object;
   const auto Parameters = Self->DumpParser->GetBugCheckParameters();
 
   const uint64_t NumberParams = sizeof(Parameters.BugCheckCodeParameter) /
@@ -185,7 +182,7 @@ PyObject *DumpParserGetPhysicalPage(PyObject *Object, PyObject *Args) {
   // Parse Python argument (expect one unsigned long long integer).
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
+  const auto *Self = (PythonDumpParser *)Object;
 
   uint64_t PhysicalAddress = 0;
   if (!PyArg_ParseTuple(Args, "K", &PhysicalAddress)) {
@@ -198,14 +195,12 @@ PyObject *DumpParserGetPhysicalPage(PyObject *Object, PyObject *Args) {
   //
 
   const uint8_t *Page = Self->DumpParser->GetPhysicalPage(PhysicalAddress);
-
-  if (!Page) {
+  if (Page == nullptr) {
     return PyErr_Format(PyExc_ValueError,
                         "get_physical_page() invalid address");
   }
 
-  return PyBytes_FromStringAndSize(reinterpret_cast<const char *>(Page),
-                                   kdmpparser::Page::Size);
+  return PyBytes_FromStringAndSize((char *)Page, kdmpparser::Page::Size);
 }
 
 //
@@ -220,28 +215,27 @@ PyObject *DumpParserVirtTranslate(PyObject *Object, PyObject *Args) {
   // Parse Python argument (expect one or two unsigned long long integer).
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
+  const auto *Self = (PythonDumpParser *)Object;
 
   uint64_t VirtualAddress = 0;
   uint64_t DirectoryTableBase = 0;
   if (!PyArg_ParseTuple(Args, "K|K", &VirtualAddress, &DirectoryTableBase)) {
     return PyErr_Format(PyExc_TypeError,
-                        "translate_address() expected one or two integer");
+                        "virt_translate() expected one or two integers");
   }
 
   //
   // Retrieve the physical address (parse pages tables in the dump).
   //
 
-  const uint64_t PhysicalAddress =
+  const auto &PhysicalAddress =
       Self->DumpParser->VirtTranslate(VirtualAddress, DirectoryTableBase);
 
   if (!PhysicalAddress) {
-    return PyErr_Format(PyExc_ValueError,
-                        "translate_address() invalid address");
+    return PyErr_Format(PyExc_ValueError, "virt_translate() invalid address");
   }
 
-  return PyLong_FromUnsignedLongLong(PhysicalAddress);
+  return PyLong_FromUnsignedLongLong(*PhysicalAddress);
 }
 
 //
@@ -255,7 +249,7 @@ PyObject *DumpParserGetVirtualPage(PyObject *Object, PyObject *Args) {
   // Parse Python argument (expect one or two unsigned long long integer).
   //
 
-  PythonDumpParser *Self = reinterpret_cast<PythonDumpParser *>(Object);
+  const auto *Self = (PythonDumpParser *)Object;
 
   uint64_t VirtualAddress = 0;
   uint64_t DirectoryTableBase = 0;
@@ -266,13 +260,11 @@ PyObject *DumpParserGetVirtualPage(PyObject *Object, PyObject *Args) {
 
   const uint8_t *Page =
       Self->DumpParser->GetVirtualPage(VirtualAddress, DirectoryTableBase);
-
-  if (!Page) {
+  if (Page == nullptr) {
     return PyErr_Format(PyExc_ValueError, "get_virtual_page() invalid address");
   }
 
-  return PyBytes_FromStringAndSize(reinterpret_cast<const char *>(Page),
-                                   kdmpparser::Page::Size);
+  return PyBytes_FromStringAndSize((char *)Page, kdmpparser::Page::Size);
 }
 
 //
@@ -292,7 +284,7 @@ PyMODINIT_FUNC PyInit_kdmp() {
   //
 
   PyObject *M = PyModule_Create(&KDMPModule);
-  if (!M) {
+  if (M == nullptr) {
     return nullptr;
   }
 
@@ -329,6 +321,5 @@ PyMODINIT_FUNC PyInit_kdmp() {
   PyModule_AddIntConstant(M, "KernelDump",
                           long(kdmpparser::DumpType_t::KernelDump));
   PyModule_AddIntConstant(M, "BMPDump", long(kdmpparser::DumpType_t::BMPDump));
-
   return M;
 }

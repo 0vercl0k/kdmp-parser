@@ -5,6 +5,7 @@
 #include "kdmp-parser-structs.h"
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <unordered_map>
 
 namespace kdmpparser {
@@ -265,8 +266,9 @@ public:
   // base.
   //
 
-  uint64_t VirtTranslate(const uint64_t VirtualAddress,
-                         const uint64_t DirectoryTableBase = 0) const {
+  std::optional<uint64_t>
+  VirtTranslate(const uint64_t VirtualAddress,
+                const uint64_t DirectoryTableBase = 0) const {
 
     //
     // If DirectoryTableBase is null ; use the one from the dump header and
@@ -290,7 +292,7 @@ public:
     const MMPTE_HARDWARE Pml4e(PhyRead8(Pml4eGpa));
     if (!Pml4e.u.Present) {
       printf("Invalid page map level 4, address translation failed!\n");
-      return 0;
+      return {};
     }
 
     const uint64_t PdptBase = Pml4e.u.PageFrameNumber * Page::Size;
@@ -299,7 +301,7 @@ public:
     if (!Pdpte.u.Present) {
       printf("Invalid page directory pointer table, address translation "
              "failed!\n");
-      return 0;
+      return {};
     }
 
     //
@@ -317,7 +319,7 @@ public:
     const MMPTE_HARDWARE Pde(PhyRead8(PdeGpa));
     if (!Pde.u.Present) {
       printf("Invalid page directory entry, address translation failed!\n");
-      return 0;
+      return {};
     }
 
     //
@@ -335,7 +337,7 @@ public:
     const MMPTE_HARDWARE Pte(PhyRead8(PteGpa));
     if (!Pte.u.Present) {
       printf("Invalid page table entry, address translation failed!\n");
-      return 0;
+      return {};
     }
 
     const uint64_t PageBase = Pte.u.PageFrameNumber * Page::Size;
@@ -353,7 +355,7 @@ public:
     // First remove offset and translate the virtual address.
     //
 
-    const uint64_t PhysicalAddress =
+    const auto &PhysicalAddress =
         VirtTranslate(Page::Align(VirtualAddress), DirectoryTableBase);
 
     if (!PhysicalAddress) {
@@ -364,7 +366,7 @@ public:
     // Then get the physical page.
     //
 
-    return GetPhysicalPage(PhysicalAddress);
+    return GetPhysicalPage(*PhysicalAddress);
   }
 
 private:
