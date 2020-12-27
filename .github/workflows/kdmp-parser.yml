@@ -77,5 +77,5 @@ jobs:
     - name: Upload artifacts for dbg/x64
       uses: actions/upload-artifact@v2
       with:
-        name: winx64-Debug-py${{ matrix.pyver }}
+        name: winx64-Debug
         path: bin/winx64-Debug
