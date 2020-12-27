@@ -64,7 +64,7 @@ PyMethodDef DumpObjectMethod[] = {
 // functions and object methods).
 //
 
-static PyType_Slot TySlots[] = {
+PyType_Slot TySlots[] = {
     {Py_tp_doc, (void *)"Dump object"},
     {Py_tp_new, (void *)NewDumpParser},
     {Py_tp_dealloc, (void *)DeleteDumpParser},
@@ -72,8 +72,8 @@ static PyType_Slot TySlots[] = {
     {0, 0},
 };
 
-static PyType_Spec TySpec = {"kdmp.Dump", sizeof(PythonDumpParser), 0,
-                             Py_TPFLAGS_DEFAULT, TySlots};
+PyType_Spec TySpec = {"kdmp.Dump", sizeof(PythonDumpParser), 0,
+                      Py_TPFLAGS_DEFAULT, TySlots};
 
 //
 // KDMP Module definition.
@@ -83,7 +83,7 @@ struct KDMPState {
   PyTypeObject *PythonDumpParserType = nullptr;
 };
 
-static struct PyModuleDef KDMPModule = {
+struct PyModuleDef KDMPModule = {
     PyModuleDef_HEAD_INIT, /* m_base */
     "kdmp",                /* m_name */
     "KDMP module",         /* m_doc */
