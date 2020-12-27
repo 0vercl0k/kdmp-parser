@@ -21,7 +21,7 @@ Special thanks to:
 
 ## Python 3 bindings
 
-The bindings (contributed by [@masthoon](https://github.com/masthoon)) allow you to: read the context, read physical memory and to do virtual memory translations:
+The bindings allow you to: read the context, read physical memory and to do virtual memory translations:
 
 ```py
 from kdmp import Dump, FullDump, BMPDump
@@ -186,3 +186,10 @@ kdmp-parser\build\x64-RelWithDebInfo>cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -GN
 kdmp-parser\build\x64-RelWithDebInfo>cmake --build .
 [6/6] Linking CXX executable ..\..\bin\x64-RelWithDebInfo\parser.exe
 ```
+
+# Authors
+
+* Axel '[@0vercl0k](https://twitter.com/0vercl0k)' Souchet
+
+With contributions from:
+  - [@masthoon](https://github.com/masthoon).

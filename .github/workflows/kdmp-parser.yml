@@ -5,11 +5,24 @@ on: [push, pull_request]
 
 jobs:
   Linux2004Gcc:
-    name: Ubuntu 20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Available versions: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
+        # We don't test below 3.6 because f'strings were implemented in 3.6 and we use them in build scripts, etc.
+        pyver: ['3.6', '3.7', '3.8', '3.9', '3.x']
+
+    name: Ubuntu 20.04 - Py${{ matrix.pyver }}
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    - name: Setup Python3
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.pyver }}
+        architecture: 'x64'
 
     - name: Install dependencies
       run: |
@@ -22,17 +35,22 @@ jobs:
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
       with:
-        name: linx64-RelWithDebInfo
+        name: linx64-RelWithDebInfo-py${{ matrix.pyver }}
         path: bin/linx64-RelWithDebInfo
 
     - name: Upload artifacts for dbg/x64
       uses: actions/upload-artifact@v2
       with:
-        name: linx64-Debug
+        name: linx64-Debug-py${{ matrix.pyver }}
         path: bin/linx64-Debug
 
   Windows:
-    name: Windows latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pyver: ['3.6', '3.7', '3.8', '3.9', '3.x']
+
+    name: Windows latest - Py${{ matrix.pyver }}
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -41,7 +59,7 @@ jobs:
     - name: Setup Python3
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: ${{ matrix.pyver }}
         architecture: 'x64'
 
     - name: Setup vs prompt
@@ -53,7 +71,7 @@ jobs:
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
       with:
-        name: winx64-RelWithDebInfo
+        name: winx64-RelWithDebInfo-py${{ matrix.pyver }}
         path: bin/winx64-RelWithDebInfo
 
     - name: Upload artifacts for dbg/x64

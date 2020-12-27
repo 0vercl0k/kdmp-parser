@@ -56,7 +56,7 @@ public:
   FileMap_t(const FileMap_t &) = delete;
   FileMap_t &operator=(const FileMap_t &) = delete;
 
-  void *ViewBase() { return ViewBase_; }
+  constexpr void *ViewBase() const { return ViewBase_; }
 
   bool MapFile(const char *PathFile) {
     bool Success = true;
@@ -195,24 +195,29 @@ public:
   FileMap_t(const FileMap_t &) = delete;
   FileMap_t &operator=(const FileMap_t &) = delete;
 
-  void *ViewBase() { return ViewBase_; }
+  constexpr void *ViewBase() const { return ViewBase_; }
 
   bool MapFile(const char *PathFile) {
     Fd_ = open(PathFile, O_RDONLY);
     if (Fd_ < 0) {
-      perror("Could not open dump file.\n");
+      perror("Could not open dump file");
       return false;
     }
 
     struct stat Stat;
     if (fstat(Fd_, &Stat) < 0) {
-      perror("Could not stat dump file.\n");
+      perror("Could not stat dump file");
       return false;
     }
 
     ViewSize_ = Stat.st_size;
     ViewBase_ = mmap(nullptr, ViewSize_, PROT_READ, MAP_SHARED, Fd_, 0);
-    return ViewBase_ != MAP_FAILED;
+    if (ViewBase_ == MAP_FAILED) {
+      perror("Could not mmap");
+      return false;
+    }
+
+    return true;
   }
 };
 

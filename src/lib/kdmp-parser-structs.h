@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <type_traits>
 
 namespace kdmpparser {
 
@@ -31,31 +32,23 @@ enum class DumpType_t : uint32_t { FullDump = 1, KernelDump = 2, BMPDump = 5 };
 #pragma pack(1)
 
 //
-// All the display utilities are in this class because long story short template
-// functions were not cooperating. If you know a cleaner way to do this, hit
-// me up :)
+// Field is a pointer inside the this object and this function
+// returns the offset of Field in the object via pointer arithmetic.
 //
 
-struct DisplayUtils {
+constexpr uint64_t OffsetFromThis(const void *This, const void *Field) {
+  return uint64_t(Field) - uint64_t(This);
+}
 
-  //
-  // Field is a pointer inside the this object and this function
-  // returns the offset of Field in the object via pointer arithmetic.
-  //
+static void DisplayHeader(const uint32_t Prefix, const char *FieldName,
+                          const void *This, const void *Field) {
+  printf("%*s+0x%04" PRIx64 ": %-25s", Prefix, "", OffsetFromThis(This, Field),
+         FieldName);
+}
 
-  uint64_t OffsetFromThis(const void *This, const void *Field) const {
-    return uint64_t(Field) - uint64_t(This);
-  }
-
-  void DisplayHeader(const uint32_t Prefix, const char *FieldName,
-                     const void *This, const void *Field) const {
-    printf("%*s+0x%04" PRIx64 ": %-25s", Prefix, "",
-           OffsetFromThis(This, Field), FieldName);
-  }
-
-  //
-  // This is the macro we use to get the field name via the preprocessor.
-  //
+//
+// This is the macro we use to get the field name via the preprocessor.
+//
 
 #define DISPLAY_FIELD(FieldName)                                               \
   DisplayField(Prefix + 2, #FieldName, this, &FieldName)
@@ -64,66 +57,53 @@ struct DisplayUtils {
   DisplayHeader(Prefix + 2, #FieldName, this, &FieldName);                     \
   printf("\n")
 
-  //
-  // What follows are all the specializations we support. Basically,
-  // taking care of displaying basic types.
-  //
+//
+// This takes care of displaying basic types.
+//
 
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const uint8_t *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
+template <typename Field_t>
+static void DisplayField(const uint32_t Prefix, const char *FieldName,
+                         const void *This, const Field_t *Field) {
+  DisplayHeader(Prefix, FieldName, This, Field);
+  if constexpr (std::is_same<Field_t, uint8_t>::value) {
     printf(": 0x%02x.\n", *Field);
-  }
-
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const uint16_t *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
-    printf(": 0x%02x.\n", *Field);
-  }
-
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const uint32_t *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
+  } else if constexpr (std::is_same<Field_t, uint16_t>::value) {
+    printf(": 0x%04x.\n", *Field);
+  } else if constexpr (std::is_same<Field_t, uint32_t>::value) {
     printf(": 0x%08x.\n", *Field);
-  }
-
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const uint64_t *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
+  } else if constexpr (std::is_same<Field_t, uint64_t>::value) {
     printf(": 0x%016" PRIx64 ".\n", *Field);
-  }
-
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const uint128_t *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
+  } else if constexpr (std::is_same<Field_t, uint128_t>::value) {
     printf(": 0x%016" PRIx64 "%016" PRIx64 ".\n", Field->High, Field->Low);
-  }
-
-  void DisplayField(const uint32_t Prefix, const char *FieldName,
-                    const void *This, const DumpType_t *Field) const {
-    DisplayHeader(Prefix, FieldName, This, Field);
+  } else if constexpr (std::is_same<Field_t, DumpType_t>::value) {
     switch (*Field) {
     case DumpType_t::KernelDump: {
       printf(": Kernel Dump.\n");
-      break;
+      return;
     }
 
     case DumpType_t::FullDump: {
       printf(": Full Dump.\n");
-      break;
+      return;
     }
     case DumpType_t::BMPDump: {
       printf(": BMP Dump.\n");
-      break;
+      return;
     }
+    }
+    printf(": Unknown.\n");
+  } else {
 
-    default: {
-      printf(": Unknown.\n");
-      break;
-    }
-    }
+    //
+    // We use std::is_same<> here because otherwise the static_assert fires
+    // immediately on g++/clang++ without even instantiating FieldType_t.
+    // So we kind of trick the compiler into doing what we want.
+    //
+
+    static_assert(std::is_same<Field_t, uint8_t>::value,
+                  "DisplayField: Unknown type trying to be displayed.");
   }
-};
+}
 
 //
 // Display the header of a dump section.
@@ -136,7 +116,7 @@ struct DisplayUtils {
 // https://github.com/google/rekall/blob/master/rekall-core/rekall/plugins/overlays/windows/crashdump.py
 //
 
-struct PHYSMEM_RUN : public DisplayUtils {
+struct PHYSMEM_RUN {
   uint64_t BasePage;
   uint64_t PageCount;
 
@@ -149,7 +129,7 @@ struct PHYSMEM_RUN : public DisplayUtils {
 
 static_assert(sizeof(PHYSMEM_RUN) == 0x10, "PHYSMEM_RUN's size looks wrong.");
 
-struct PHYSMEM_DESC : public DisplayUtils {
+struct PHYSMEM_DESC {
   uint32_t NumberOfRuns;
   uint32_t Padding0;
   uint64_t NumberOfPages;
@@ -169,7 +149,7 @@ struct PHYSMEM_DESC : public DisplayUtils {
     }
   }
 
-  bool LooksGood() const {
+  constexpr bool LooksGood() const {
     if (NumberOfRuns == 0x45474150 || NumberOfPages == 0x4547415045474150ULL) {
       return false;
     }
@@ -181,10 +161,10 @@ struct PHYSMEM_DESC : public DisplayUtils {
 static_assert(sizeof(PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
-struct BMP_HEADER64 : public DisplayUtils {
-  static const uint32_t ExpectedSignature = 0x504D4453;  // 'PMDS'
-  static const uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
-  static const uint32_t ExpectedValidDump = 0x504D5544;  // 'PMUD'
+struct BMP_HEADER64 {
+  static constexpr uint32_t ExpectedSignature = 0x504D4453;  // 'PMDS'
+  static constexpr uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
+  static constexpr uint32_t ExpectedValidDump = 0x504D5544;  // 'PMUD'
 
   //
   // Should be FDMP.
@@ -264,7 +244,7 @@ struct BMP_HEADER64 : public DisplayUtils {
 static_assert(offsetof(BMP_HEADER64, FirstPage) == 0x20,
               "First page offset looks wrong.");
 
-struct CONTEXT : public DisplayUtils {
+struct CONTEXT {
 
   //
   // Note that the below definition has been stolen directly from the windows
@@ -538,7 +518,7 @@ struct CONTEXT : public DisplayUtils {
 static_assert(offsetof(CONTEXT, Xmm0) == 0x1a0,
               "The offset of Xmm0 looks wrong.");
 
-struct EXCEPTION_RECORD64 : public DisplayUtils {
+struct EXCEPTION_RECORD64 {
   uint32_t ExceptionCode;
   uint32_t ExceptionFlags;
   uint64_t ExceptionRecord;
@@ -575,7 +555,7 @@ struct EXCEPTION_RECORD64 : public DisplayUtils {
 static_assert(sizeof(EXCEPTION_RECORD64) == 0x98,
               "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
 
-struct HEADER64 : public DisplayUtils {
+struct HEADER64 {
   static const uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
   static const uint32_t ExpectedValidDump = 0x34365544; // '46UD'
 
@@ -768,26 +748,26 @@ static_assert(offsetof(HEADER64, Comment) == 0xfb0,
 static_assert(offsetof(HEADER64, BmpHeader) == 0x2000,
               "The offset of BmpHeaders looks wrong.");
 
-struct Page {
+namespace Page {
 
-  //
-  // Page size.
-  //
+//
+// Page size.
+//
 
-  static const uint64_t Size = 0x1000;
+constexpr uint64_t Size = 0x1000;
 
-  //
-  // Page align an address.
-  //
+//
+// Page align an address.
+//
 
-  static uint64_t Align(const uint64_t Address) { return Address & ~0xfff; }
+constexpr uint64_t Align(const uint64_t Address) { return Address & ~0xfff; }
 
-  //
-  // Extract the page offset off an address.
-  //
+//
+// Extract the page offset off an address.
+//
 
-  static uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
-};
+constexpr uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
+} // namespace Page
 
 //
 // Structure for parsing a PTE.
@@ -810,7 +790,7 @@ union MMPTE_HARDWARE {
     uint64_t NoExecute : 1;
   } u;
   uint64_t AsUINT64;
-  MMPTE_HARDWARE(const uint64_t Value) : AsUINT64(Value) {}
+  constexpr MMPTE_HARDWARE(const uint64_t Value) : AsUINT64(Value) {}
 };
 
 //
@@ -827,7 +807,7 @@ union VIRTUAL_ADDRESS {
     uint64_t Reserved : 16;
   } u;
   uint64_t AsUINT64;
-  VIRTUAL_ADDRESS(const uint64_t Value) : AsUINT64(Value) {}
+  constexpr VIRTUAL_ADDRESS(const uint64_t Value) : AsUINT64(Value) {}
 };
 
 static_assert(sizeof(MMPTE_HARDWARE) == 8);
