@@ -10,7 +10,7 @@ jobs:
       matrix:
         # Available versions: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         # We don't test below 3.6 because f'strings were implemented in 3.6 and we use them in build scripts, etc.
-        pyver: ['3.6'] #, '3.7', '3.8', '3.9', '3.x']
+        pyver: ['3.6', '3.7', '3.8', '3.9', '3.x']
 
     name: Ubuntu 20.04 - Py${{ matrix.pyver }}
     runs-on: ubuntu-20.04
