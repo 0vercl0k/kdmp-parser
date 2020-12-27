@@ -65,9 +65,9 @@ PyMethodDef DumpObjectMethod[] = {
 //
 
 static PyType_Slot TySlots[] = {
-    {Py_tp_doc, "Dump object"},
-    {Py_tp_new, NewDumpParser},
-    {Py_tp_dealloc, DeleteDumpParser},
+    {Py_tp_doc, (void *)"Dump object"},
+    {Py_tp_new, (void *)NewDumpParser},
+    {Py_tp_dealloc, (void *)DeleteDumpParser},
     {Py_tp_methods, DumpObjectMethod},
     {0, 0},
 };
