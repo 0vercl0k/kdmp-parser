@@ -9,6 +9,7 @@
 // any system headers).
 //
 
+#define PY_SSIZE_T_CLEAN
 #define Py_LIMITED_API
 #include <Python.h>
 
