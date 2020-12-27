@@ -24,14 +24,15 @@ jobs:
         python-version: ${{ matrix.pyver }}
         architecture: 'x64'
 
-    - run: echo $PATH
     - name: Install dependencies
       run: |
         sudo apt-get -y update
         sudo apt install -y g++-multilib ninja-build
 
+    # setup-python prepends into $PATH where to find the set up
+    # Python installation; that's what we give to CMake.
     - name: Build
-      run: Python_ROOT_DIR=$(where python3) python3 builder.py --run-tests
+      run: Python_ROOT_DIR=$(echo $PATH | cut -d":" -f2) python3 builder.py --run-tests
 
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
