@@ -86,7 +86,7 @@ struct KDMPState {
 static struct PyModuleDef KDMPModule = {
     PyModuleDef_HEAD_INIT, /* m_base */
     "kdmp",                /* m_name */
-    nullptr,               /* m_doc */
+    "KDMP module",         /* m_doc */
     sizeof(KDMPState),     /* m_size */
     nullptr,               /* m_methods */
     nullptr,               /* m_slots */
