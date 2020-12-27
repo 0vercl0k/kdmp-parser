@@ -57,9 +57,9 @@ def build(arch, configuration, tests_on):
             f'-DCMAKE_C_FLAGS=-m32'
         )
 
-    # Allow the user to override the Python version if Python_ROOT_DIR is found
+    # Allow the user to override the Python version if Python3_ROOT_DIR is found
     # in the environment. This is particularly useful for the CI.
-    py_root = os.getenv('Python_ROOT_DIR')
+    py_root = os.getenv('Python3_ROOT_DIR')
     if py_root is not None:
         extra_opts = extra_opts + (
             f'-DPython_ROOT_DIR={py_root}',
