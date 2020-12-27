@@ -62,7 +62,8 @@ def build(arch, configuration, tests_on):
     py_root = os.getenv('Python3_ROOT_DIR')
     if py_root is not None:
         extra_opts = extra_opts + (
-            f'-DPython3_ROOT_DIR={py_root}',
+            f'-DPython3_FIND_STRATEGY=LOCATION',
+            f'-DPython3_ROOT_DIR={py_root}'
         )
 
     cmake_config = (
