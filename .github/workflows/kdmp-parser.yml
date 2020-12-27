@@ -24,6 +24,7 @@ jobs:
         python-version: ${{ matrix.pyver }}
         architecture: 'x64'
 
+    - run: echo $PATH
     - name: Install dependencies
       run: |
         sudo apt-get -y update
