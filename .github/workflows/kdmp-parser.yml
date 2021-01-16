@@ -4,15 +4,16 @@ name: Builds
 on: [push, pull_request]
 
 jobs:
-  Linux2004Gcc:
+  Ubuntu2004:
     strategy:
       fail-fast: false
       matrix:
         # Available versions: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         # We don't test below 3.6 because f'strings were implemented in 3.6 and we use them in build scripts, etc.
         pyver: ['3.6', '3.7', '3.8', '3.9', '3.x']
+        compiler: ['clang', 'gcc']
 
-    name: Ubuntu 20.04 - Py${{ matrix.pyver }}
+    name: Ubuntu 20.04 - Py${{ matrix.pyver }} / ${{ matrix.compiler }}
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout
@@ -27,10 +28,22 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get -y update
-        sudo apt install -y g++-multilib ninja-build
+        sudo apt install -y g++-10-multilib g++-10 ninja-build
+        sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
-    - name: Build
+    - name: Build with gcc
+      if: matrix.compiler == 'gcc'
       run: python3 builder.py --run-tests
+      env:
+        CC: gcc-10
+        CXX: g++-10
+
+    - name: Build with clang
+      if: matrix.compiler == 'clang'
+      run: python3 builder.py --run-tests
+      env:
+        CC: clang-11
+        CXX: clang++-11
 
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
