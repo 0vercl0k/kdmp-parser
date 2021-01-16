@@ -36,14 +36,14 @@ enum class DumpType_t : uint32_t { FullDump = 1, KernelDump = 2, BMPDump = 5 };
 // returns the offset of Field in the object via pointer arithmetic.
 //
 
-constexpr uint64_t OffsetFromThis(const void *This, const void *Field) {
+constexpr uint64_t OffsetFromThis(const uintptr_t This, const uintptr_t Field) {
   return uint64_t(Field) - uint64_t(This);
 }
 
 static void DisplayHeader(const uint32_t Prefix, const char *FieldName,
                           const void *This, const void *Field) {
-  printf("%*s+0x%04" PRIx64 ": %-25s", Prefix, "", OffsetFromThis(This, Field),
-         FieldName);
+  printf("%*s+0x%04" PRIx64 ": %-25s", Prefix, "",
+         OffsetFromThis(uintptr_t(This), uintptr_t(Field)), FieldName);
 }
 
 //
