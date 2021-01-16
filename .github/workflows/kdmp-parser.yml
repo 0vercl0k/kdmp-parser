@@ -32,18 +32,18 @@ jobs:
         sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
     - name: Build with gcc
-      if: ${{ matrix.compiler }} == 'gcc'
+      if: matrix.compiler == 'gcc'
       run: python3 builder.py --run-tests
       env:
-        CC: gcc
-        CXX: g++
+        CC: gcc-10
+        CXX: g++-10
 
     - name: Build with clang
-      if: ${{ matrix.compiler }} == 'clang'
+      if: matrix.compiler == 'clang'
       run: python3 builder.py --run-tests
       env:
-        CC: clang
-        CXX: clang++
+        CC: clang-11
+        CXX: clang++-11
 
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
