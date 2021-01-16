@@ -18,7 +18,7 @@ jobs:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
 
-    name: Ubuntu 20.04 - Py${{ matrix.pyver }}
+    name: Ubuntu 20.04 - Py${{ matrix.pyver }} / ${{ matrix.cxx }}
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout
@@ -37,7 +37,7 @@ jobs:
         sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
     - name: Build
-      run: python3 builder.py --run-tests
+      run: CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} python3 builder.py --run-tests
 
     - name: Upload artifacts for rel/x64
       uses: actions/upload-artifact@v2
