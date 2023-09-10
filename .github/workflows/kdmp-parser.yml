@@ -1,94 +1,159 @@
-# Axel '0vercl0k' Souchet - July 26 2020
 name: Builds
 
 on: [push, pull_request]
 
+
 jobs:
-  Ubuntu2004:
+  parser:
     strategy:
       fail-fast: false
       matrix:
-        # Available versions: https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
-        # We don't test below 3.6 because f'strings were implemented in 3.6 and we use them in build scripts, etc.
-        pyver: ['3.6', '3.7', '3.8', '3.9', '3.x']
-        compiler: ['clang', 'gcc']
+        variant:
+          - {os: windows-latest, generator: msvc, arch: x64, config: RelWithDebInfo}
+          - {os: windows-latest, generator: ninja, arch: x64, config: RelWithDebInfo}
+          - {os: windows-latest, generator: msvc, arch: win32, config: RelWithDebInfo}
+          # - {os: windows-latest, generator: msvc, arch: arm64, config: RelWithDebInfo}
+          - {os: ubuntu-latest, generator: gcc, arch: x64, config: RelWithDebInfo}
+          - {os: ubuntu-latest, generator: clang, arch: x64, config: RelWithDebInfo}
+          # - {os: macos-latest, generator: clang, arch: x64, config: Release}
+    runs-on: ${{ matrix.variant.os }}
+    name: parser / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.variant.arch }}
+    env:
+      NB_CPU: 1
+      CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=OFF -DBUILD_PYTHON_BINDING:BOOL=OFF"
+      CMAKE_ARCH: ""
 
-    name: Ubuntu 20.04 - Py${{ matrix.pyver }} / ${{ matrix.compiler }}
-    runs-on: ubuntu-20.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Setup Python3
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.pyver }}
-        architecture: 'x64'
+    - name: Environment Setup (Windows)
+      if: matrix.variant.os == 'windows-latest'
+      run: |
+        echo "NB_CPU=$env:NUMBER_OF_PROCESSORS" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "CMAKE_ARCH='-A ${{ matrix.variant.arch }}'" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Import-Module .\.github\Invoke-VisualStudio.ps1
+        Invoke-VisualStudio2022${{ matrix.variant.arch }}
 
-    - name: Install dependencies
+    - name: Environment Setup (Linux)
+      if: matrix.variant.os == 'ubuntu-latest'
       run: |
         sudo apt-get -y update
-        sudo apt install -y g++-10-multilib g++-10 ninja-build
+        echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
+
+    - name: Environment Setup (Linux/GCC)
+      if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
+      run: |
+        sudo apt install -y g++ ninja-build
+        echo CC=gcc >> $GITHUB_ENV
+        echo CXX=g++ >> $GITHUB_ENV
+
+    - name: Environment Setup (Linux/CLang)
+      if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'clang'
+      run: |
         sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+        echo CC=clang >> $GITHUB_ENV
+        echo CXX=clang++ >> $GITHUB_ENV
 
-    - name: Build with gcc
-      if: matrix.compiler == 'gcc'
-      run: python3 builder.py --run-tests
-      env:
-        CC: gcc-10
-        CXX: g++-10
+    - name: Environment Setup (MacOS)
+      if: matrix.variant.os == 'macos-latest'
+      run: |
+        echo NB_CPU=$(sysctl -n hw.ncpu) >> $GITHUB_ENV
 
-    - name: Build with clang
-      if: matrix.compiler == 'clang'
-      run: python3 builder.py --run-tests
-      env:
-        CC: clang-11
-        CXX: clang++-11
+    - name: Build
+      run: |
+        mkdir build
+        mkdir artifact
+        cmake -S . -B ./build ${{ env.CMAKE_ARCH }} ${{ env.CMAKE_FLAGS }}
+        cmake --build ./build --verbose --config ${{ matrix.variant.config }} --parallel ${{ env.NB_CPU }}
+        cmake --install ./build  --config ${{ matrix.variant.config }} --prefix ./artifact --verbose
 
-    - name: Upload artifacts for rel/x64
-      uses: actions/upload-artifact@v2
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
       with:
-        name: linx64-RelWithDebInfo-py${{ matrix.pyver }}
-        path: bin/linx64-RelWithDebInfo
+        name: parser-${{ matrix.variant.os }}.${{ matrix.variant.generator }}-${{ matrix.variant.arch }}.${{ matrix.variant.config }}
+        path: artifact/
 
-    - name: Upload artifacts for dbg/x64
-      uses: actions/upload-artifact@v2
-      with:
-        name: linx64-Debug-py${{ matrix.pyver }}
-        path: bin/linx64-Debug
-
-  Windows:
+  bindings:
     strategy:
       fail-fast: false
       matrix:
-        pyver: ['3.6', '3.7', '3.8', '3.9', '3.x']
-
-    name: Windows latest - Py${{ matrix.pyver }}
-    runs-on: windows-latest
+        # nanobind does not support Python < 3.8.
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        variant:
+          - {os: windows-latest, generator: msvc, arch: x64, config: RelWithDebInfo, py-arch: x64}
+          - {os: windows-latest, generator: msvc, arch: win32, config: RelWithDebInfo, py-arch: x86}
+          # - {os: windows-latest, generator: msvc, arch: arm64, config: RelWithDebInfo, py-arch: x64} # Unsupported (see https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
+          - {os: ubuntu-latest, generator: gcc, arch: x64, config: RelWithDebInfo, py-arch: x64}
+          - {os: ubuntu-latest, generator: clang, arch: x64, config: RelWithDebInfo, py-arch: x64}
+          # - {os: macos-latest, generator: clang, arch: x64, config: Release, py-arch: x64}
+    runs-on: ${{ matrix.variant.os }}
+    name: bindings / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.python-version }} / ${{ matrix.variant.arch }}
+    env:
+      NB_CPU: 1
+      CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=OFF -DBUILD_TESTS:BOOL=OFF -DBUILD_PYTHON_BINDING:BOOL=ON"
+    needs: parser
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Setup Python3
-      uses: actions/setup-python@v2
+    - name: Setup Python
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.pyver }}
-        architecture: 'x64'
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.variant.py-arch }}
 
-    - name: Setup vs prompt
-      uses: ilammy/msvc-dev-cmd@v1
+    - name: Install Python pre-requisites
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install --user --upgrade -r src/python/requirements.txt
 
-    - name: Build
-      run: python builder.py --run-tests
+    - name: Environment Setup (Windows)
+      if: matrix.variant.os == 'windows-latest'
+      run: |
+        echo "NB_CPU=$env:NUMBER_OF_PROCESSORS" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "CMAKE_ARCH='-A ${{ matrix.variant.arch }}'" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Import-Module .\.github\Invoke-VisualStudio.ps1
+        Invoke-VisualStudio2022${{ matrix.variant.arch }}
+        mkdir ../kdmp-parser-testdatas
+        Invoke-WebRequest -Uri https://github.com/0vercl0k/kdmp-parser-testdatas/raw/main/testdatas.zip -OutFile ../kdmp-parser-testdatas/testdatas.zip
 
-    - name: Upload artifacts for rel/x64
-      uses: actions/upload-artifact@v2
+    - name: Environment Setup (Linux)
+      if: matrix.variant.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get -y update
+        echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
+        mkdir ../kdmp-parser-testdatas
+        wget -O ../kdmp-parser-testdatas/testdatas.zip https://github.com/0vercl0k/kdmp-parser-testdatas/raw/main/testdatas.zip
+
+    - name: Environment Setup (Linux/GCC)
+      if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
+      run: |
+        sudo apt install -y g++ ninja-build
+        echo CC=gcc >> $GITHUB_ENV
+        echo CXX=g++ >> $GITHUB_ENV
+
+    - name: Environment Setup (Linux/CLang)
+      if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'clang'
+      run: |
+        sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+        echo CC=clang >> $GITHUB_ENV
+        echo CXX=clang++ >> $GITHUB_ENV
+
+    - name: Build wheel
+      run: |
+        mkdir wheel
+        python -m pip wheel src/python -w ./wheel
+
+    - name: Python Binding Tests
+      run: |
+        python -m pip install -U -r src/python/tests/requirements.txt
+        python -m pip install -U --user src/python
+        python -m pytest -vvv src/python/tests
+
+    - name: Upload wheel
+      uses: actions/upload-artifact@v3
       with:
-        name: winx64-RelWithDebInfo-py${{ matrix.pyver }}
-        path: bin/winx64-RelWithDebInfo
+        name: kdmp-parser-py${{ matrix.python-version }}-${{ matrix.variant.os }}.${{ matrix.variant.generator }}-${{ matrix.variant.arch }}.${{ matrix.variant.config }}-${{ github.sha }}
+        path: wheel/*.whl
 
-    - name: Upload artifacts for dbg/x64
-      uses: actions/upload-artifact@v2
-      with:
-        name: winx64-Debug
-        path: bin/winx64-Debug
