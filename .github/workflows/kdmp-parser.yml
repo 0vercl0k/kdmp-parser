@@ -20,7 +20,7 @@ jobs:
     name: parser / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.variant.arch }}
     env:
       NB_CPU: 1
-      CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=OFF -DBUILD_PYTHON_BINDING:BOOL=OFF"
+      CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_PYTHON_BINDING:BOOL=OFF"
       CMAKE_ARCH: ""
 
     steps:
@@ -43,7 +43,7 @@ jobs:
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
         cd kdmp-parser-testdatas
         git lfs checkout
-        Expand-Archive ./testdatas.zip
+        Expand-Archive ./testdatas.zip -DestinationPath .
         cd ..
 
     - name: Environment Setup (Linux)
@@ -54,7 +54,7 @@ jobs:
         echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
         cd kdmp-parser-testdatas
         git lfs checkout
-        unzip testdatas.zip
+        unzip testdatas.zip -d .
         cd ..
 
     - name: Environment Setup (Linux/GCC)
@@ -144,7 +144,7 @@ jobs:
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
         cd kdmp-parser-testdatas
         git lfs checkout
-        Expand-Archive ./testdatas.zip
+        Expand-Archive ./testdatas.zip -DestinationPath .
         cd ..
 
 
@@ -155,7 +155,7 @@ jobs:
         echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
         cd kdmp-parser-testdatas
         git lfs checkout
-        unzip ./testdatas.zip
+        unzip ./testdatas.zip -d .
         cd ..
 
     - name: Environment Setup (Linux/GCC)
