@@ -1,9 +1,9 @@
 //
-// This file is part of udmp-parser project
+// This file is part of kdmp-parser project
 //
-// Released under MIT License, by 0vercl0k - 2023
+// Released under MIT License, by 0vercl0k - 2020-2023
 //
-// With contribution from:
+// With contributions from:
 //  * hugsy - (github.com/hugsy)
 //
 

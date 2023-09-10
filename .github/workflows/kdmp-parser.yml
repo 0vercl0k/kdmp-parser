@@ -25,7 +25,14 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    - name: Checkout LFS
+      uses: actions/checkout@v4
+      with:
+        repository: 0vercl0k/kdmp-parser-testdatas
+        lfs: true
+        path: kdmp-parser-testdatas
 
     - name: Environment Setup (Windows)
       if: matrix.variant.os == 'windows-latest'
@@ -34,12 +41,21 @@ jobs:
         echo "CMAKE_ARCH='-A ${{ matrix.variant.arch }}'" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         Import-Module .\.github\Invoke-VisualStudio.ps1
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
+        cd kdmp-parser-testdatas
+        git lfs checkout
+        Expand-Archive ./testdatas.zip
+        cd ..
 
     - name: Environment Setup (Linux)
       if: matrix.variant.os == 'ubuntu-latest'
       run: |
-        sudo apt-get -y update
+        ls -R
+        sudo apt-get -y update && sudo apt-get -y install unzip
         echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
+        cd kdmp-parser-testdatas
+        git lfs checkout
+        unzip testdatas.zip
+        cd ..
 
     - name: Environment Setup (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
@@ -68,6 +84,10 @@ jobs:
         cmake --build ./build --verbose --config ${{ matrix.variant.config }} --parallel ${{ env.NB_CPU }}
         cmake --install ./build  --config ${{ matrix.variant.config }} --prefix ./artifact --verbose
 
+    - name: Tests
+      run: |
+        ctest --parallel ${{ env.NB_CPU }} --progress --extra-verbose --build-config ${{ matrix.variant.config }} -T test
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -95,7 +115,14 @@ jobs:
     needs: parser
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    - name: Checkout LFS
+      uses: actions/checkout@v4
+      with:
+        repository: 0vercl0k/kdmp-parser-testdatas
+        lfs: true
+        path: kdmp-parser-testdatas
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -115,16 +142,21 @@ jobs:
         echo "CMAKE_ARCH='-A ${{ matrix.variant.arch }}'" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         Import-Module .\.github\Invoke-VisualStudio.ps1
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
-        mkdir ../kdmp-parser-testdatas
-        Invoke-WebRequest -Uri https://github.com/0vercl0k/kdmp-parser-testdatas/raw/main/testdatas.zip -OutFile ../kdmp-parser-testdatas/testdatas.zip
+        cd kdmp-parser-testdatas
+        git lfs checkout
+        Expand-Archive ./testdatas.zip
+        cd ..
+
 
     - name: Environment Setup (Linux)
       if: matrix.variant.os == 'ubuntu-latest'
       run: |
-        sudo apt-get -y update
+        sudo apt-get -y update && sudo apt install unzip -y
         echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
-        mkdir ../kdmp-parser-testdatas
-        wget -O ../kdmp-parser-testdatas/testdatas.zip https://github.com/0vercl0k/kdmp-parser-testdatas/raw/main/testdatas.zip
+        cd kdmp-parser-testdatas
+        git lfs checkout
+        unzip ./testdatas.zip
+        cd ..
 
     - name: Environment Setup (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'

@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
-OPTION(BUILD_TESTS "Build and run tests" OFF)
-
 project(
     kdmp-parser
     DESCRIPTION "A Cross-Platform C++ parser library for Windows kernel minidumps."
@@ -18,12 +16,6 @@ project(
 
 set(PROJECT_AUTHOR 0vercl0k)
 set(PROJECT_LICENSE MIT)
-
-add_compile_options(
-    $<$<CXX_COMPILER_ID:MSVC>:/W4$<SEMICOLON>/WX>
-    $<$<CXX_COMPILER_ID:GNU>:-Wall$<SEMICOLON>-Wextra$<SEMICOLON>-pedantic$<SEMICOLON>-Werror>
-    $<$<CXX_COMPILER_ID:Clang>:-Wall$<SEMICOLON>-Wextra$<SEMICOLON>-pedantic$<SEMICOLON>-Werror>
-)
 
 option(BUILD_PARSER "Build the parser executable for kdmp-parser" ON)
 option(BUILD_TESTS "Build the test suite for kdmp-parser" ON)
@@ -37,12 +29,9 @@ endif(BUILD_PARSER)
 
 if(BUILD_PYTHON_BINDING)
     add_subdirectory(src/python)
-
-    if(BUILD_TESTS)
-        add_subdirectory(src/testapp)
-    endif()
 endif(BUILD_PYTHON_BINDING)
 
 if(BUILD_TESTS)
+    include(CTest)
     add_subdirectory(src/tests)
-endif()
+endif(BUILD_TESTS)

@@ -1,9 +1,10 @@
 #
-# This file is part of udmp-parser project
+# This file is part of kdmp-parser project
 #
-# Released under MIT License, by 0vercl0k - 2023
+# Released under MIT License, by 0vercl0k - 2020-2023
 #
-# With contribution from:
+# With contributions from:
+# * masthoon - (github.com/masthoon)
 # * hugsy - (github.com/hugsy)
 #
 
@@ -16,7 +17,7 @@ import kdmp_parser
 
 REPO_ROOT = pathlib.Path(__file__).absolute().parent.parent.parent.parent
 # Cloned from https://github.com/0vercl0k/kdmp-parser-testdatas
-TEST_DATA_DIR = REPO_ROOT / "../kdmp-parser-testdatas"
+TEST_DATA_DIR = REPO_ROOT / "kdmp-parser-testdatas"
 assert TEST_DATA_DIR.exists()
 TEST_DATA_ZIPFILE = TEST_DATA_DIR / f"testdatas.zip"
 assert TEST_DATA_ZIPFILE.exists()
