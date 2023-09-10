@@ -3,6 +3,7 @@
 
 #include "filemap.h"
 #include "kdmp-parser-structs.h"
+#include "kdmp-parser-version.h"
 
 #include <array>
 #include <cstdint>
@@ -574,10 +575,10 @@ private:
 };
 
 struct Version {
-  static inline const uint16_t Major = 0;
-  static inline const uint16_t Minor = 5;
-  static inline const uint16_t Patch = 0;
-  static inline const std::string Release = "";
+  static inline const uint16_t Major = KDMPPARSER_VERSION_MAJOR;
+  static inline const uint16_t Minor = KDMPPARSER_VERSION_MINOR;
+  static inline const uint16_t Patch = KDMPPARSER_VERSION_PATCH;
+  static inline const std::string Release = KDMPPARSER_VERSION_RELEASE;
 };
 
 } // namespace kdmpparser

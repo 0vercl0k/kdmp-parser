@@ -5,10 +5,8 @@ message(STATUS ${TEST_DATA_DIR})
 list(APPEND TEST_SOURCE_FILES
 
     # Test cases
+    tests_version.cc
     tests_parser.cc
-
-    # Performance tests
-    # TODO
 )
 
 foreach(SOURCE_FILE ${TEST_SOURCE_FILES})
