@@ -21,32 +21,25 @@ Special thanks to:
 
 ## Python 3 bindings
 
-The bindings allow you to: read the context, read physical memory and to do virtual memory translations:
+The Python bindings exposes all functions from `kdmp-parser` to a Python module named `kdmp_parser`. To install the bindings:
 
-```py
-from kdmp import Dump, FullDump, BMPDump
-
-dmp = Dump(sys.argv[2])
-assert(dmp.type() == FullDump or dmp.type() == BMPDump)
-
-ctx = dmp.context()
-dtb = ctx['dtb'] & ~0xfff # remove PCID
-
-assert(ctx['rip'] == 0xfffff805108776a0)
-assert(dtb == 0x6d4000)
-
-page = dmp.get_physical_page(0x5000)
-assert(page[0x34:0x38] == b'MSFT')
-
-assert(dmp.virt_translate(0xfffff78000000000) == 0x0000000000c2f000)
-assert(dmp.virt_translate(0xfffff80513370000) == 0x000000003d555000)
-
-assert(dmp.get_virtual_page(0xfffff78000000000) == dmp.get_physical_page(0x0000000000c2f000))
-assert(dmp.get_virtual_page(0xfffff80513370000) == dmp.get_physical_page(0x000000003d555000))
-
-v = 0xfffff80513568000
-assert(dmp.get_virtual_page(v) == dmp.get_physical_page(dmp.virt_translate(v)))
+ * from PyPI
 ```
+python -m pip install kdmp_parser
+```
+ * using `pip` with `git`
+```
+python -m pip install -e "git+https://github.com/hugsy/kdmp-parser.git/#egg=kdmp-parser&subdirectory=src/python"
+```
+ * from cloning this repository
+```
+git clone https://github.com/0vercl0k/kdmp-parser.git
+cd kdmp-parser
+python -m pip install .\src\python\
+```
+
+
+
 
 ## Parser
 
@@ -192,4 +185,5 @@ kdmp-parser\build\x64-RelWithDebInfo>cmake --build .
 * Axel '[@0vercl0k](https://twitter.com/0vercl0k)' Souchet
 
 With contributions from:
-  - [@masthoon](https://github.com/masthoon).
+  - [@masthoon](https://github.com/masthoon)
+  - [@hugsy](https://github.com/hugsy)

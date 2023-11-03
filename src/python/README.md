@@ -19,33 +19,46 @@ Special thanks to:
 - [yrp604](https://github.com/yrp604) for being knowledgeable about the format,
 - the [rekall](https://github.com/google/rekall) project and their [Python implementation](https://github.com/google/rekall/blob/master/rekall-core/rekall/plugins/overlays/windows/crashdump.py) (most of the structures in [kdmp-parser-structs.h](https://github.com/0vercl0k/kdmp-parser/blob/master/src/kdmp-parser/kdmp-parser-structs.h) have been adapted from it).
 
-## Python 3 bindings
+## Examples
 
-The bindings allow you to: read the context, read physical memory and to do virtual memory translations:
+Some test dump files can be found in `kdmp-parser-testdatas/`
+
+### Get context, print the Program Counter
 
 ```py
-from kdmp_parser import Dump, FullDump, BMPDump
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("./kdmp-parser-testdatas/full.dmp")
+assert dmp.type == kdmp_parser.DumpType.FullDump
+ctx = dmp.context
+print(f"Dump RIP={ctx.Rip:#x}")
+```
 
-dmp = Dump(sys.argv[2])
-assert(dmp.type() == FullDump or dmp.type() == BMPDump)
+### Read a virtual memory page at address pointed by RAX
 
-ctx = dmp.context()
-dtb = ctx['dtb'] & ~0xfff # remove PCID
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("./kdmp-parser-testdatas/full.dmp")
+dmp.read_virtual_page( ctx.Rax )
+```
 
-assert(ctx['rip'] == 0xfffff805108776a0)
-assert(dtb == 0x6d4000)
+### Explore the physical memory
 
-page = dmp.get_physical_page(0x5000)
-assert(page[0x34:0x38] == b'MSFT')
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("./kdmp-parser-testdatas/full.dmp")
+pml4 = dmp.directory_table_base
+print(f"{pml=:#x}")
+dmp.read_physical_page(pml4)
+```
 
-assert(dmp.virt_translate(0xfffff78000000000) == 0x0000000000c2f000)
-assert(dmp.virt_translate(0xfffff80513370000) == 0x000000003d555000)
+### Resolve a virtual address to a physical one
 
-assert(dmp.get_virtual_page(0xfffff78000000000) == dmp.get_physical_page(0x0000000000c2f000))
-assert(dmp.get_virtual_page(0xfffff80513370000) == dmp.get_physical_page(0x000000003d555000))
-
-v = 0xfffff80513568000
-assert(dmp.get_virtual_page(v) == dmp.get_physical_page(dmp.virt_translate(v)))
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("./kdmp-parser-testdatas/full.dmp")
+VA = dmp.Rip
+PA = dmp.translate_virtual(VA)
+print(f"{VA=:#x} -> {PA=:#x}")
 ```
 
 ## Install from PIP
