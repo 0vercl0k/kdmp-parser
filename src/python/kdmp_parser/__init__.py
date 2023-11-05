@@ -64,7 +64,8 @@ class KernelDumpParser:
         """Read a physical page from the memory dump
 
         Args:
-            physical_address (int): _description_
+            physical_address (int): The physical address to read. Note that no alignment
+            of this parameter is assumed.
 
         Returns:
             Optional[bytearray]: The bytes in the page if found, None otherwise
@@ -73,7 +74,6 @@ class KernelDumpParser:
         if not raw_page:
             return None
 
-        assert len(raw_page) == _kdmp_parser.PageSize
         return bytearray(raw_page)
 
     def read_virtual_page(
@@ -92,7 +92,6 @@ class KernelDumpParser:
         if not raw_page:
             return None
 
-        assert len(raw_page) == _kdmp_parser.PageSize
         return bytearray(raw_page)
 
     def translate_virtual(
