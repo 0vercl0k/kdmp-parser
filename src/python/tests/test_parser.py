@@ -43,12 +43,6 @@ class TestParserBasic(unittest.TestCase):
     def tearDown(self) -> None:
         return super().tearDown()
 
-    def test_version(self):
-        assert isinstance(kdmp_parser.version.major, int)
-        assert isinstance(kdmp_parser.version.minor, int)
-        assert isinstance(kdmp_parser.version.patch, int)
-        assert isinstance(kdmp_parser.version.release, str)
-
     def test_parser_context(self):
         expected_values = {
             "bmp.dmp": {

@@ -218,10 +218,11 @@ NB_MODULE(_kdmp_parser, m) {
       .def("Show", &kdmpparser::CONTEXT::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::CONTEXT::LooksGood);
 
-  // TODO put this in submodule?
   m.attr("PageSize") = kdmpparser::Page::Size;
-  m.def("PageAlign", &kdmpparser::Page::Align);
-  m.def("PageAlign", &kdmpparser::Page::Offset);
+  m.def("PageAlign", &kdmpparser::Page::Align, "Address"_a,
+        "Get the aligned value on the page for the given address.");
+  m.def("PageOffset", &kdmpparser::Page::Offset, "Address"_a,
+        "Get the offset to the page for the given address.");
 
   nb::class_<kdmpparser::BugCheckParameters_t>(m, "BugCheckParameters_t")
       .def(nb::init<>())
