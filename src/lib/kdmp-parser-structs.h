@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <string_view>
 #include <type_traits>
 
 namespace kdmpparser {
@@ -22,7 +23,18 @@ struct uint128_t {
 
 static_assert(sizeof(uint128_t) == 16, "uint128_t's size looks wrong.");
 
-enum class DumpType_t : uint32_t { FullDump = 1, KernelDump = 2, BMPDump = 5 };
+enum class DumpType_t : uint32_t {
+  // Dump type to "old" dbgengd.ll
+  FullDump = 1,
+  KernelDump = 2,
+  BMPDump = 5,
+
+  // New stuff
+  MiniDump = 0x4,                // Produced by `.dump /m`
+  KernelMemoryDump = 0x8,        // Produced by `.dump /k`
+  KernelAndUserMemoryDump = 0x9, // Produced by `.dump /ka`
+  FullMemoryDump = 0xa,          // Produced by `.dump /f`
+};
 
 //
 // Save off the alignement setting and disable
@@ -62,6 +74,30 @@ static void DisplayHeader(const uint32_t Prefix, const char *FieldName,
 // This takes care of displaying basic types.
 //
 
+const std::string_view DumpTypeToString(DumpType_t type) {
+  using namespace std::literals::string_view_literals;
+  switch (type) {
+  // Dump type to "old" dbgengd.ll
+  case DumpType_t::FullDump:
+    return "FullDump"sv;
+  case DumpType_t::KernelDump:
+    return "KernelDump"sv;
+  case DumpType_t::BMPDump:
+    return "BMPDump"sv;
+
+  // New stuff
+  case DumpType_t::MiniDump:
+    return "MiniDump"sv;
+  case DumpType_t::KernelMemoryDump:
+    return "KernelMemoryDump"sv;
+  case DumpType_t::KernelAndUserMemoryDump:
+    return "KernelAndUserMemoryDump"sv;
+  case DumpType_t::FullMemoryDump:
+    return "FullMemoryDump"sv;
+  }
+  return "Unknown"sv;
+}
+
 template <typename Field_t>
 static void DisplayField(const uint32_t Prefix, const char *FieldName,
                          const void *This, const Field_t *Field) {
@@ -77,24 +113,7 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
   } else if constexpr (std::is_same<Field_t, uint128_t>::value) {
     printf(": 0x%016" PRIx64 "%016" PRIx64 ".\n", Field->High, Field->Low);
   } else if constexpr (std::is_same<Field_t, DumpType_t>::value) {
-    switch (*Field) {
-    case DumpType_t::KernelDump: {
-      printf(": Kernel Dump.\n");
-      return;
-    }
-
-    case DumpType_t::FullDump: {
-      printf(": Full Dump.\n");
-      return;
-    }
-    case DumpType_t::BMPDump: {
-      printf(": BMP Dump.\n");
-      return;
-    }
-    default:
-      printf(": Unknown.\n");
-      return;
-    }
+    printf(": %s.\n", DumpTypeToString(*Field).data());
   } else {
 
     //
@@ -668,6 +687,14 @@ struct HEADER64 {
         return false;
       }
       break;
+
+    case DumpType_t::KernelMemoryDump:
+    case DumpType_t::KernelAndUserMemoryDump:
+    case DumpType_t::FullMemoryDump:
+    case DumpType_t::MiniDump:
+      printf("Unsupported type %s (%#x).\n", DumpTypeToString(DumpType).data(),
+             static_cast<uint32_t>(DumpType));
+      return false;
 
     default:
       printf("Unknown Type %#x.\n", static_cast<uint32_t>(DumpType));
