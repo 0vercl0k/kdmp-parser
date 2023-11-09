@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <string_view>
 #include <type_traits>
+#include <variant>
 
 namespace kdmpparser {
 
@@ -109,6 +110,8 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
   } else if constexpr (std::is_same<Field_t, uint32_t>::value) {
     printf(": 0x%08x.\n", *Field);
   } else if constexpr (std::is_same<Field_t, uint64_t>::value) {
+    printf(": 0x%016" PRIx64 ".\n", *Field);
+  } else if constexpr (std::is_same<Field_t, int64_t>::value) {
     printf(": 0x%016" PRIx64 ".\n", *Field);
   } else if constexpr (std::is_same<Field_t, uint128_t>::value) {
     printf(": 0x%016" PRIx64 "%016" PRIx64 ".\n", Field->High, Field->Low);
@@ -593,8 +596,8 @@ union DUMP_FILE_ATTRIBUTES {
 ///
 ///
 struct HEADER64 {
-  static const inline uint32_t ExpectedSignature = 'PAGE';
-  static const inline uint32_t ExpectedValidDump = 'DU64';
+  static const uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
+  static const uint32_t ExpectedValidDump = 0x34365544; // '46UD'
 
   /* 0x0000 */ uint32_t Signature;
   /* 0x0004 */ uint32_t ValidDump;
@@ -612,11 +615,11 @@ struct HEADER64 {
   /* 0x0060 */ std::array<uint8_t, 32> VersionUser;
   /* 0x0080 */ uint64_t KdDebuggerDataBlock;
   /* 0x0088 */ union DUMP_HEADER64_0 {
-    std::array<uint8_t, 700> PhysicalMemoryBlockBuffer;
     PHYSMEM_DESC PhysicalMemoryBlock;
+    std::array<uint8_t, 700> PhysicalMemoryBlockBuffer;
   } u1;
   /* 0x0344 */ uint32_t __Padding1;
-  /* 0x0348 */ union {
+  /* 0x0348 */ union CONTEXT_RECORD64_0 {
     CONTEXT ContextRecord;
     std::array<uint8_t, 3000> ContextRecordBuffer;
   } u2;
@@ -638,69 +641,6 @@ struct HEADER64 {
   /* 0x1050 */ DUMP_FILE_ATTRIBUTES Attributes;
   /* 0x1054 */ uint32_t BootId;
   /* 0x1058 */ std::array<uint8_t, 4008> _reserved0;
-
-  //
-  // According to rekall there's a gap here:
-  // 'BugCheckCode' : [0x38, ['unsigned long']],
-  // 'BugCheckCodeParameter' : [0x40, ['array', 4, ['unsigned long
-  // long']]],
-  //
-
-  // std::array<uint8_t, 0x40 - (0x38 + sizeof(BugCheckCode))> Padding0;
-  // std::array<uint64_t, 4> BugCheckCodeParameter;
-
-  //
-  // According to rekall there's a gap here:
-  // 'BugCheckCodeParameter' : [0x40, ['array', 4, ['unsigned long long']]],
-  // 'KdDebuggerDataBlock' : [0x80, ['unsigned long long']],
-  //
-
-  // std::array<uint8_t, 0x80 - (0x40 + sizeof(BugCheckCodeParameter))>
-  // Padding1;
-
-  // uint64_t KdDebuggerDataBlock;
-
-  // PHYSMEM_DESC PhysicalMemoryBlockBuffer;
-
-  //
-  // According to rekall there's a gap here:
-  // 'PhysicalMemoryBlockBuffer' : [0x88, ['_PHYSICAL_MEMORY_DESCRIPTOR']],
-  // 'ContextRecord' : [0x348, ['array', 3000, ['unsigned char']]],
-  //
-
-  // std::array<uint8_t, 0x348 - (0x88 + sizeof(PhysicalMemoryBlockBuffer))>
-  //     Padding2;
-  // CONTEXT ContextRecord;
-
-  //
-  // According to rekall there's a gap here:
-  // 'ContextRecord' : [0x348, ['array', 3000, ['unsigned char']]],
-  // 'Exception' : [0xf00, ['_EXCEPTION_RECORD64']],
-  //
-
-  // std::array<uint8_t, 0xf00 - (0x348 + sizeof(ContextRecord))> Padding3;
-  // EXCEPTION_RECORD64 Exception;
-  // DumpType_t DumpType;
-
-  //
-  // According to rekall there's a gap here:
-  // 'DumpType' : [0xf98, ['unsigned long']],
-  // 'RequiredDumpSpace' : [0xfa0, ['unsigned long long']],
-  //
-  // std::array<uint8_t, 0xfa0 - (0xf98 + sizeof(DumpType))> Padding4;
-  // uint64_t RequiredDumpSpace;
-  // uint64_t SystemTime;
-  // std::array<uint8_t, 128> Comment;
-  // uint64_t SystemUpTime;
-  // uint32_t MiniDumpFields;
-  // uint32_t SecondaryDataState;
-  // uint32_t ProductType;
-  // uint32_t SuiteMask;
-  // uint32_t WriterStatus;
-  // uint8_t Unused1;
-  // uint8_t KdSecondaryVersion;
-  // std::array<uint8_t, 2> Unused;
-  // std::array<uint8_t, 4016> _reserved0;
 
   BMP_HEADER64 BmpHeader;
 
@@ -778,9 +718,9 @@ struct HEADER64 {
     DISPLAY_FIELD(BugCheckCode);
     DISPLAY_FIELD_OFFSET(BugCheckCodeParameters);
     DISPLAY_FIELD(KdDebuggerDataBlock);
-    DISPLAY_FIELD_OFFSET(u1.PhysicalMemoryBlock);
+    DISPLAY_FIELD_OFFSET(u1.PhysicalMemoryBlockBuffer);
     u1.PhysicalMemoryBlock.Show(Prefix + 2);
-    DISPLAY_FIELD_OFFSET(u2.ContextRecord);
+    DISPLAY_FIELD_OFFSET(u2.ContextRecordBuffer);
     u2.ContextRecord.Show(Prefix + 2);
     DISPLAY_FIELD_OFFSET(Exception);
     Exception.Show(Prefix + 2);

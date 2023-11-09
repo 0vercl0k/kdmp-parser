@@ -15,6 +15,7 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unordered_map.h>
+#include <nanobind/stl/variant.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -188,19 +189,19 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("MachineImageType", &kdmpparser::HEADER64::MachineImageType)
       .def_ro("NumberProcessors", &kdmpparser::HEADER64::NumberProcessors)
       .def_ro("BugCheckCode", &kdmpparser::HEADER64::BugCheckCode)
-      .def_ro("Padding0", &kdmpparser::HEADER64::Padding0)
       .def_ro("BugCheckCodeParameter",
-              &kdmpparser::HEADER64::BugCheckCodeParameter)
-      .def_ro("Padding1", &kdmpparser::HEADER64::Padding1)
+              &kdmpparser::HEADER64::BugCheckCodeParameters)
       .def_ro("KdDebuggerDataBlock", &kdmpparser::HEADER64::KdDebuggerDataBlock)
-      .def_ro("PhysicalMemoryBlockBuffer",
-              &kdmpparser::HEADER64::PhysicalMemoryBlockBuffer)
-      .def_ro("Padding2", &kdmpparser::HEADER64::Padding2)
-      .def_ro("ContextRecord", &kdmpparser::HEADER64::ContextRecord)
-      .def_ro("Padding3", &kdmpparser::HEADER64::Padding3)
+      .def_prop_ro(
+          "PhysicalMemoryBlock",
+          [](kdmpparser::HEADER64 const &hdr) -> kdmpparser::PHYSMEM_DESC {
+            return hdr.u1.PhysicalMemoryBlock;
+          })
+      .def_prop_ro(
+          "ContextRecord",
+          [](kdmpparser::HEADER64 const &hdr) { return hdr.u2.ContextRecord; })
       .def_ro("Exception", &kdmpparser::HEADER64::Exception)
       .def_ro("DumpType", &kdmpparser::HEADER64::DumpType)
-      .def_ro("Padding4", &kdmpparser::HEADER64::Padding4)
       .def_ro("RequiredDumpSpace", &kdmpparser::HEADER64::RequiredDumpSpace)
       .def_ro("SystemTime", &kdmpparser::HEADER64::SystemTime)
       .def_ro("Comment", &kdmpparser::HEADER64::Comment)
@@ -210,10 +211,9 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("ProductType", &kdmpparser::HEADER64::ProductType)
       .def_ro("SuiteMask", &kdmpparser::HEADER64::SuiteMask)
       .def_ro("WriterStatus", &kdmpparser::HEADER64::WriterStatus)
-      .def_ro("Unused1", &kdmpparser::HEADER64::Unused1)
       .def_ro("KdSecondaryVersion", &kdmpparser::HEADER64::KdSecondaryVersion)
-      .def_ro("Unused", &kdmpparser::HEADER64::Unused)
-      .def_ro("_reserved0", &kdmpparser::HEADER64::_reserved0)
+      .def_ro("Attributes", &kdmpparser::HEADER64::Attributes)
+      .def_ro("BootId", &kdmpparser::HEADER64::BootId)
       .def_ro("BmpHeader", &kdmpparser::HEADER64::BmpHeader)
       .def("Show", &kdmpparser::CONTEXT::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::CONTEXT::LooksGood);

@@ -118,7 +118,7 @@ public:
     // Give the user a view of the context record.
     //
 
-    return DmpHdr_->ContextRecord;
+    return DmpHdr_->u2.ContextRecord;
   }
 
   //
@@ -131,10 +131,11 @@ public:
     // Give the user a view of the bugcheck parameters.
     //
 
-    return {
-        DmpHdr_->BugCheckCode,
-        {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
-         DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
+    return {DmpHdr_->BugCheckCode,
+            {DmpHdr_->BugCheckCodeParameters[0],
+             DmpHdr_->BugCheckCodeParameters[1],
+             DmpHdr_->BugCheckCodeParameters[2],
+             DmpHdr_->BugCheckCodeParameters[3]}};
   }
 
   //
@@ -162,7 +163,7 @@ public:
   //
 
   void ShowContextRecord(const uint32_t Prefix) const {
-    const CONTEXT &Context = DmpHdr_->ContextRecord;
+    const CONTEXT &Context = GetContext();
     printf("%*srax=%016" PRIx64 " rbx=%016" PRIx64 " rcx=%016" PRIx64 "\n",
            Prefix, "", Context.Rax, Context.Rbx, Context.Rcx);
     printf("%*srdx=%016" PRIx64 " rsi=%016" PRIx64 " rdi=%016" PRIx64 "\n",
@@ -418,8 +419,7 @@ private:
     //
 
     uint8_t *RunBase = (uint8_t *)&DmpHdr_->BmpHeader;
-    const uint32_t NumberOfRuns =
-        DmpHdr_->PhysicalMemoryBlockBuffer.NumberOfRuns;
+    const uint32_t NumberOfRuns = DmpHdr_->u1.PhysicalMemoryBlock.NumberOfRuns;
 
     //
     // Back at it, this time building the index!
@@ -431,7 +431,7 @@ private:
       // Grab the current run as well as its base page and page count.
       //
 
-      const PHYSMEM_RUN *Run = DmpHdr_->PhysicalMemoryBlockBuffer.Run + RunIdx;
+      const PHYSMEM_RUN *Run = DmpHdr_->u1.PhysicalMemoryBlock.Run + RunIdx;
 
       const uint64_t BasePage = Run->BasePage;
       const uint64_t PageCount = Run->PageCount;
