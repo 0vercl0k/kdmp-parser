@@ -577,30 +577,77 @@ struct EXCEPTION_RECORD64 {
 static_assert(sizeof(EXCEPTION_RECORD64) == 0x98,
               "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
 
-struct HEADER64 {
-  static const inline uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
-  static const inline uint32_t ExpectedValidDump = 0x34365544; // '46UD'
+union DUMP_FILE_ATTRIBUTES {
+  struct DUMP_FILE_ATTRIBUTES_0 {
+    uint32_t _bitfield;
+  } Anonymous;
+  uint32_t Attributes;
+};
 
-  uint32_t Signature;
-  uint32_t ValidDump;
-  uint32_t MajorVersion;
-  uint32_t MinorVersion;
-  uint64_t DirectoryTableBase;
-  uint64_t PfnDatabase;
-  uint64_t PsLoadedModuleList;
-  uint64_t PsActiveProcessHead;
-  uint32_t MachineImageType;
-  uint32_t NumberProcessors;
-  uint32_t BugCheckCode;
+///
+///@brief Adjusted C struct for DUMP_HEADERS64 from MS Rust docs. Padding
+/// adjustment added from reversing `nt!IoFillDumpHeader`
+///
+/// @link
+/// https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/System/Diagnostics/Debug/struct.DUMP_HEADER64.html#structfield.DumpType
+///
+///
+struct HEADER64 {
+  static const inline uint32_t ExpectedSignature = 'PAGE';
+  static const inline uint32_t ExpectedValidDump = 'DU64';
+
+  /* 0x0000 */ uint32_t Signature;
+  /* 0x0004 */ uint32_t ValidDump;
+  /* 0x0008 */ uint32_t MajorVersion;
+  /* 0x000c */ uint32_t MinorVersion;
+  /* 0x0010 */ uint64_t DirectoryTableBase;
+  /* 0x0018 */ uint64_t PfnDatabase;
+  /* 0x0020 */ uint64_t PsLoadedModuleList;
+  /* 0x0028 */ uint64_t PsActiveProcessHead;
+  /* 0x0030 */ uint32_t MachineImageType;
+  /* 0x0034 */ uint32_t NumberProcessors;
+  /* 0x0038 */ uint32_t BugCheckCode;
+  /* 0x003c */ uint32_t __Padding0;
+  /* 0x0040 */ std::array<uint64_t, 4> BugCheckCodeParameters;
+  /* 0x0060 */ std::array<uint8_t, 32> VersionUser;
+  /* 0x0080 */ uint64_t KdDebuggerDataBlock;
+  /* 0x0088 */ union DUMP_HEADER64_0 {
+    std::array<uint8_t, 700> PhysicalMemoryBlockBuffer;
+    PHYSMEM_DESC PhysicalMemoryBlock;
+  } u1;
+  /* 0x0344 */ uint32_t __Padding1;
+  /* 0x0348 */ union {
+    CONTEXT ContextRecord;
+    std::array<uint8_t, 3000> ContextRecordBuffer;
+  } u2;
+  /* 0x0f00 */ EXCEPTION_RECORD64 Exception;
+  /* 0x0f98 */ DumpType_t DumpType;
+  /* 0x0f9c */ uint32_t __Padding2;
+  /* 0x0fa0 */ int64_t RequiredDumpSpace;
+  /* 0x0fa8 */ int64_t SystemTime;
+  /* 0x0fb0 */ std::array<uint8_t, 128> Comment;
+  /* 0x1030 */ int64_t SystemUpTime;
+  /* 0x1038 */ uint32_t MiniDumpFields;
+  /* 0x103c */ uint32_t SecondaryDataState;
+  /* 0x1040 */ uint32_t ProductType;
+  /* 0x1044 */ uint32_t SuiteMask;
+  /* 0x1048 */ uint32_t WriterStatus;
+  /* 0x104c */ uint8_t Unused1;
+  /* 0x104d */ uint8_t KdSecondaryVersion;
+  /* 0x104e */ std::array<uint8_t, 2> Unused;
+  /* 0x1050 */ DUMP_FILE_ATTRIBUTES Attributes;
+  /* 0x1054 */ uint32_t BootId;
+  /* 0x1058 */ std::array<uint8_t, 4008> _reserved0;
 
   //
   // According to rekall there's a gap here:
   // 'BugCheckCode' : [0x38, ['unsigned long']],
-  // 'BugCheckCodeParameter' : [0x40, ['array', 4, ['unsigned long long']]],
+  // 'BugCheckCodeParameter' : [0x40, ['array', 4, ['unsigned long
+  // long']]],
   //
 
-  std::array<uint8_t, 0x40 - (0x38 + sizeof(BugCheckCode))> Padding0;
-  std::array<uint64_t, 4> BugCheckCodeParameter;
+  // std::array<uint8_t, 0x40 - (0x38 + sizeof(BugCheckCode))> Padding0;
+  // std::array<uint64_t, 4> BugCheckCodeParameter;
 
   //
   // According to rekall there's a gap here:
@@ -608,9 +655,12 @@ struct HEADER64 {
   // 'KdDebuggerDataBlock' : [0x80, ['unsigned long long']],
   //
 
-  std::array<uint8_t, 0x80 - (0x40 + sizeof(BugCheckCodeParameter))> Padding1;
-  uint64_t KdDebuggerDataBlock;
-  PHYSMEM_DESC PhysicalMemoryBlockBuffer;
+  // std::array<uint8_t, 0x80 - (0x40 + sizeof(BugCheckCodeParameter))>
+  // Padding1;
+
+  // uint64_t KdDebuggerDataBlock;
+
+  // PHYSMEM_DESC PhysicalMemoryBlockBuffer;
 
   //
   // According to rekall there's a gap here:
@@ -618,9 +668,9 @@ struct HEADER64 {
   // 'ContextRecord' : [0x348, ['array', 3000, ['unsigned char']]],
   //
 
-  std::array<uint8_t, 0x348 - (0x88 + sizeof(PhysicalMemoryBlockBuffer))>
-      Padding2;
-  CONTEXT ContextRecord;
+  // std::array<uint8_t, 0x348 - (0x88 + sizeof(PhysicalMemoryBlockBuffer))>
+  //     Padding2;
+  // CONTEXT ContextRecord;
 
   //
   // According to rekall there's a gap here:
@@ -628,29 +678,30 @@ struct HEADER64 {
   // 'Exception' : [0xf00, ['_EXCEPTION_RECORD64']],
   //
 
-  std::array<uint8_t, 0xf00 - (0x348 + sizeof(ContextRecord))> Padding3;
-  EXCEPTION_RECORD64 Exception;
-  DumpType_t DumpType;
+  // std::array<uint8_t, 0xf00 - (0x348 + sizeof(ContextRecord))> Padding3;
+  // EXCEPTION_RECORD64 Exception;
+  // DumpType_t DumpType;
 
   //
   // According to rekall there's a gap here:
   // 'DumpType' : [0xf98, ['unsigned long']],
   // 'RequiredDumpSpace' : [0xfa0, ['unsigned long long']],
   //
-  std::array<uint8_t, 0xfa0 - (0xf98 + sizeof(DumpType))> Padding4;
-  uint64_t RequiredDumpSpace;
-  uint64_t SystemTime;
-  std::array<uint8_t, 128> Comment;
-  uint64_t SystemUpTime;
-  uint32_t MiniDumpFields;
-  uint32_t SecondaryDataState;
-  uint32_t ProductType;
-  uint32_t SuiteMask;
-  uint32_t WriterStatus;
-  uint8_t Unused1;
-  uint8_t KdSecondaryVersion;
-  std::array<uint8_t, 2> Unused;
-  std::array<uint8_t, 4016> _reserved0;
+  // std::array<uint8_t, 0xfa0 - (0xf98 + sizeof(DumpType))> Padding4;
+  // uint64_t RequiredDumpSpace;
+  // uint64_t SystemTime;
+  // std::array<uint8_t, 128> Comment;
+  // uint64_t SystemUpTime;
+  // uint32_t MiniDumpFields;
+  // uint32_t SecondaryDataState;
+  // uint32_t ProductType;
+  // uint32_t SuiteMask;
+  // uint32_t WriterStatus;
+  // uint8_t Unused1;
+  // uint8_t KdSecondaryVersion;
+  // std::array<uint8_t, 2> Unused;
+  // std::array<uint8_t, 4016> _reserved0;
+
   BMP_HEADER64 BmpHeader;
 
   bool LooksGood() const {
@@ -675,7 +726,7 @@ struct HEADER64 {
 
     switch (DumpType) {
     case DumpType_t::FullDump:
-      if (!PhysicalMemoryBlockBuffer.LooksGood()) {
+      if (!u1.PhysicalMemoryBlock.LooksGood()) {
         printf("The PhysicalMemoryBlockBuffer looks wrong.\n");
         return false;
       }
@@ -705,7 +756,7 @@ struct HEADER64 {
     // Integrity check the CONTEXT record.
     //
 
-    if (!ContextRecord.LooksGood()) {
+    if (!u2.ContextRecord.LooksGood()) {
       return false;
     }
 
@@ -725,12 +776,12 @@ struct HEADER64 {
     DISPLAY_FIELD(MachineImageType);
     DISPLAY_FIELD(NumberProcessors);
     DISPLAY_FIELD(BugCheckCode);
-    DISPLAY_FIELD_OFFSET(BugCheckCodeParameter);
+    DISPLAY_FIELD_OFFSET(BugCheckCodeParameters);
     DISPLAY_FIELD(KdDebuggerDataBlock);
-    DISPLAY_FIELD_OFFSET(PhysicalMemoryBlockBuffer);
-    PhysicalMemoryBlockBuffer.Show(Prefix + 2);
-    DISPLAY_FIELD_OFFSET(ContextRecord);
-    ContextRecord.Show(Prefix + 2);
+    DISPLAY_FIELD_OFFSET(u1.PhysicalMemoryBlock);
+    u1.PhysicalMemoryBlock.Show(Prefix + 2);
+    DISPLAY_FIELD_OFFSET(u2.ContextRecord);
+    u2.ContextRecord.Show(Prefix + 2);
     DISPLAY_FIELD_OFFSET(Exception);
     Exception.Show(Prefix + 2);
     DISPLAY_FIELD(DumpType);
@@ -769,13 +820,16 @@ struct HEADER64 {
 // layout, so hopefully they prevent any regressions regarding the layout.
 //
 
-static_assert(offsetof(HEADER64, BugCheckCodeParameter) == 0x40,
+static_assert(offsetof(HEADER64, Signature) == 0x00,
+              "The offset of KdDebuggerDataBlock looks wrong.");
+
+static_assert(offsetof(HEADER64, BugCheckCodeParameters) == 0x40,
               "The offset of KdDebuggerDataBlock looks wrong.");
 
 static_assert(offsetof(HEADER64, KdDebuggerDataBlock) == 0x80,
               "The offset of KdDebuggerDataBlock looks wrong.");
 
-static_assert(offsetof(HEADER64, ContextRecord) == 0x348,
+static_assert(offsetof(HEADER64, u2.ContextRecord) == 0x348,
               "The offset of ContextRecord looks wrong.");
 
 static_assert(offsetof(HEADER64, Exception) == 0xf00,
