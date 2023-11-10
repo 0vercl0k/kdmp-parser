@@ -99,6 +99,13 @@ public:
       }
       break;
     }
+    case DumpType_t::KernelMemoryDump: {
+      if (!BuildPhysicalMemoryFromKernelOnlyDump()) {
+        printf("BuildPhysicalMemoryFromKernelOnlyDump failed.\n");
+        return false;
+      }
+      break;
+    }
     default: {
       printf("Invalid type\n");
       return false;
@@ -418,7 +425,7 @@ private:
     // Walk through the runs.
     //
 
-    uint8_t *RunBase = (uint8_t *)&DmpHdr_->BmpHeader;
+    uint8_t *RunBase = (uint8_t *)&DmpHdr_->u3.BmpHeader;
     const uint32_t NumberOfRuns = DmpHdr_->u1.PhysicalMemoryBlock.NumberOfRuns;
 
     //
@@ -503,9 +510,9 @@ private:
   //
 
   bool BuildPhysmemBMPDump() {
-    const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->BmpHeader.FirstPage;
-    const uint64_t BitmapSize = DmpHdr_->BmpHeader.Pages / 8;
-    const uint8_t *Bitmap = DmpHdr_->BmpHeader.Bitmap.data();
+    const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->u3.BmpHeader.FirstPage;
+    const uint64_t BitmapSize = DmpHdr_->u3.BmpHeader.Pages / 8;
+    const uint8_t *Bitmap = DmpHdr_->u3.BmpHeader.Bitmap.data();
 
     //
     // Walk the bitmap byte per byte.
@@ -535,6 +542,41 @@ private:
 
         const uint64_t Pfn = (BitmapIdx * 8) + BitIdx;
         const uint64_t Pa = Pfn * Page::Size;
+        Physmem_.try_emplace(Pa, Page);
+        Page += Page::Size;
+      }
+    }
+
+    return true;
+  }
+
+  ///
+  /// @brief
+  ///
+  bool BuildPhysicalMemoryFromKernelOnlyDump() {
+    const uint8_t *Page =
+        (uint8_t *)DmpHdr_ + DmpHdr_->u3.RdmpHeader.FirstPageOffset;
+    const uint64_t MetadataSize = DmpHdr_->u3.RdmpHeader.MetadataSize;
+    const uint8_t *Bitmap = DmpHdr_->u3.RdmpHeader.Bitmap.data();
+
+    struct KernelMetadata {
+      uint64_t PageFileNumber;
+      uint64_t NumberOfPages;
+    };
+
+    // TODO remove
+    // printf("FirstPageOffset = %llu\n",
+    // DmpHdr_->u3.RdmpHeader.FirstPageOffset); printf("Page = %p\n", Page);
+    // printf("MetadataSize = %llu\n", MetadataSize);
+    // printf("Bitmap = %p\n", Bitmap);
+
+    for (uint64_t i = 0; i < MetadataSize; i += sizeof(KernelMetadata)) {
+      const KernelMetadata &Entry = (KernelMetadata &)Bitmap[i];
+      const uint64_t Pfn = Entry.PageFileNumber;
+      if (!Pfn)
+        break;
+      for (uint64_t j = 0; j < Entry.NumberOfPages; j++) {
+        const uint64_t Pa = Pfn * Page::Size + j * Page::Size;
         Physmem_.try_emplace(Pa, Page);
         Page += Page::Size;
       }

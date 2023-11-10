@@ -269,6 +269,59 @@ struct BMP_HEADER64 {
 static_assert(offsetof(BMP_HEADER64, FirstPage) == 0x20,
               "First page offset looks wrong.");
 
+struct RDMP_HEADER64 {
+  static constexpr uint32_t ExpectedMarker = 0x40;
+  static constexpr uint32_t ExpectedSignature = 0x504d4452; // 'PMDR'
+  static constexpr uint32_t ExpectedValidDump = 0x504D5544; // 'PMUD'
+
+  uint32_t Marker;
+  uint32_t Signature;
+  uint32_t ValidDump;
+  uint32_t __Unused;
+  uint64_t MetadataSize;
+  uint64_t FirstPageOffset;
+
+  bool LooksGood() const {
+    if (Marker != ExpectedMarker)
+      return false;
+
+    if (Signature != RDMP_HEADER64::ExpectedSignature)
+      return false;
+
+    if (ValidDump != RDMP_HEADER64::ExpectedValidDump)
+      return false;
+
+    if (MetadataSize - 0x20 !=
+        FirstPageOffset - 0x2040) // sizeof(HEADER64) + sizeof(RDMP_HEADERS64)
+      return false;
+
+    return true;
+  }
+
+  void Show(const uint32_t Prefix = 0) const {
+    DISPLAY_HEADER("RDMP_HEADER64");
+    DISPLAY_FIELD(Signature);
+    DISPLAY_FIELD(ValidDump);
+    DISPLAY_FIELD(FirstPageOffset);
+    DISPLAY_FIELD(MetadataSize);
+  }
+};
+
+static_assert(sizeof(RDMP_HEADER64) == 0x20, "Invalid size for RDMP_HEADERS64");
+
+struct KERNEL_RDMP_HEADER64 : RDMP_HEADER64 {
+
+  uint64_t __Unknown1;
+  uint64_t __Unknown2;
+  std::array<uint8_t, 1> Bitmap;
+};
+
+static_assert(sizeof(KERNEL_RDMP_HEADER64) == 0x31,
+              "Invalid size for KERNEL_RDMP_HEADER64");
+
+static_assert(offsetof(KERNEL_RDMP_HEADER64, Bitmap) == 0x30,
+              "Invalid offset for KERNEL_RDMP_HEADER64");
+
 struct CONTEXT {
 
   //
@@ -642,7 +695,10 @@ struct HEADER64 {
   /* 0x1054 */ uint32_t BootId;
   /* 0x1058 */ std::array<uint8_t, 4008> _reserved0;
 
-  BMP_HEADER64 BmpHeader;
+  union {
+    BMP_HEADER64 BmpHeader;
+    KERNEL_RDMP_HEADER64 RdmpHeader;
+  } u3;
 
   bool LooksGood() const {
 
@@ -665,21 +721,30 @@ struct HEADER64 {
     //
 
     switch (DumpType) {
-    case DumpType_t::FullDump:
+    case DumpType_t::FullDump: {
       if (!u1.PhysicalMemoryBlock.LooksGood()) {
         printf("The PhysicalMemoryBlockBuffer looks wrong.\n");
         return false;
       }
       break;
+    }
 
-    case DumpType_t::BMPDump:
-      if (!BmpHeader.LooksGood()) {
+    case DumpType_t::BMPDump: {
+      if (!u3.BmpHeader.LooksGood()) {
         printf("The BmpHeader looks wrong.\n");
         return false;
       }
       break;
+    }
 
-    case DumpType_t::KernelMemoryDump:
+    case DumpType_t::KernelMemoryDump: {
+      if (!u3.RdmpHeader.LooksGood()) {
+        printf("The RdmpHeader looks wrong.\n");
+        return false;
+      }
+      break;
+    }
+
     case DumpType_t::KernelAndUserMemoryDump:
     case DumpType_t::FullMemoryDump:
     case DumpType_t::MiniDump:
@@ -736,8 +801,8 @@ struct HEADER64 {
     DISPLAY_FIELD(WriterStatus);
     DISPLAY_FIELD(KdSecondaryVersion);
     if (DumpType == DumpType_t::BMPDump) {
-      DISPLAY_FIELD_OFFSET(BmpHeader);
-      BmpHeader.Show();
+      DISPLAY_FIELD_OFFSET(u3.BmpHeader);
+      u3.BmpHeader.Show();
     }
   }
 };
@@ -778,7 +843,7 @@ static_assert(offsetof(HEADER64, Exception) == 0xf00,
 static_assert(offsetof(HEADER64, Comment) == 0xfb0,
               "The offset of Comment looks wrong.");
 
-static_assert(offsetof(HEADER64, BmpHeader) == 0x2000,
+static_assert(offsetof(HEADER64, u3.BmpHeader) == 0x2000,
               "The offset of BmpHeaders looks wrong.");
 
 namespace Page {

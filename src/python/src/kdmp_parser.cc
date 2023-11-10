@@ -39,6 +39,12 @@ NB_MODULE(_kdmp_parser, m) {
       .value("FullDump", kdmpparser::DumpType_t::FullDump)
       .value("KernelDump", kdmpparser::DumpType_t::KernelDump)
       .value("BMPDump", kdmpparser::DumpType_t::BMPDump)
+
+      .value("MiniDump", kdmpparser::DumpType_t::MiniDump)
+      .value("KernelMemoryDump", kdmpparser::DumpType_t::KernelMemoryDump)
+      .value("KernelAndUserMemoryDump",
+             kdmpparser::DumpType_t::KernelAndUserMemoryDump)
+      .value("FullMemoryDump", kdmpparser::DumpType_t::FullMemoryDump)
       .export_values();
 
   nb::class_<kdmpparser::PHYSMEM_RUN>(m, "PHYSMEM_RUN")
@@ -214,7 +220,14 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("KdSecondaryVersion", &kdmpparser::HEADER64::KdSecondaryVersion)
       .def_ro("Attributes", &kdmpparser::HEADER64::Attributes)
       .def_ro("BootId", &kdmpparser::HEADER64::BootId)
-      .def_ro("BmpHeader", &kdmpparser::HEADER64::BmpHeader)
+
+      .def_prop_ro(
+          "BmpHeader",
+          [](kdmpparser::HEADER64 const &hdr) { return hdr.u3.BmpHeader; })
+      .def_prop_ro(
+          "RdmpHeader",
+          [](kdmpparser::HEADER64 const &hdr) { return hdr.u3.RdmpHeader; })
+
       .def("Show", &kdmpparser::CONTEXT::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::CONTEXT::LooksGood);
 

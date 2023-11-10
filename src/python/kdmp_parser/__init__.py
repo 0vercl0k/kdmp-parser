@@ -29,6 +29,10 @@ class DumpType(enum.IntEnum):
     FullDump = _DumpType_t.FullDump
     KernelDump = _DumpType_t.KernelDump
     BMPDump = _DumpType_t.BMPDump
+    MiniDump = _DumpType_t.MiniDump
+    KernelMemoryDump = _DumpType_t.KernelMemoryDump
+    KernelAndUserMemoryDump = _DumpType_t.KernelAndUserMemoryDump
+    FullMemoryDump = _DumpType_t.FullMemoryDump
 
 
 class KernelDumpParser:
