@@ -737,6 +737,7 @@ struct HEADER64 {
       break;
     }
 
+    case DumpType_t::KernelAndUserMemoryDump:
     case DumpType_t::KernelMemoryDump: {
       if (!u3.RdmpHeader.LooksGood()) {
         printf("The RdmpHeader looks wrong.\n");
@@ -745,7 +746,6 @@ struct HEADER64 {
       break;
     }
 
-    case DumpType_t::KernelAndUserMemoryDump:
     case DumpType_t::FullMemoryDump:
     case DumpType_t::MiniDump:
       printf("Unsupported type %s (%#x).\n", DumpTypeToString(DumpType).data(),

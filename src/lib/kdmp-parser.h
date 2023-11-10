@@ -99,6 +99,7 @@ public:
       }
       break;
     }
+    case DumpType_t::KernelAndUserMemoryDump:
     case DumpType_t::KernelMemoryDump: {
       if (!BuildPhysicalMemoryFromKernelOnlyDump()) {
         printf("BuildPhysicalMemoryFromKernelOnlyDump failed.\n");
