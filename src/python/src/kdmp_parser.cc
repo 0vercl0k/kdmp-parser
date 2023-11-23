@@ -11,10 +11,11 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/array.h>
+#include <nanobind/stl/bind_map.h>
 #include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
-#include <nanobind/stl/unordered_map.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -237,6 +238,12 @@ NB_MODULE(_kdmp_parser, m) {
       .def("GetBugCheckParameters",
            &kdmpparser::KernelDumpParser::GetBugCheckParameters)
       .def("GetDumpType", &kdmpparser::KernelDumpParser::GetDumpType)
+      .def("GetPhysmem",
+           [](const kdmpparser::KernelDumpParser &o) {
+             auto &ref = o.GetPhysmem();
+             return nb::make_key_iterator(nb::type<std::vector<uint64_t>>(),
+                                          "it", ref.cbegin(), ref.cend());
+           })
       .def("ShowExceptionRecord",
            &kdmpparser::KernelDumpParser::ShowExceptionRecord, "Prefix"_a = 0)
       .def("ShowContextRecord",

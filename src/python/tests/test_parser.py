@@ -11,7 +11,6 @@
 import pathlib
 import unittest
 import zipfile
-import pytest
 
 import kdmp_parser
 
@@ -124,3 +123,23 @@ class TestParserBasic(unittest.TestCase):
         assert parser.read_virtual_page(
             0xFFFFF80513370000
         ) == parser.read_physical_page(0x000000003D555000)
+
+    def test_parser_page_iterator(self):
+        parser = kdmp_parser.KernelDumpParser(self.minidump_files[0])
+
+        page_addresses = list(parser.pages.keys())
+        page_values = list(parser.pages.values())
+
+        assert len(parser.pages) > 0
+        assert len(page_addresses) == len(parser.pages)
+        assert len(page_addresses) == len(page_values)
+
+        addr = page_addresses[0]
+        page = parser.pages[addr]
+        assert parser.read_physical_page(addr) == page
+
+        for addr, page in parser.pages.items():
+            assert addr in page_addresses
+            assert page in page_values
+            assert len(page) == kdmp_parser.page.size
+            assert parser.read_physical_page(addr) == page
