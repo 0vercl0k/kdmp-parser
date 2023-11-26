@@ -255,8 +255,9 @@ NB_MODULE(_kdmp_parser, m) {
           [](kdmpparser::KernelDumpParser const &x,
              uint64_t PhysicalAddress) -> std::optional<kdmpparser::Page_t> {
             auto ptr = x.GetPhysicalPage(PhysicalAddress);
-            if (!ptr)
+            if (!ptr) {
               return std::nullopt;
+            }
             kdmpparser::Page_t out;
             ::memcpy(out.data(), ptr, kdmpparser::Page::Size);
             return out;
