@@ -228,7 +228,7 @@ NB_MODULE(_kdmp_parser, m) {
   nb::class_<kdmpparser::BugCheckParameters_t>(m, "BugCheckParameters_t")
       .def(nb::init<>())
       .def_ro("BugCheckCode", &kdmpparser::BugCheckParameters_t::BugCheckCode)
-      .def_ro("BugCheckCodeParameter;",
+      .def_ro("BugCheckCodeParameter",
               &kdmpparser::BugCheckParameters_t::BugCheckCodeParameter);
 
   nb::class_<kdmpparser::KernelDumpParser>(m, "KernelDumpParser")
