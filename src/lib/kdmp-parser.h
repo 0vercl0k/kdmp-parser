@@ -574,7 +574,7 @@ private:
   bool MapFile() { return FileMap_.MapFile(PathFile_.string().c_str()); }
 };
 
-struct Version {
+struct Version_t {
   static inline const uint16_t Major = KDMPPARSER_VERSION_MAJOR;
   static inline const uint16_t Minor = KDMPPARSER_VERSION_MINOR;
   static inline const uint16_t Patch = KDMPPARSER_VERSION_PATCH;

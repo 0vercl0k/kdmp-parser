@@ -24,11 +24,11 @@ NB_MODULE(_kdmp_parser, m) {
 
   m.doc() = "KDMP parser module";
 
-  nb::class_<kdmpparser::Version>(m, "version")
-      .def_ro_static("major", &kdmpparser::Version::Major)
-      .def_ro_static("minor", &kdmpparser::Version::Minor)
-      .def_ro_static("patch", &kdmpparser::Version::Patch)
-      .def_ro_static("release", &kdmpparser::Version::Release);
+  nb::class_<kdmpparser::Version_t>(m, "version")
+      .def_ro_static("major", &kdmpparser::Version_t::Major)
+      .def_ro_static("minor", &kdmpparser::Version_t::Minor)
+      .def_ro_static("patch", &kdmpparser::Version_t::Patch)
+      .def_ro_static("release", &kdmpparser::Version_t::Release);
 
   nb::class_<kdmpparser::uint128_t>(m, "uint128_t")
       .def(nb::init<>())

@@ -6,8 +6,8 @@
 #include "kdmp-parser.h"
 
 TEST_CASE("kdmp-parser", "version") {
-  CHECK(kdmpparser::Version::Major == KDMPPARSER_VERSION_MAJOR);
-  CHECK(kdmpparser::Version::Minor == KDMPPARSER_VERSION_MINOR);
-  CHECK(kdmpparser::Version::Patch == KDMPPARSER_VERSION_PATCH);
-  CHECK(kdmpparser::Version::Release == KDMPPARSER_VERSION_RELEASE);
+  CHECK(kdmpparser::Version_t::Major == KDMPPARSER_VERSION_MAJOR);
+  CHECK(kdmpparser::Version_t::Minor == KDMPPARSER_VERSION_MINOR);
+  CHECK(kdmpparser::Version_t::Patch == KDMPPARSER_VERSION_PATCH);
+  CHECK(kdmpparser::Version_t::Release == KDMPPARSER_VERSION_RELEASE);
 }
