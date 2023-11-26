@@ -87,13 +87,11 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
       printf(": Full Dump.\n");
       return;
     }
+
     case DumpType_t::BMPDump: {
       printf(": BMP Dump.\n");
       return;
     }
-    default:
-      printf(": Unknown.\n");
-      return;
     }
   } else {
 
