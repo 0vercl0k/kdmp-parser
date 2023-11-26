@@ -210,7 +210,7 @@ struct BMP_HEADER64 {
 
   uint64_t Pages;
 
-  std::array<uint8_t, 1> Bitmap; // TODO fix
+  std::array<uint8_t, 1> Bitmap;
 
   bool LooksGood() const {
 
