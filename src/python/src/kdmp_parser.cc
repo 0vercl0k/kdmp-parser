@@ -240,9 +240,10 @@ NB_MODULE(_kdmp_parser, m) {
       .def("GetDumpType", &kdmpparser::KernelDumpParser::GetDumpType)
       .def("GetPhysmem",
            [](const kdmpparser::KernelDumpParser &o) {
-             auto &ref = o.GetPhysmem();
+             const auto &PhysMem = o.GetPhysmem();
              return nb::make_key_iterator(nb::type<std::vector<uint64_t>>(),
-                                          "it", ref.cbegin(), ref.cend());
+                                          "it", PhysMem.cbegin(),
+                                          PhysMem.cend());
            })
       .def("ShowExceptionRecord",
            &kdmpparser::KernelDumpParser::ShowExceptionRecord, "Prefix"_a = 0)
@@ -253,14 +254,16 @@ NB_MODULE(_kdmp_parser, m) {
       .def(
           "GetPhysicalPage",
           [](kdmpparser::KernelDumpParser const &x,
-             uint64_t PhysicalAddress) -> std::optional<kdmpparser::Page_t> {
-            auto ptr = x.GetPhysicalPage(PhysicalAddress);
-            if (!ptr) {
+             const uint64_t PhysicalAddress)
+              -> std::optional<kdmpparser::Page_t> {
+            const auto *Page = x.GetPhysicalPage(PhysicalAddress);
+            if (!Page) {
               return std::nullopt;
             }
-            kdmpparser::Page_t out;
-            ::memcpy(out.data(), ptr, kdmpparser::Page::Size);
-            return out;
+
+            kdmpparser::Page_t Out;
+            memcpy(Out.data(), Page, kdmpparser::Page::Size);
+            return Out;
           },
           "PhysicalAddress"_a)
       .def("GetDirectoryTableBase",
@@ -269,15 +272,19 @@ NB_MODULE(_kdmp_parser, m) {
            "VirtualAddress"_a, "DirectoryTableBase"_a)
       .def(
           "GetVirtualPage",
-          [](kdmpparser::KernelDumpParser const &x, uint64_t VirtualAddress,
-             uint64_t DirectoryTableBase =
+          [](kdmpparser::KernelDumpParser const &x,
+             const uint64_t VirtualAddress,
+             const uint64_t DirectoryTableBase =
                  0) -> std::optional<kdmpparser::Page_t> {
-            auto ptr = x.GetVirtualPage(VirtualAddress, DirectoryTableBase);
-            if (!ptr)
+            const auto *Page =
+                x.GetVirtualPage(VirtualAddress, DirectoryTableBase);
+            if (!Page) {
               return std::nullopt;
-            kdmpparser::Page_t out;
-            ::memcpy(out.data(), ptr, kdmpparser::Page::Size);
-            return out;
+            }
+
+            kdmpparser::Page_t Out;
+            memcpy(Out.data(), Page, kdmpparser::Page::Size);
+            return Out;
           },
           "VirtualAddress"_a, "DirectoryTableBase"_a = 0);
 }
