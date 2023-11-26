@@ -1,7 +1,7 @@
 //
 // This file is part of kdmp-parser project
 //
-// Released under MIT License, by 0vercl0k - 2020-2023
+// Released under MIT License, by 0vercl0k - 2023
 //
 // With contributions from:
 //  * hugsy - (github.com/hugsy)
@@ -257,7 +257,7 @@ NB_MODULE(_kdmp_parser, m) {
             auto ptr = x.GetPhysicalPage(PhysicalAddress);
             if (!ptr)
               return std::nullopt;
-            kdmpparser::Page_t out{};
+            kdmpparser::Page_t out;
             ::memcpy(out.data(), ptr, kdmpparser::Page::Size);
             return out;
           },
