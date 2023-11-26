@@ -41,7 +41,7 @@ class KernelDumpParser {
   // File path to the crash-dump.
   //
 
-  std::filesystem::path PathFile_{};
+  std::filesystem::path PathFile_;
 
   //
   // Mapping between physical addresses / page data.
