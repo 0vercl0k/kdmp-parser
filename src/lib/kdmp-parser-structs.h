@@ -557,8 +557,8 @@ static_assert(sizeof(EXCEPTION_RECORD64) == 0x98,
               "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
 
 struct HEADER64 {
-  static const inline uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
-  static const inline uint32_t ExpectedValidDump = 0x34365544; // '46UD'
+  static constexpr uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
+  static constexpr uint32_t ExpectedValidDump = 0x34365544; // '46UD'
 
   uint32_t Signature;
   uint32_t ValidDump;

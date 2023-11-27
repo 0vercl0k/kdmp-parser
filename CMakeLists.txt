@@ -32,6 +32,5 @@ if(BUILD_PYTHON_BINDING)
 endif(BUILD_PYTHON_BINDING)
 
 if(BUILD_TESTS)
-    include(CTest)
     add_subdirectory(src/tests)
 endif(BUILD_TESTS)

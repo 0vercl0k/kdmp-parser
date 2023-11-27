@@ -239,8 +239,8 @@ NB_MODULE(_kdmp_parser, m) {
            &kdmpparser::KernelDumpParser::GetBugCheckParameters)
       .def("GetDumpType", &kdmpparser::KernelDumpParser::GetDumpType)
       .def("GetPhysmem",
-           [](const kdmpparser::KernelDumpParser &o) {
-             const auto &PhysMem = o.GetPhysmem();
+           [](const kdmpparser::KernelDumpParser &Parser) {
+             const auto &PhysMem = Parser.GetPhysmem();
              return nb::make_key_iterator(nb::type<std::vector<uint64_t>>(),
                                           "it", PhysMem.cbegin(),
                                           PhysMem.cend());
@@ -253,10 +253,10 @@ NB_MODULE(_kdmp_parser, m) {
            &kdmpparser::KernelDumpParser::ShowAllStructures, "Prefix"_a = 0)
       .def(
           "GetPhysicalPage",
-          [](kdmpparser::KernelDumpParser const &x,
+          [](const kdmpparser::KernelDumpParser &Parser,
              const uint64_t PhysicalAddress)
               -> std::optional<kdmpparser::Page_t> {
-            const auto *Page = x.GetPhysicalPage(PhysicalAddress);
+            const auto *Page = Parser.GetPhysicalPage(PhysicalAddress);
             if (!Page) {
               return std::nullopt;
             }
@@ -272,12 +272,12 @@ NB_MODULE(_kdmp_parser, m) {
            "VirtualAddress"_a, "DirectoryTableBase"_a)
       .def(
           "GetVirtualPage",
-          [](kdmpparser::KernelDumpParser const &x,
+          [](const kdmpparser::KernelDumpParser &Parser,
              const uint64_t VirtualAddress,
              const uint64_t DirectoryTableBase =
                  0) -> std::optional<kdmpparser::Page_t> {
             const auto *Page =
-                x.GetVirtualPage(VirtualAddress, DirectoryTableBase);
+                Parser.GetVirtualPage(VirtualAddress, DirectoryTableBase);
             if (!Page) {
               return std::nullopt;
             }

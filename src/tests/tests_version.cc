@@ -1,4 +1,4 @@
-// Axel '0vercl0k' Souchet - 2019-2023
+// Axel '0vercl0k' Souchet - 2023
 #define CATCH_CONFIG_MAIN
 
 #include <catch2/catch_test_macros.hpp>
