@@ -27,7 +27,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Cache Testdata
+      id: cache-testdata
+      uses: actions/cache@v3
+      with:
+        path: kdmp-parser-testdatas
+        key: lfs-testdata-${{ matrix.variant.os }}-${{ matrix.variant.arch }}-${{ matrix.variant.generator }}
+
     - name: Checkout LFS
+      if: steps.cache-testdata.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
       with:
         repository: 0vercl0k/kdmp-parser-testdatas
@@ -35,7 +43,7 @@ jobs:
         path: kdmp-parser-testdatas
 
     - name: Environment Setup (Windows)
-      if: matrix.variant.os == 'windows-latest'
+      if: matrix.variant.os == 'windows-latest' && steps.cache-testdata.outputs.cache-hit != 'true'
       run: |
         echo "NB_CPU=$env:NUMBER_OF_PROCESSORS" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         echo "CMAKE_ARCH='-A ${{ matrix.variant.arch }}'" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -47,7 +55,7 @@ jobs:
         cd ..
 
     - name: Environment Setup (Linux)
-      if: matrix.variant.os == 'ubuntu-latest'
+      if: matrix.variant.os == 'ubuntu-latest' && steps.cache-testdata.outputs.cache-hit != 'true'
       run: |
         ls -R
         sudo apt-get -y update && sudo apt-get -y install unzip
