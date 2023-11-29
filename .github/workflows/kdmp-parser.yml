@@ -28,7 +28,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Environment Setup (Windows)
-      if: matrix.variant.os == 'windows-latest' && steps.cache-testdata.outputs.cache-hit != 'true'
+      if: matrix.variant.os == 'windows-latest'
       run: |
         echo "NB_CPU=$env:NUMBER_OF_PROCESSORS" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         echo "CMAKE_ARCH='-A ${{ matrix.variant.arch }}'" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -36,7 +36,7 @@ jobs:
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
 
     - name: Environment Setup (Linux)
-      if: matrix.variant.os == 'ubuntu-latest' && steps.cache-testdata.outputs.cache-hit != 'true'
+      if: matrix.variant.os == 'ubuntu-latest'
       run: |
         ls -R
         sudo apt-get -y update && sudo apt-get -y install
