@@ -126,10 +126,6 @@ jobs:
       run: |
         sudo apt-get -y update && sudo apt install unzip -y
         echo "NB_CPU=$(grep -c ^processor /proc/cpuinfo)" >> $GITHUB_ENV
-        cd kdmp-parser-testdatas
-        git lfs checkout
-        unzip ./testdatas.zip -d .
-        cd ..
 
     - name: Environment Setup (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
