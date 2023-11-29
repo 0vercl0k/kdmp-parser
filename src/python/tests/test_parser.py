@@ -15,7 +15,7 @@ import zipfile
 import kdmp_parser
 
 REPO_ROOT = pathlib.Path(__file__).absolute().parent.parent.parent.parent
-# Cloned from https://github.com/0vercl0k/kdmp-parser-testdatas
+# Downloaded from https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip
 TEST_DATA_DIR = REPO_ROOT / "kdmp-parser-testdatas"
 assert TEST_DATA_DIR.exists()
 TEST_DATA_ZIPFILE = TEST_DATA_DIR / f"testdatas.zip"

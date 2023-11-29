@@ -35,6 +35,6 @@ class PageIterator:
         for page_addr in self.__dump.GetPhysmem():
             yield self[page_addr]
 
-    def items(self) -> Generator[tuple[int, bytearray], None, None]:
+    def items(self) -> Generator["tuple[int, bytearray]", None, None]:
         for page_addr in self.__dump.GetPhysmem():
             yield page_addr, self[page_addr]
