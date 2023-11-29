@@ -27,20 +27,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Cache Testdata
-      id: cache-testdata
-      uses: actions/cache@v3
-      with:
-        path: kdmp-parser-testdatas
-        key: lfs-testdata-${{ matrix.variant.os }}-${{ matrix.variant.arch }}-${{ matrix.variant.generator }}
+    # - name: Cache Testdata
+    #   id: cache-testdata
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: kdmp-parser-testdatas
+    #     key: lfs-testdata-${{ matrix.variant.os }}-${{ matrix.variant.arch }}-${{ matrix.variant.generator }}
 
-    - name: Checkout LFS
-      if: steps.cache-testdata.outputs.cache-hit != 'true'
-      uses: actions/checkout@v4
-      with:
-        repository: 0vercl0k/kdmp-parser-testdatas
-        lfs: true
-        path: kdmp-parser-testdatas
+    # - name: Checkout LFS
+    #   if: steps.cache-testdata.outputs.cache-hit != 'true'
+    #   uses: actions/checkout@v4
+    #   with:
+    #     repository: 0vercl0k/kdmp-parser-testdatas
+    #     lfs: true
+    #     path: kdmp-parser-testdatas
 
     - name: Environment Setup (Windows)
       if: matrix.variant.os == 'windows-latest' && steps.cache-testdata.outputs.cache-hit != 'true'
