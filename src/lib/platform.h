@@ -6,7 +6,7 @@
 #elif defined(__amd64__) || defined(_M_X64)
 #define ARCH_X64
 #else
-#error Platform not supported.
+#error Architecture not supported.
 #endif
 
 #if defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
@@ -26,12 +26,6 @@
 
 #if defined(linux) || defined(__linux)
 #define SYSTEM_PLATFORM "Linux"
-#else
-#error An error occured
-#endif
-
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
 
 #if defined ARCH_X86
 #define LINUX_X86
@@ -39,18 +33,21 @@
 #define LINUX_X64
 #endif
 
-#elif defined __APPLE__
-#define OSX
+#elif defined(__APPLE__)
+
 #define SYSTEM_PLATFORM "OSX"
-
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
-
 #if defined ARCH_X86
 #define OSX_X86
 #elif defined ARCH_X64
 #define OSX_X64
 #endif
+
+#else
+#error An error occured
+#endif
+
+#define EXIT_FAILURE 1
+#define EXIT_SUCCESS 0
 
 #else
 #error Platform not supported.
