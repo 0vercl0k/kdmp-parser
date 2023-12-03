@@ -81,7 +81,7 @@ jobs:
           # - {os: windows-latest, generator: msvc, arch: arm64, config: RelWithDebInfo, py-arch: x64} # Unsupported (see https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
           - {os: ubuntu-latest, generator: gcc, arch: x64, config: RelWithDebInfo, py-arch: x64}
           - {os: ubuntu-latest, generator: clang, arch: x64, config: RelWithDebInfo, py-arch: x64}
-          # - {os: macos-latest, generator: clang, arch: x64, config: Release, py-arch: x64}
+          - {os: macos-latest, generator: clang, arch: x64, config: Release, py-arch: x64}
     runs-on: ${{ matrix.variant.os }}
     name: bindings / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.python-version }} / ${{ matrix.variant.arch }}
     env:

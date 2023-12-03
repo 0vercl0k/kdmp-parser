@@ -668,7 +668,7 @@ struct HEADER64 {
       break;
 
     default:
-      printf("Unknown Type %#x.\n", static_cast<uint32_t>(DumpType));
+      printf("Unknown Type %#x.\n", uint32_t(DumpType));
       return false;
     }
 
