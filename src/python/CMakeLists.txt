@@ -17,6 +17,7 @@ project(
 )
 set(PROJECT_AUTHOR 0vercl0k)
 set(PROJECT_LICENSE MIT)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(Python 3
     REQUIRED COMPONENTS Interpreter Development.Module
@@ -39,27 +40,16 @@ list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 
 find_package(nanobind CONFIG REQUIRED)
 
-set(CMAKE_CXX_STANDARD 20)
-
 nanobind_add_module(_kdmp_parser NB_STATIC src/kdmp_parser.cc)
-
-if(WIN32)
-    target_compile_definitions(_kdmp_parser PRIVATE NOMINMAX)
-endif()
-
-if(MSVC)
-    target_link_libraries(_kdmp_parser PRIVATE DbgHelp.lib)
-endif(MSVC)
 
 if(BUILD_PYTHON_PACKAGE)
     #
     # Those directives are only used when creating a standalone `kdmp_parser` python package
-    # Usual case is when build with `python -m pip install src/python`
+    # Usual case is when build with `pip install src/python`
     #
     target_include_directories(_kdmp_parser PRIVATE ${KDMPPARSER_INCLUDE_DIR})
     install(DIRECTORY kdmp_parser DESTINATION .)
     install(TARGETS _kdmp_parser LIBRARY DESTINATION kdmp_parser)
-
 else()
     #
     # This is the general case, when built from the root cmakefile
