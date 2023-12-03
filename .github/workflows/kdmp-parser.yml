@@ -18,7 +18,7 @@ jobs:
     name: parser / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.variant.arch }}
     env:
       CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_PYTHON_BINDING:BOOL=OFF"
-      CMAKE_ARCH: ${{ matrix.variant.arch }}
+      CMAKE_ARCH: ""
 
     steps:
     - name: Checkout
@@ -29,6 +29,7 @@ jobs:
       run: |
         Import-Module .\.github\Invoke-VisualStudio.ps1
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
+        echo CMAKE_ARCH='-A ${{ matrix.variant.arch }}' >> %GITHUB_ENV%
 
     - name: Environment Setup (Linux)
       if: matrix.variant.os == 'ubuntu-latest'
@@ -53,7 +54,7 @@ jobs:
       run: |
         mkdir build
         mkdir artifact
-        cmake -S . -B ./build -A ${{ env.CMAKE_ARCH }} ${{ env.CMAKE_FLAGS }}
+        cmake -S . -B ./build ${{ env.CMAKE_ARCH }} ${{ env.CMAKE_FLAGS }}
         cmake --build ./build --verbose --config ${{ matrix.variant.config }}
         cmake --install ./build --config ${{ matrix.variant.config }} --prefix ./artifact --verbose
 
