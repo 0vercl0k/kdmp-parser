@@ -14,16 +14,12 @@ import unittest
 import kdmp_parser
 
 REPO_ROOT = pathlib.Path(__file__).absolute().parent.parent.parent.parent
-# Downloaded from https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip
-TEST_DATA_DIR = REPO_ROOT / "src" / "tests" / "testdatas"
-assert TEST_DATA_DIR.exists()
-
 
 class TestParserBasic(unittest.TestCase):
     def setUp(self):
         self.minidump_files: list[pathlib.Path] = [
-            TEST_DATA_DIR / "bmp.dmp",
-            TEST_DATA_DIR / "full.dmp",
+            REPO_ROOT / "bmp.dmp",
+            REPO_ROOT / "full.dmp",
         ]
 
         return super().setUp()
