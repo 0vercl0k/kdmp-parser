@@ -19,6 +19,7 @@
 #elif defined ARCH_X64
 #define WINDOWS_X64
 #endif
+
 #elif defined(linux) || defined(__linux) || defined(__FreeBSD__) ||            \
     defined(__FreeBSD_kernel__) || defined(__MACH__)
 #define LINUX
@@ -36,6 +37,19 @@
 #define LINUX_X86
 #elif defined ARCH_X64
 #define LINUX_X64
+#endif
+
+#elif defined __APPLE__
+#define OSX
+#define SYSTEM_PLATFORM "OSX"
+
+#define EXIT_FAILURE 1
+#define EXIT_SUCCESS 0
+
+#if defined ARCH_X86
+#define OSX_X86
+#elif defined ARCH_X64
+#define OSX_X64
 #endif
 
 #else
