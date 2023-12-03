@@ -111,6 +111,12 @@ jobs:
         curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
         unzip testdatas.zip
 
+    - name: Environment Setup (OSX)
+      if: matrix.variant.os == 'macos-latest'
+      run: |
+        curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
+        unzip testdatas.zip
+
     - name: Environment Setup (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
       run: |
