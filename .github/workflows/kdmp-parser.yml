@@ -18,7 +18,6 @@ jobs:
     name: parser / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.variant.arch }}
     env:
       CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_PYTHON_BINDING:BOOL=OFF"
-      CMAKE_ARCH: ""
 
     steps:
     - name: Checkout
@@ -29,12 +28,13 @@ jobs:
       run: |
         Import-Module .\.github\Invoke-VisualStudio.ps1
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
-        echo CMAKE_ARCH='-A ${{ matrix.variant.arch }}' >> %GITHUB_ENV%
+        echo CMAKE_ARCH=-A ${{ matrix.variant.arch }} >> %GITHUB_ENV%
 
     - name: Environment Setup (Linux)
       if: matrix.variant.os == 'ubuntu-latest'
       run: |
         sudo apt update
+        echo CMAKE_ARCH= >> $GITHUB_ENV
 
     - name: Build (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
@@ -42,6 +42,7 @@ jobs:
         sudo apt install -y g++
         echo CC=gcc >> $GITHUB_ENV
         echo CXX=g++ >> $GITHUB_ENV
+        echo CMAKE_ARCH= >> $GITHUB_ENV
 
     - name: Environment Setup (Linux/CLang)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'clang'
