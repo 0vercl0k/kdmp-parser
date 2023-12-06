@@ -15,21 +15,22 @@ const std::array g_TestDataFiles{
 TEST_CASE("kdmp-parser", "parser") {
   SECTION("Test minidump exists") {
     for (const auto &File : g_TestDataFiles) {
-      CHECK(std::filesystem::exists(File));
+      REQUIRE(std::filesystem::exists(File));
     }
   }
 
   SECTION("Basic parsing") {
     for (const auto &File : g_TestDataFiles) {
       kdmpparser::KernelDumpParser Dmp;
-      CHECK(Dmp.Parse(File));
+      REQUIRE(Dmp.Parse(File));
 
       const auto Type = Dmp.GetDumpType();
       const auto &Physmem = Dmp.GetPhysmem();
-      if (!strcmp(File, "bmp.dmp")) {
+      const auto &Path = Dmp.GetDumpPath();
+      if (Path.filename() == "bmp.dmp") {
         CHECK(Type == kdmpparser::DumpType_t::BMPDump);
         CHECK(Physmem.size() == 0x54'4b);
-      } else if (!strcmp(File, "full.dmp")) {
+      } else if (Path.filename() == "full.dmp") {
         CHECK(Type == kdmpparser::DumpType_t::FullDump);
         CHECK(Physmem.size() == 0x03'fb'e6);
       } else {
@@ -53,7 +54,7 @@ TEST_CASE("kdmp-parser", "parser") {
   SECTION("Context values") {
     for (const auto &File : g_TestDataFiles) {
       kdmpparser::KernelDumpParser Dmp;
-      CHECK(Dmp.Parse(File));
+      REQUIRE(Dmp.Parse(File));
       const auto &Context = Dmp.GetContext();
       CHECK(Context.Rax == 0x00000000'00000003ULL);
       CHECK(Context.Rbx == 0xfffff805'0f4e9f70ULL);
@@ -78,7 +79,7 @@ TEST_CASE("kdmp-parser", "parser") {
   SECTION("Memory access") {
     for (const auto &File : g_TestDataFiles) {
       kdmpparser::KernelDumpParser Dmp;
-      CHECK(Dmp.Parse(File));
+      REQUIRE(Dmp.Parse(File));
       const uint64_t Address = 0x6d'4d'22;
       const uint64_t AddressAligned = Address & 0xffffffff'fffff000;
       const uint64_t AddressOffset = Address & 0xfff;

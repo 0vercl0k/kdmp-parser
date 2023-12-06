@@ -61,6 +61,10 @@ public:
     //
 
     PathFile_ = std::filesystem::path(PathFile);
+    if (!std::filesystem::exists(PathFile_)) {
+      printf("Invalid file: %s.\n", (char *)PathFile_.string().c_str());
+      return false;
+    }
 
     //
     // Map a view of the file.
@@ -136,6 +140,12 @@ public:
         {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
          DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
   }
+
+  //
+  // Get the path of dump.
+  //
+
+  std::filesystem::path const &GetDumpPath() const { return PathFile_; }
 
   //
   // Get the type of dump.

@@ -1,8 +1,34 @@
 name: Builds
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
 
 jobs:
+  testdatas:
+    name: Fetch Test Data
+    runs-on: ubuntu-latest
+    steps:
+    - name: Cache Artifacts
+      id: cache-testdatas
+      uses: actions/cache@v3
+      with:
+        key: kdmp-parser-testdatas-cache
+        path: .
+    - if: steps.cache-testdatas.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get -y update; sudo apt-get install -y unzip;
+        curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
+        unzip testdatas.zip
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        if-no-files-found: error
+        name: kdmp-parser-testdatas-cache
+        path: .
+
   parser:
+    needs: testdatas
     strategy:
       fail-fast: false
       matrix:
@@ -18,10 +44,18 @@ jobs:
     name: parser / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.variant.arch }}
     env:
       CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_PYTHON_BINDING:BOOL=OFF"
+      CMAKE_ARCH: ""
+      CTEST_DIR: "~/testdatas"
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    - name: Retrieve testdatas
+      uses: actions/download-artifact@v3
+      with:
+        name: kdmp-parser-testdatas-cache
+        path: .
 
     - name: Environment Setup (Windows)
       if: matrix.variant.os == 'windows-latest'
@@ -34,7 +68,6 @@ jobs:
       if: matrix.variant.os == 'ubuntu-latest'
       run: |
         sudo apt update
-        echo CMAKE_ARCH= >> $GITHUB_ENV
 
     - name: Build (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'
@@ -42,7 +75,6 @@ jobs:
         sudo apt install -y g++
         echo CC=gcc >> $GITHUB_ENV
         echo CXX=g++ >> $GITHUB_ENV
-        echo CMAKE_ARCH= >> $GITHUB_ENV
 
     - name: Environment Setup (Linux/CLang)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'clang'
@@ -61,7 +93,8 @@ jobs:
 
     - name: Tests
       run: |
-        ctest --progress --extra-verbose --build-config ${{ matrix.variant.config }} -T test
+        mv *.dmp ./build/src/tests/
+        ctest --progress --extra-verbose --build-config ${{ matrix.variant.config }} -T test --test-dir ./build/src/tests/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
@@ -70,11 +103,12 @@ jobs:
         path: artifact/
 
   bindings:
+    needs: testdatas
     strategy:
       fail-fast: false
       matrix:
         # nanobind does not support Python < 3.8.
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         variant:
           - {os: windows-latest, generator: msvc, arch: x64, config: RelWithDebInfo, py-arch: x64}
           - {os: windows-latest, generator: msvc, arch: win32, config: RelWithDebInfo, py-arch: x86}
@@ -90,6 +124,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Retrieve testdatas
+      uses: actions/download-artifact@v3
+      with:
+        name: kdmp-parser-testdatas-cache
+        path: .
+
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
@@ -101,21 +141,16 @@ jobs:
       run: |
         Import-Module .\.github\Invoke-VisualStudio.ps1
         Invoke-VisualStudio2022${{ matrix.variant.arch }}
-        curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
-        7z x testdatas.zip
 
     - name: Environment Setup (Linux)
       if: matrix.variant.os == 'ubuntu-latest'
       run: |
         sudo apt-get -y update
-        curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
-        unzip testdatas.zip
 
     - name: Environment Setup (OSX)
       if: matrix.variant.os == 'macos-latest'
       run: |
-        curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
-        unzip testdatas.zip
+        echo
 
     - name: Environment Setup (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-latest' && matrix.variant.generator == 'gcc'

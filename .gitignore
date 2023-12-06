@@ -62,3 +62,6 @@ __pycache__/
 
 # Version files
 src/lib/kdmp-parser-version.h
+
+kdmp-parser-testdatas
+
