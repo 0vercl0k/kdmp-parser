@@ -2,6 +2,7 @@
 #pragma once
 
 #include "platform.h"
+#include <array>
 #include <cinttypes>
 #include <cstddef>
 #include <cstdint>
@@ -86,12 +87,12 @@ static void DisplayField(const uint32_t Prefix, const char *FieldName,
       printf(": Full Dump.\n");
       return;
     }
+
     case DumpType_t::BMPDump: {
       printf(": BMP Dump.\n");
       return;
     }
     }
-    printf(": Unknown.\n");
   } else {
 
     //
@@ -188,7 +189,7 @@ struct BMP_HEADER64 {
   // 'FirstPage': [0x20, ['unsigned long long']],
   //
 
-  uint8_t Padding0[0x20 - (0x4 + sizeof(ValidDump))];
+  std::array<uint8_t, 0x20 - (0x4 + sizeof(ValidDump))> Padding0;
 
   //
   // The offset of the first page in the file.
@@ -209,7 +210,7 @@ struct BMP_HEADER64 {
 
   uint64_t Pages;
 
-  uint8_t Bitmap[1];
+  std::array<uint8_t, 1> Bitmap;
 
   bool LooksGood() const {
 
@@ -341,7 +342,7 @@ struct CONTEXT {
   uint16_t Reserved3;
   uint32_t MxCsr2;
   uint32_t MxCsr_Mask;
-  uint128_t FloatRegisters[8];
+  std::array<uint128_t, 8> FloatRegisters;
   uint128_t Xmm0;
   uint128_t Xmm1;
   uint128_t Xmm2;
@@ -363,7 +364,7 @@ struct CONTEXT {
   // Vector registers.
   //
 
-  uint128_t VectorRegister[26];
+  std::array<uint128_t, 26> VectorRegister;
   uint64_t VectorControl;
 
   //
@@ -525,7 +526,7 @@ struct EXCEPTION_RECORD64 {
   uint64_t ExceptionAddress;
   uint32_t NumberParameters;
   uint32_t __unusedAlignment;
-  uint64_t ExceptionInformation[15];
+  std::array<uint64_t, 15> ExceptionInformation;
 
   void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("KDMP_PARSER_EXCEPTION_RECORD64");
@@ -556,8 +557,8 @@ static_assert(sizeof(EXCEPTION_RECORD64) == 0x98,
               "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
 
 struct HEADER64 {
-  static const uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
-  static const uint32_t ExpectedValidDump = 0x34365544; // '46UD'
+  static constexpr uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
+  static constexpr uint32_t ExpectedValidDump = 0x34365544; // '46UD'
 
   uint32_t Signature;
   uint32_t ValidDump;
@@ -577,8 +578,8 @@ struct HEADER64 {
   // 'BugCheckCodeParameter' : [0x40, ['array', 4, ['unsigned long long']]],
   //
 
-  uint8_t Padding0[0x40 - (0x38 + sizeof(BugCheckCode))];
-  uint64_t BugCheckCodeParameter[4];
+  std::array<uint8_t, 0x40 - (0x38 + sizeof(BugCheckCode))> Padding0;
+  std::array<uint64_t, 4> BugCheckCodeParameter;
 
   //
   // According to rekall there's a gap here:
@@ -586,7 +587,7 @@ struct HEADER64 {
   // 'KdDebuggerDataBlock' : [0x80, ['unsigned long long']],
   //
 
-  uint8_t Padding1[0x80 - (0x40 + sizeof(BugCheckCodeParameter))];
+  std::array<uint8_t, 0x80 - (0x40 + sizeof(BugCheckCodeParameter))> Padding1;
   uint64_t KdDebuggerDataBlock;
   PHYSMEM_DESC PhysicalMemoryBlockBuffer;
 
@@ -596,7 +597,8 @@ struct HEADER64 {
   // 'ContextRecord' : [0x348, ['array', 3000, ['unsigned char']]],
   //
 
-  uint8_t Padding2[0x348 - (0x88 + sizeof(PhysicalMemoryBlockBuffer))];
+  std::array<uint8_t, 0x348 - (0x88 + sizeof(PhysicalMemoryBlockBuffer))>
+      Padding2;
   CONTEXT ContextRecord;
 
   //
@@ -605,7 +607,7 @@ struct HEADER64 {
   // 'Exception' : [0xf00, ['_EXCEPTION_RECORD64']],
   //
 
-  uint8_t Padding3[0xf00 - (0x348 + sizeof(ContextRecord))];
+  std::array<uint8_t, 0xf00 - (0x348 + sizeof(ContextRecord))> Padding3;
   EXCEPTION_RECORD64 Exception;
   DumpType_t DumpType;
 
@@ -614,10 +616,10 @@ struct HEADER64 {
   // 'DumpType' : [0xf98, ['unsigned long']],
   // 'RequiredDumpSpace' : [0xfa0, ['unsigned long long']],
   //
-  uint8_t Padding4[0xfa0 - (0xf98 + sizeof(DumpType))];
+  std::array<uint8_t, 0xfa0 - (0xf98 + sizeof(DumpType))> Padding4;
   uint64_t RequiredDumpSpace;
   uint64_t SystemTime;
-  uint8_t Comment[128];
+  std::array<uint8_t, 128> Comment;
   uint64_t SystemUpTime;
   uint32_t MiniDumpFields;
   uint32_t SecondaryDataState;
@@ -626,8 +628,8 @@ struct HEADER64 {
   uint32_t WriterStatus;
   uint8_t Unused1;
   uint8_t KdSecondaryVersion;
-  uint8_t Unused[2];
-  uint8_t _reserved0[4016];
+  std::array<uint8_t, 2> Unused;
+  std::array<uint8_t, 4016> _reserved0;
   BMP_HEADER64 BmpHeader;
 
   bool LooksGood() const {
@@ -650,16 +652,24 @@ struct HEADER64 {
     // Make sure it's a dump type we know how to handle.
     //
 
-    if (DumpType == DumpType_t::FullDump) {
+    switch (DumpType) {
+    case DumpType_t::FullDump:
       if (!PhysicalMemoryBlockBuffer.LooksGood()) {
         printf("The PhysicalMemoryBlockBuffer looks wrong.\n");
         return false;
       }
-    } else if (DumpType == DumpType_t::BMPDump) {
+      break;
+
+    case DumpType_t::BMPDump:
       if (!BmpHeader.LooksGood()) {
         printf("The BmpHeader looks wrong.\n");
         return false;
       }
+      break;
+
+    default:
+      printf("Unknown Type %#x.\n", uint32_t(DumpType));
+      return false;
     }
 
     //

@@ -3,18 +3,24 @@
 
 #include "filemap.h"
 #include "kdmp-parser-structs.h"
+#include "kdmp-parser-version.h"
+
+#include <array>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <optional>
+#include <string>
 #include <unordered_map>
 
 namespace kdmpparser {
 
+using Page_t = std::array<uint8_t, kdmpparser::Page::Size>;
 using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
 
 struct BugCheckParameters_t {
   uint32_t BugCheckCode;
-  uint64_t BugCheckCodeParameter[4];
+  std::array<uint64_t, 4> BugCheckCodeParameter;
 };
 
 class KernelDumpParser {
@@ -35,7 +41,7 @@ class KernelDumpParser {
   // File path to the crash-dump.
   //
 
-  const char *PathFile_ = nullptr;
+  std::filesystem::path PathFile_;
 
   //
   // Mapping between physical addresses / page data.
@@ -54,7 +60,11 @@ public:
     // Copy the path file.
     //
 
-    PathFile_ = PathFile;
+    PathFile_ = std::filesystem::path(PathFile);
+    if (!std::filesystem::exists(PathFile_)) {
+      printf("Invalid file: %s.\n", (char *)PathFile_.string().c_str());
+      return false;
+    }
 
     //
     // Map a view of the file.
@@ -78,16 +88,25 @@ public:
     // Retrieve the physical memory according to the type of dump we have.
     //
 
-    if (DmpHdr_->DumpType == DumpType_t::FullDump) {
+    switch (DmpHdr_->DumpType) {
+    case DumpType_t::FullDump: {
       if (!BuildPhysmemFullDump()) {
         printf("BuildPhysmemFullDump failed.\n");
         return false;
       }
-    } else if (DmpHdr_->DumpType == DumpType_t::BMPDump) {
+      break;
+    }
+    case DumpType_t::BMPDump: {
       if (!BuildPhysmemBMPDump()) {
         printf("BuildPhysmemBMPDump failed.\n");
         return false;
       }
+      break;
+    }
+    default: {
+      printf("Invalid type\n");
+      return false;
+    }
     }
 
     return true;
@@ -97,13 +116,13 @@ public:
   // Give the Context record to the user.
   //
 
-  constexpr const CONTEXT *GetContext() const {
+  constexpr const CONTEXT &GetContext() const {
 
     //
     // Give the user a view of the context record.
     //
 
-    return &DmpHdr_->ContextRecord;
+    return DmpHdr_->ContextRecord;
   }
 
   //
@@ -121,6 +140,12 @@ public:
         {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
          DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
   }
+
+  //
+  // Get the path of dump.
+  //
+
+  const std::filesystem::path &GetDumpPath() const { return PathFile_; }
 
   //
   // Get the type of dump.
@@ -428,21 +453,21 @@ private:
       for (uint64_t PageIdx = 0; PageIdx < PageCount; PageIdx++) {
 
         //
-        // Compute the current PFN as well as the actual physical address of the
-        // page.
+        // Compute the current PFN as well as the actual physical address of
+        // the page.
         //
 
         const uint64_t Pfn = BasePage + PageIdx;
         const uint64_t Pa = Pfn * Page::Size;
 
         //
-        // Now one thing to understand is that the Runs structure allows to skip
-        // for holes in memory. Instead of, padding them with empty spaces to
-        // conserve a 1:1 mapping between physical address and file offset, the
-        // Run gives you the base Pfn. This means that we don't have a 1:1
-        // mapping between file offset and physical addresses so we need to keep
-        // track of where the Run starts in memory and then we can simply access
-        // our pages one after the other.
+        // Now one thing to understand is that the Runs structure allows to
+        // skip for holes in memory. Instead of, padding them with empty
+        // spaces to conserve a 1:1 mapping between physical address and file
+        // offset, the Run gives you the base Pfn. This means that we don't
+        // have a 1:1 mapping between file offset and physical addresses so we
+        // need to keep track of where the Run starts in memory and then we
+        // can simply access our pages one after the other.
         //
         // If this is not clear enough, here is a small example:
         //  Run[0]
@@ -457,12 +482,12 @@ private:
         // Now if we want to get the file offset of those pages we start at
         // Run0:
         //   Run0 starts at file offset 0x2000 so Page0 is at file offset
-        //   0x2000, Page1 is at file offset 0x3000. Run1 starts at file offset
-        //   0x2000+(2*0x1000) so Page3 is at file offset
+        //   0x2000, Page1 is at file offset 0x3000. Run1 starts at file
+        //   offset 0x2000+(2*0x1000) so Page3 is at file offset
         //   0x2000+(2*0x1000)+0x1000.
         //
-        // That is the reason why the computation below is RunBase + (PageIdx *
-        // 0x1000) instead of RunBase + (Pfn * 0x1000).
+        // That is the reason why the computation below is RunBase + (PageIdx
+        // * 0x1000) instead of RunBase + (Pfn * 0x1000).
 
         const uint8_t *PageBase = RunBase + (PageIdx * Page::Size);
 
@@ -490,7 +515,7 @@ private:
   bool BuildPhysmemBMPDump() {
     const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->BmpHeader.FirstPage;
     const uint64_t BitmapSize = DmpHdr_->BmpHeader.Pages / 8;
-    const uint8_t *Bitmap = DmpHdr_->BmpHeader.Bitmap;
+    const uint8_t *Bitmap = DmpHdr_->BmpHeader.Bitmap.data();
 
     //
     // Walk the bitmap byte per byte.
@@ -556,6 +581,14 @@ private:
   // Map a view of the file in memory.
   //
 
-  bool MapFile() { return FileMap_.MapFile(PathFile_); }
+  bool MapFile() { return FileMap_.MapFile(PathFile_.string().c_str()); }
 };
+
+struct Version_t {
+  static inline const uint16_t Major = KDMPPARSER_VERSION_MAJOR;
+  static inline const uint16_t Minor = KDMPPARSER_VERSION_MINOR;
+  static inline const uint16_t Patch = KDMPPARSER_VERSION_PATCH;
+  static inline const std::string Release = KDMPPARSER_VERSION_RELEASE;
+};
+
 } // namespace kdmpparser
