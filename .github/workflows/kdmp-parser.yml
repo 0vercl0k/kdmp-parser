@@ -181,6 +181,5 @@ jobs:
     - name: Upload wheel
       uses: actions/upload-artifact@v3
       with:
-        name: kdmp-parser-py${{ matrix.python-version }}-${{ matrix.variant.os }}.${{ matrix.variant.generator }}-${{ matrix.variant.arch }}.${{ matrix.variant.config }}-${{ github.sha }}
+        name: wheels
         path: wheel/*.whl
-
