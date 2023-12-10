@@ -8,20 +8,12 @@ from typing import Optional, Union
 
 #
 # `_kdmp_parser` is the C++ module. It contains the port of all C++ classes/enums/etc. in their
-# original form. The Python package part provides the abstraction more pythonic layer.
+# original form. The Python package part provides more Pythonic APIs.
 #
 from ._kdmp_parser import (  # type: ignore
     version,
     DumpType_t as _DumpType_t,
     KernelDumpParser as _KernelDumpParser,
-    # uint128_t,
-    # PHYSMEM_RUN,
-    # PHYSMEM_DESC,
-    # BMP_HEADER64,
-    # CONTEXT,
-    # EXCEPTION_RECORD64,
-    # HEADER64,
-    # BugCheckParameters_t,
 )
 
 from .page import (

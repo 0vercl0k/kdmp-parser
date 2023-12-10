@@ -145,7 +145,7 @@ public:
   // Get the path of dump.
   //
 
-  std::filesystem::path const &GetDumpPath() const { return PathFile_; }
+  const std::filesystem::path &GetDumpPath() const { return PathFile_; }
 
   //
   // Get the type of dump.
