@@ -24,6 +24,9 @@ class PageIterator:
     def __iter__(self) -> Generator[int, None, None]:
         return self.keys()
 
+    def __contains__(self, addr: int) -> bool:
+        return addr in self.keys()
+
     def __len__(self) -> int:
         return len(list(self.keys()))
 

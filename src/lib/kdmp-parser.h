@@ -103,6 +103,17 @@ public:
       }
       break;
     }
+
+    case DumpType_t::CompleteMemoryDump:
+    case DumpType_t::KernelAndUserMemoryDump:
+    case DumpType_t::KernelMemoryDump: {
+      if (!BuildPhysicalMemoryFromDump(DmpHdr_->DumpType)) {
+        printf("BuildPhysicalMemoryFromDump failed.\n");
+        return false;
+      }
+      break;
+    }
+
     default: {
       printf("Invalid type\n");
       return false;
@@ -122,7 +133,7 @@ public:
     // Give the user a view of the context record.
     //
 
-    return DmpHdr_->ContextRecord;
+    return DmpHdr_->u2.ContextRecord;
   }
 
   //
@@ -135,10 +146,11 @@ public:
     // Give the user a view of the bugcheck parameters.
     //
 
-    return {
-        DmpHdr_->BugCheckCode,
-        {DmpHdr_->BugCheckCodeParameter[0], DmpHdr_->BugCheckCodeParameter[1],
-         DmpHdr_->BugCheckCodeParameter[2], DmpHdr_->BugCheckCodeParameter[3]}};
+    return {DmpHdr_->BugCheckCode,
+            {DmpHdr_->BugCheckCodeParameters[0],
+             DmpHdr_->BugCheckCodeParameters[1],
+             DmpHdr_->BugCheckCodeParameters[2],
+             DmpHdr_->BugCheckCodeParameters[3]}};
   }
 
   //
@@ -172,7 +184,7 @@ public:
   //
 
   void ShowContextRecord(const uint32_t Prefix) const {
-    const CONTEXT &Context = DmpHdr_->ContextRecord;
+    const CONTEXT &Context = GetContext();
     printf("%*srax=%016" PRIx64 " rbx=%016" PRIx64 " rcx=%016" PRIx64 "\n",
            Prefix, "", Context.Rax, Context.Rbx, Context.Rcx);
     printf("%*srdx=%016" PRIx64 " rsi=%016" PRIx64 " rdi=%016" PRIx64 "\n",
@@ -394,6 +406,12 @@ public:
     return GetPhysicalPage(*PhysicalAddress);
   }
 
+  const HEADER64 *GetDumpHeader() const {
+    if (!DmpHdr_)
+      throw std::runtime_error("DmpHdr_ should never be null here");
+    return DmpHdr_;
+  }
+
 private:
   //
   // Utility function to read an uint64_t from a physical address.
@@ -427,9 +445,8 @@ private:
     // Walk through the runs.
     //
 
-    uint8_t *RunBase = (uint8_t *)&DmpHdr_->BmpHeader;
-    const uint32_t NumberOfRuns =
-        DmpHdr_->PhysicalMemoryBlockBuffer.NumberOfRuns;
+    uint8_t *RunBase = (uint8_t *)&DmpHdr_->u3.BmpHeader;
+    const uint32_t NumberOfRuns = DmpHdr_->u1.PhysicalMemoryBlock.NumberOfRuns;
 
     //
     // Back at it, this time building the index!
@@ -441,7 +458,7 @@ private:
       // Grab the current run as well as its base page and page count.
       //
 
-      const PHYSMEM_RUN *Run = DmpHdr_->PhysicalMemoryBlockBuffer.Run + RunIdx;
+      const PHYSMEM_RUN *Run = DmpHdr_->u1.PhysicalMemoryBlock.Run + RunIdx;
 
       const uint64_t BasePage = Run->BasePage;
       const uint64_t PageCount = Run->PageCount;
@@ -513,9 +530,9 @@ private:
   //
 
   bool BuildPhysmemBMPDump() {
-    const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->BmpHeader.FirstPage;
-    const uint64_t BitmapSize = DmpHdr_->BmpHeader.Pages / 8;
-    const uint8_t *Bitmap = DmpHdr_->BmpHeader.Bitmap.data();
+    const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->u3.BmpHeader.FirstPage;
+    const uint64_t BitmapSize = DmpHdr_->u3.BmpHeader.Pages / 8;
+    const uint8_t *Bitmap = DmpHdr_->u3.BmpHeader.Bitmap.data();
 
     //
     // Walk the bitmap byte per byte.
@@ -545,6 +562,76 @@ private:
 
         const uint64_t Pfn = (BitmapIdx * 8) + BitIdx;
         const uint64_t Pa = Pfn * Page::Size;
+        Physmem_.try_emplace(Pa, Page);
+        Page += Page::Size;
+      }
+    }
+
+    return true;
+  }
+
+  ///
+  /// @brief Populate the physical memory map using one of the new supported
+  /// dump type
+  ///
+  /// @param Type must be `KernelMemoryDump`, `KernelAndUserMemoryDump`,
+  /// `CompleteMemoryDump`
+  ///
+  /// @return true on success, false otherwise
+  ///
+  bool BuildPhysicalMemoryFromDump(DumpType_t Type) {
+    uint64_t FirstPageOffset = 0;
+    uint8_t *Page = nullptr;
+    uint64_t MetadataSize = 0;
+    uint8_t *Bitmap = nullptr;
+
+    const uint64_t FileSize = FileMap_.ViewSize();
+    const uint64_t MaxAddress = ((uint64_t)DmpHdr_) + FileSize;
+
+    switch (Type) {
+    case DumpType_t::KernelMemoryDump:
+    case DumpType_t::KernelAndUserMemoryDump:
+      FirstPageOffset = DmpHdr_->u3.RdmpHeader.FirstPageOffset;
+      Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
+      MetadataSize = DmpHdr_->u3.RdmpHeader.MetadataSize;
+      Bitmap = DmpHdr_->u3.RdmpHeader.Bitmap.data();
+      break;
+
+    case DumpType_t::CompleteMemoryDump:
+      FirstPageOffset = DmpHdr_->u3.RdmpHeader.FirstPageOffset;
+      Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
+      MetadataSize = DmpHdr_->u3.FullRdmpHeader.MetadataSize;
+      Bitmap = DmpHdr_->u3.FullRdmpHeader.Bitmap.data();
+      break;
+
+    default:
+      return false;
+    }
+
+    if (!FirstPageOffset || !Page || !MetadataSize || !Bitmap)
+      return false;
+
+    if ((uint64_t)Page >= MaxAddress)
+      return false;
+
+    struct PfnRange {
+      uint64_t PageFileNumber;
+      uint64_t NumberOfPages;
+    };
+
+    for (uint64_t i = 0; i < MetadataSize; i += sizeof(PfnRange)) {
+      if (((uint64_t)Bitmap + i) > MaxAddress)
+        return false;
+
+      const PfnRange &Entry = (PfnRange &)Bitmap[i];
+      const uint64_t Pfn = Entry.PageFileNumber;
+      if (!Pfn)
+        break;
+
+      for (uint64_t j = 0; j < Entry.NumberOfPages; j++) {
+        if ((uint64_t)Page >= MaxAddress)
+          return false;
+        const uint64_t Pa = Pfn * Page::Size + j * Page::Size;
         Physmem_.try_emplace(Pa, Page);
         Page += Page::Size;
       }

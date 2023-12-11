@@ -1,5 +1,6 @@
 // Axel '0vercl0k' Souchet - April 28 2020
 #include "platform.h"
+#include <cstdint>
 #include <cstdio>
 
 #if defined(WINDOWS)
@@ -21,6 +22,12 @@ class FileMap_t {
   //
 
   PVOID ViewBase_ = nullptr;
+
+  //
+  // File size
+  //
+
+  LARGE_INTEGER FileSize_{};
 
 public:
   ~FileMap_t() {
@@ -57,6 +64,8 @@ public:
   FileMap_t &operator=(const FileMap_t &) = delete;
 
   constexpr void *ViewBase() const { return ViewBase_; }
+
+  LARGE_INTEGER const &FileSize() const { return FileSize_; }
 
   bool MapFile(const char *PathFile) {
     bool Success = true;
@@ -126,6 +135,14 @@ public:
     }
 
     //
+    // Collect the file size
+    //
+    if (!::GetFileSizeEx(File, &FileSize_)) {
+      Success = false;
+      goto clean;
+    }
+
+    //
     // Everything went well, so grab a copy of the handles for
     // our class and null-out the temporary variables.
     //
@@ -161,6 +178,8 @@ public:
 
     return Success;
   }
+
+  uint64_t ViewSize() const { return FileSize_.QuadPart; }
 };
 
 #elif defined(LINUX)
@@ -219,6 +238,8 @@ public:
 
     return true;
   }
+
+  uint64_t ViewSize() const { return ViewSize_; }
 };
 
 #endif

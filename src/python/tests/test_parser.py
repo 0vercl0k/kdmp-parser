@@ -10,6 +10,7 @@
 
 import pathlib
 import unittest
+import zipfile
 
 import kdmp_parser
 

@@ -16,7 +16,10 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/unordered_map.h>
+#include <nanobind/stl/variant.h>
 #include <vector>
+
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -40,6 +43,12 @@ NB_MODULE(_kdmp_parser, m) {
       .value("FullDump", kdmpparser::DumpType_t::FullDump)
       .value("KernelDump", kdmpparser::DumpType_t::KernelDump)
       .value("BMPDump", kdmpparser::DumpType_t::BMPDump)
+
+      .value("MiniDump", kdmpparser::DumpType_t::MiniDump)
+      .value("KernelMemoryDump", kdmpparser::DumpType_t::KernelMemoryDump)
+      .value("KernelAndUserMemoryDump",
+             kdmpparser::DumpType_t::KernelAndUserMemoryDump)
+      .value("CompleteMemoryDump", kdmpparser::DumpType_t::CompleteMemoryDump)
       .export_values();
 
   nb::class_<kdmpparser::PHYSMEM_RUN>(m, "PHYSMEM_RUN")
@@ -74,6 +83,28 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("Bitmap", &kdmpparser::BMP_HEADER64::Bitmap)
       .def("Show", &kdmpparser::PHYSMEM_DESC::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::PHYSMEM_DESC::LooksGood);
+
+  nb::class_<kdmpparser::RDMP_HEADER64>(m, "RDMP_HEADER64")
+      .def(nb::init<>())
+      .def_ro_static("ExpectedMarker",
+                     &kdmpparser::RDMP_HEADER64::ExpectedMarker)
+      .def_ro_static("ExpectedSignature",
+                     &kdmpparser::RDMP_HEADER64::ExpectedSignature)
+      .def_ro_static("ExpectedValidDump",
+                     &kdmpparser::RDMP_HEADER64::ExpectedValidDump)
+      .def_ro("Marker", &kdmpparser::RDMP_HEADER64::Marker)
+      .def_ro("Signature", &kdmpparser::RDMP_HEADER64::Signature)
+      .def_ro("ValidDump", &kdmpparser::RDMP_HEADER64::ValidDump)
+      .def_ro("MetadataSize", &kdmpparser::RDMP_HEADER64::MetadataSize)
+      .def_ro("FirstPageOffset", &kdmpparser::RDMP_HEADER64::FirstPageOffset)
+      .def("LooksGood", &kdmpparser::RDMP_HEADER64::LooksGood)
+      .def("Show", &kdmpparser::RDMP_HEADER64::Show);
+
+  nb::class_<kdmpparser::KERNEL_RDMP_HEADER64>(m, "KERNEL_RDMP_HEADER64")
+      .def(nb::init<>());
+
+  nb::class_<kdmpparser::FULL_RDMP_HEADER64>(m, "FULL_RDMP_HEADER64")
+      .def(nb::init<>());
 
   nb::class_<kdmpparser::CONTEXT>(m, "CONTEXT")
       .def(nb::init<>())
@@ -178,7 +209,6 @@ NB_MODULE(_kdmp_parser, m) {
                      &kdmpparser::HEADER64::ExpectedSignature)
       .def_ro_static("ExpectedValidDump",
                      &kdmpparser::HEADER64::ExpectedValidDump)
-
       .def_ro("Signature", &kdmpparser::HEADER64::Signature)
       .def_ro("ValidDump", &kdmpparser::HEADER64::ValidDump)
       .def_ro("MajorVersion", &kdmpparser::HEADER64::MajorVersion)
@@ -190,19 +220,19 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("MachineImageType", &kdmpparser::HEADER64::MachineImageType)
       .def_ro("NumberProcessors", &kdmpparser::HEADER64::NumberProcessors)
       .def_ro("BugCheckCode", &kdmpparser::HEADER64::BugCheckCode)
-      .def_ro("Padding0", &kdmpparser::HEADER64::Padding0)
       .def_ro("BugCheckCodeParameter",
-              &kdmpparser::HEADER64::BugCheckCodeParameter)
-      .def_ro("Padding1", &kdmpparser::HEADER64::Padding1)
+              &kdmpparser::HEADER64::BugCheckCodeParameters)
       .def_ro("KdDebuggerDataBlock", &kdmpparser::HEADER64::KdDebuggerDataBlock)
-      .def_ro("PhysicalMemoryBlockBuffer",
-              &kdmpparser::HEADER64::PhysicalMemoryBlockBuffer)
-      .def_ro("Padding2", &kdmpparser::HEADER64::Padding2)
-      .def_ro("ContextRecord", &kdmpparser::HEADER64::ContextRecord)
-      .def_ro("Padding3", &kdmpparser::HEADER64::Padding3)
+      .def_prop_ro(
+          "PhysicalMemoryBlock",
+          [](kdmpparser::HEADER64 const &hdr) -> kdmpparser::PHYSMEM_DESC {
+            return hdr.u1.PhysicalMemoryBlock;
+          })
+      .def_prop_ro(
+          "ContextRecord",
+          [](kdmpparser::HEADER64 const &hdr) { return hdr.u2.ContextRecord; })
       .def_ro("Exception", &kdmpparser::HEADER64::Exception)
       .def_ro("DumpType", &kdmpparser::HEADER64::DumpType)
-      .def_ro("Padding4", &kdmpparser::HEADER64::Padding4)
       .def_ro("RequiredDumpSpace", &kdmpparser::HEADER64::RequiredDumpSpace)
       .def_ro("SystemTime", &kdmpparser::HEADER64::SystemTime)
       .def_ro("Comment", &kdmpparser::HEADER64::Comment)
@@ -212,11 +242,33 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("ProductType", &kdmpparser::HEADER64::ProductType)
       .def_ro("SuiteMask", &kdmpparser::HEADER64::SuiteMask)
       .def_ro("WriterStatus", &kdmpparser::HEADER64::WriterStatus)
-      .def_ro("Unused1", &kdmpparser::HEADER64::Unused1)
       .def_ro("KdSecondaryVersion", &kdmpparser::HEADER64::KdSecondaryVersion)
-      .def_ro("Unused", &kdmpparser::HEADER64::Unused)
-      .def_ro("_reserved0", &kdmpparser::HEADER64::_reserved0)
-      .def_ro("BmpHeader", &kdmpparser::HEADER64::BmpHeader)
+      .def_ro("Attributes", &kdmpparser::HEADER64::Attributes)
+      .def_ro("BootId", &kdmpparser::HEADER64::BootId)
+
+      .def_prop_ro("BmpHeader",
+                   [](kdmpparser::HEADER64 const &hdr) {
+                     if (hdr.DumpType != kdmpparser::DumpType_t::BMPDump)
+                       throw std::runtime_error("Invalid type");
+                     return hdr.u3.BmpHeader;
+                   })
+      .def_prop_ro("RdmpHeader",
+                   [](kdmpparser::HEADER64 const &hdr) {
+                     if (hdr.DumpType !=
+                             kdmpparser::DumpType_t::KernelAndUserMemoryDump &&
+                         hdr.DumpType !=
+                             kdmpparser::DumpType_t::KernelMemoryDump)
+                       throw std::runtime_error("Invalid type");
+                     return hdr.u3.RdmpHeader;
+                   })
+      .def_prop_ro("FullRdmpHeader",
+                   [](kdmpparser::HEADER64 const &hdr) {
+                     if (hdr.DumpType !=
+                         kdmpparser::DumpType_t::CompleteMemoryDump)
+                       throw std::runtime_error("Invalid type");
+                     return hdr.u3.FullRdmpHeader;
+                   })
+
       .def("Show", &kdmpparser::CONTEXT::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::CONTEXT::LooksGood);
 
@@ -236,6 +288,8 @@ NB_MODULE(_kdmp_parser, m) {
       .def(nb::init<>())
       .def("Parse", &kdmpparser::KernelDumpParser::Parse, "PathFile"_a)
       .def("GetContext", &kdmpparser::KernelDumpParser::GetContext)
+      .def("GetDumpHeader", &kdmpparser::KernelDumpParser::GetDumpHeader,
+           nb::rv_policy::reference)
       .def("GetBugCheckParameters",
            &kdmpparser::KernelDumpParser::GetBugCheckParameters)
       .def("GetDumpType", &kdmpparser::KernelDumpParser::GetDumpType)
