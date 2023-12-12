@@ -1,17 +1,11 @@
 name: Builds
 
-on:
-  pull_request:
-  push:
-    branches:
-      - master
-    tags:
-      - v*
+on: [push, pull_request]
 
 jobs:
   testdatas:
     env:
-      TESTDATA_URL: https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip
+      TESTDATA_URL: https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.7z
 
     name: Fetch Test Data
     runs-on: ubuntu-latest
@@ -24,9 +18,9 @@ jobs:
         path: .
     - if: steps.cache-testdatas.outputs.cache-hit != 'true'
       run: |
-        sudo apt-get -y update; sudo apt-get install -y unzip;
+        sudo apt-get -y update; sudo apt-get install -y p7zip;
         curl ${{ env.TESTDATA_URL }}  -O -L
-        unzip testdatas.zip; rm testdatas.zip
+        7z x testdatas.7z; rm testdatas.7z
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:

@@ -1,11 +1,10 @@
 # Python building for `kdmp-parser`
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Licence MIT](https://img.shields.io/packagist/l/doctrine/orm.svg?maxAge=2592000?style=plastic)](https://github.com/0vercl0k/kdmp-parser/blob/master/LICENSE)
-
+![Build status](https://github.com/0vercl0k/kdmp-parser/workflows/Builds/badge.svg)
 
 This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg) as well as [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg).
 
-![parser](pics/parser.jpg)
+![parser](https://github.com/0vercl0k/kdmp-parser/raw/master/pics/parser.jpg)
 
 The library supports loading 64-bit dumps and provides read access to things like:
 
