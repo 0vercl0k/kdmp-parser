@@ -18,7 +18,7 @@ jobs:
         path: .
     - if: steps.cache-testdatas.outputs.cache-hit != 'true'
       run: |
-        sudo apt-get -y update; sudo apt-get install -y p7zip;
+        sudo apt-get -y update; sudo apt-get install -y p7zip-full;
         curl ${{ env.TESTDATA_URL }}  -O -L
         7z x testdatas.7z; rm testdatas.7z
     - name: Upload artifacts
