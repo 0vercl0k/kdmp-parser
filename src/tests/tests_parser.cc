@@ -173,8 +173,8 @@ const static TestCaseValues TestCaseCompleteDump{
 
 const std::array g_ExpectedValues{
     TestCaseBmp, TestCaseFull,
-    // TestCaseKernelDump,   TestCaseKernelUserDump,
-    // TestCaseCompleteDump,
+    TestCaseKernelDump,   TestCaseKernelUserDump,
+    TestCaseCompleteDump,
 };
 
 TEST_CASE("kdmp-parser", "parser") {
