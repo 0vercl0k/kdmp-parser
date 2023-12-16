@@ -27,7 +27,7 @@ class FileMap_t {
   // File size
   //
 
-  LARGE_INTEGER FileSize_{};
+  LARGE_INTEGER FileSize_ = {0};
 
 public:
   ~FileMap_t() {
@@ -65,8 +65,6 @@ public:
 
   constexpr void *ViewBase() const { return ViewBase_; }
 
-  LARGE_INTEGER const &FileSize() const { return FileSize_; }
-
   bool MapFile(const char *PathFile) {
     bool Success = true;
     HANDLE File = nullptr;
@@ -80,7 +78,7 @@ public:
     File = CreateFileA(PathFile, GENERIC_READ, FILE_SHARE_READ, nullptr,
                        OPEN_EXISTING, 0, nullptr);
 
-    if (File == NULL) {
+    if (File == nullptr) {
 
       //
       // If we fail to open the file, let the user know.
@@ -135,9 +133,12 @@ public:
     }
 
     //
-    // Collect the file size
+    // Get the file size.
     //
-    if (!::GetFileSizeEx(File, &FileSize_)) {
+
+    if (!GetFileSizeEx(File, &FileSize_)) {
+      const DWORD GLE = GetLastError();
+      printf("GetFileSizeEx failed with GLE=%lu.\n", GLE);
       Success = false;
       goto clean;
     }
@@ -179,7 +180,10 @@ public:
     return Success;
   }
 
-  uint64_t ViewSize() const { return FileSize_.QuadPart; }
+  bool InBounds(const void *Ptr, const size_t Size) const {
+    const uint8_t *End = (uint8_t *)ViewBase_ + FileSize_.QuadPart;
+    return Ptr >= ViewBase_ && Ptr < End;
+  }
 };
 
 #elif defined(LINUX)
@@ -239,7 +243,10 @@ public:
     return true;
   }
 
-  uint64_t ViewSize() const { return ViewSize_; }
+  bool InBounds(const void *Ptr, const size_t Size) const {
+    const uint8_t *End = (uint8_t *)ViewBase_ + ViewSize_;
+    return Ptr >= ViewBase_ && Ptr < End;
+  }
 };
 
 #endif

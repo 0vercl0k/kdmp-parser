@@ -25,10 +25,10 @@ struct uint128_t {
 static_assert(sizeof(uint128_t) == 16, "uint128_t's size looks wrong.");
 
 enum class DumpType_t : uint32_t {
-  // Dump type to "old" dbgengd.ll
-  FullDump = 1,
-  KernelDump = 2,
-  BMPDump = 5,
+  // Old dump types from dbgeng.dll
+  FullDump = 0x1,
+  KernelDump = 0x2,
+  BMPDump = 0x5,
 
   // New stuff
   MiniDump = 0x4,                // Produced by `.dump /m`
@@ -75,28 +75,28 @@ static void DisplayHeader(const uint32_t Prefix, const char *FieldName,
 // This takes care of displaying basic types.
 //
 
-const std::string_view DumpTypeToString(DumpType_t type) {
-  using namespace std::literals::string_view_literals;
-  switch (type) {
-  // Dump type to "old" dbgengd.ll
+const std::string_view DumpTypeToString(const DumpType_t Type) {
+  switch (Type) {
+  // Old dump types from dbgeng.dll
   case DumpType_t::FullDump:
-    return "FullDump"sv;
+    return "FullDump";
   case DumpType_t::KernelDump:
-    return "KernelDump"sv;
+    return "KernelDump";
   case DumpType_t::BMPDump:
-    return "BMPDump"sv;
+    return "BMPDump";
 
   // New stuff
   case DumpType_t::MiniDump:
-    return "MiniDump"sv;
+    return "MiniDump";
   case DumpType_t::KernelMemoryDump:
-    return "KernelMemoryDump"sv;
+    return "KernelMemoryDump";
   case DumpType_t::KernelAndUserMemoryDump:
-    return "KernelAndUserMemoryDump"sv;
+    return "KernelAndUserMemoryDump";
   case DumpType_t::CompleteMemoryDump:
-    return "CompleteMemoryDump"sv;
+    return "CompleteMemoryDump";
   }
-  return ""sv;
+
+  return "Unknown";
 }
 
 template <typename Field_t>
@@ -187,9 +187,9 @@ static_assert(sizeof(PHYSMEM_DESC) == 0x20,
               "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
 
 struct BMP_HEADER64 {
-  static const inline uint32_t ExpectedSignature = 0x504D4453;  // 'PMDS'
-  static const inline uint32_t ExpectedSignature2 = 0x504D4446; // 'PMDF'
-  static const inline uint32_t ExpectedValidDump = 0x504D5544;  // 'PMUD'
+  static constexpr uint32_t ExpectedSignature = 0x50'4D'44'53;  // 'PMDS'
+  static constexpr uint32_t ExpectedSignature2 = 0x50'4D'44'46; // 'PMDF'
+  static constexpr uint32_t ExpectedValidDump = 0x50'4D'55'44;  // 'PMUD'
 
   //
   // Should be FDMP.
@@ -270,9 +270,9 @@ static_assert(offsetof(BMP_HEADER64, FirstPage) == 0x20,
               "First page offset looks wrong.");
 
 struct RDMP_HEADER64 {
-  static const inline uint32_t ExpectedMarker = 0x40;
-  static const inline uint32_t ExpectedSignature = 0x504d4452; // 'PMDR'
-  static const inline uint32_t ExpectedValidDump = 0x504D5544; // 'PMUD'
+  static constexpr uint32_t ExpectedMarker = 0x40;
+  static constexpr uint32_t ExpectedSignature = 0x50'4D'44'52; // 'PMDR'
+  static constexpr uint32_t ExpectedValidDump = 0x50'4D'55'44; // 'PMUD'
 
   uint32_t Marker;
   uint32_t Signature;
@@ -282,18 +282,23 @@ struct RDMP_HEADER64 {
   uint64_t FirstPageOffset;
 
   bool LooksGood() const {
-    if (Marker != ExpectedMarker)
+    if (Marker != ExpectedMarker) {
       return false;
+    }
 
-    if (Signature != RDMP_HEADER64::ExpectedSignature)
+    if (Signature != RDMP_HEADER64::ExpectedSignature) {
       return false;
+    }
 
-    if (ValidDump != RDMP_HEADER64::ExpectedValidDump)
+    if (ValidDump != RDMP_HEADER64::ExpectedValidDump) {
       return false;
+    }
 
     if (MetadataSize - 0x20 !=
-        FirstPageOffset - 0x2040) // sizeof(HEADER64) + sizeof(RDMP_HEADERS64)
+        FirstPageOffset -
+            0x20'40) { // sizeof(HEADER64) + sizeof(RDMP_HEADERS64)
       return false;
+    }
 
     return true;
   }
@@ -307,7 +312,7 @@ struct RDMP_HEADER64 {
   }
 };
 
-static_assert(sizeof(RDMP_HEADER64) == 0x20, "Invalid size for RDMP_HEADERS64");
+static_assert(sizeof(RDMP_HEADER64) == 0x20, "Invalid size for RDMP_HEADER64");
 
 struct KERNEL_RDMP_HEADER64 : public RDMP_HEADER64 {
   uint64_t __Unknown1;
@@ -668,17 +673,17 @@ union DUMP_FILE_ATTRIBUTES {
   uint32_t Attributes;
 };
 
-///
-///@brief Adjusted C struct for DUMP_HEADERS64 from MS Rust docs. Padding
-/// adjustment added from reversing `nt!IoFillDumpHeader`
-///
-/// @link
-/// https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/System/Diagnostics/Debug/struct.DUMP_HEADER64.html#structfield.DumpType
-///
-///
+//
+// Adjusted C struct for `DUMP_HEADERS64` from MS Rust docs. Padding
+// adjustment added from reversing `nt!IoFillDumpHeader`.
+//
+// @link
+// https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/System/Diagnostics/Debug/struct.DUMP_HEADER64.html#structfield.DumpType
+//
+
 struct HEADER64 {
-  static const inline uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
-  static const inline uint32_t ExpectedValidDump = 0x34365544; // '46UD'
+  static constexpr uint32_t ExpectedSignature = 0x45474150; // 'EGAP'
+  static constexpr uint32_t ExpectedValidDump = 0x34365544; // '46UD'
 
   /* 0x0000 */ uint32_t Signature;
   /* 0x0004 */ uint32_t ValidDump;
@@ -783,14 +788,16 @@ struct HEADER64 {
       break;
     }
 
-    case DumpType_t::MiniDump:
+    case DumpType_t::MiniDump: {
       printf("Unsupported type %s (%#x).\n", DumpTypeToString(DumpType).data(),
-             static_cast<uint32_t>(DumpType));
+             uint32_t(DumpType));
       return false;
+    }
 
-    default:
+    default: {
       printf("Unknown Type %#x.\n", uint32_t(DumpType));
       return false;
+    }
     }
 
     //

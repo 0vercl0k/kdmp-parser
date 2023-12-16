@@ -406,10 +406,12 @@ public:
     return GetPhysicalPage(*PhysicalAddress);
   }
 
-  const HEADER64 *GetDumpHeader() const {
-    if (!DmpHdr_)
-      throw std::runtime_error("DmpHdr_ should never be null here");
-    return DmpHdr_;
+  const HEADER64 &GetDumpHeader() const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
+
+    return *DmpHdr_;
   }
 
 private:
@@ -570,68 +572,78 @@ private:
     return true;
   }
 
-  ///
-  /// @brief Populate the physical memory map using one of the new supported
-  /// dump type
-  ///
-  /// @param Type must be `KernelMemoryDump`, `KernelAndUserMemoryDump`,
-  /// `CompleteMemoryDump`
-  ///
-  /// @return true on success, false otherwise
-  ///
-  bool BuildPhysicalMemoryFromDump(DumpType_t Type) {
+  //
+  // Populate the physical memory map for the 'new' dump types.
+  // `Type` must be either `KernelMemoryDump`, `KernelAndUserMemoryDump`,
+  // or `CompleteMemoryDump`.
+  //
+  // Returns true on success, false otherwise.
+  //
+
+  bool BuildPhysicalMemoryFromDump(const DumpType_t Type) {
     uint64_t FirstPageOffset = 0;
     uint8_t *Page = nullptr;
     uint64_t MetadataSize = 0;
     uint8_t *Bitmap = nullptr;
 
-    const uint64_t FileSize = FileMap_.ViewSize();
-    const uint64_t MaxAddress = ((uint64_t)DmpHdr_) + FileSize;
-
     switch (Type) {
     case DumpType_t::KernelMemoryDump:
-    case DumpType_t::KernelAndUserMemoryDump:
+    case DumpType_t::KernelAndUserMemoryDump: {
       FirstPageOffset = DmpHdr_->u3.RdmpHeader.FirstPageOffset;
       Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
       MetadataSize = DmpHdr_->u3.RdmpHeader.MetadataSize;
       Bitmap = DmpHdr_->u3.RdmpHeader.Bitmap.data();
       break;
+    }
 
-    case DumpType_t::CompleteMemoryDump:
+    case DumpType_t::CompleteMemoryDump: {
       FirstPageOffset = DmpHdr_->u3.RdmpHeader.FirstPageOffset;
       Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
       MetadataSize = DmpHdr_->u3.FullRdmpHeader.MetadataSize;
       Bitmap = DmpHdr_->u3.FullRdmpHeader.Bitmap.data();
       break;
+    }
 
-    default:
+    default: {
+      return false;
+    }
+    }
+
+    if (!FirstPageOffset || !Page || !MetadataSize || !Bitmap) {
       return false;
     }
 
-    if (!FirstPageOffset || !Page || !MetadataSize || !Bitmap)
-      return false;
+    auto IsPageInBounds = [&](const uint8_t *Ptr) {
+      return FileMap_.InBounds(Ptr, Page::Size);
+    };
 
-    if ((uint64_t)Page >= MaxAddress)
+    if (!IsPageInBounds(Page)) {
       return false;
+    }
 
     struct PfnRange {
       uint64_t PageFileNumber;
       uint64_t NumberOfPages;
     };
 
-    for (uint64_t i = 0; i < MetadataSize; i += sizeof(PfnRange)) {
-      if (((uint64_t)Bitmap + i) > MaxAddress)
+    for (uint64_t Offset = 0; Offset < MetadataSize;
+         Offset += sizeof(PfnRange)) {
+      const PfnRange &Entry = (PfnRange &)Bitmap[Offset];
+      if (!FileMap_.InBounds(&Entry, sizeof(Entry))) {
         return false;
+      }
 
-      const PfnRange &Entry = (PfnRange &)Bitmap[i];
       const uint64_t Pfn = Entry.PageFileNumber;
-      if (!Pfn)
+      if (!Pfn) {
         break;
+      }
 
-      for (uint64_t j = 0; j < Entry.NumberOfPages; j++) {
-        if ((uint64_t)Page >= MaxAddress)
+      for (uint64_t PageIdx = 0; PageIdx < Entry.NumberOfPages; PageIdx++) {
+        if (!IsPageInBounds(Page)) {
           return false;
-        const uint64_t Pa = Pfn * Page::Size + j * Page::Size;
+        }
+
+        const uint64_t Pa = (Pfn * Page::Size) + (PageIdx * Page::Size);
         Physmem_.try_emplace(Pa, Page);
         Page += Page::Size;
       }
