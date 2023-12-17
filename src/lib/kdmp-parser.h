@@ -589,17 +589,17 @@ private:
     switch (Type) {
     case DumpType_t::KernelMemoryDump:
     case DumpType_t::KernelAndUserMemoryDump: {
-      FirstPageOffset = DmpHdr_->u3.RdmpHeader.FirstPageOffset;
+      FirstPageOffset = DmpHdr_->u3.RdmpHeader.Hdr.FirstPageOffset;
       Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
-      MetadataSize = DmpHdr_->u3.RdmpHeader.MetadataSize;
+      MetadataSize = DmpHdr_->u3.RdmpHeader.Hdr.MetadataSize;
       Bitmap = DmpHdr_->u3.RdmpHeader.Bitmap.data();
       break;
     }
 
     case DumpType_t::CompleteMemoryDump: {
-      FirstPageOffset = DmpHdr_->u3.RdmpHeader.FirstPageOffset;
+      FirstPageOffset = DmpHdr_->u3.RdmpHeader.Hdr.FirstPageOffset;
       Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
-      MetadataSize = DmpHdr_->u3.FullRdmpHeader.MetadataSize;
+      MetadataSize = DmpHdr_->u3.FullRdmpHeader.Hdr.MetadataSize;
       Bitmap = DmpHdr_->u3.FullRdmpHeader.Bitmap.data();
       break;
     }

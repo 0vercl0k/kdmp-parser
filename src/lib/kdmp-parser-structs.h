@@ -314,27 +314,21 @@ struct RDMP_HEADER64 {
 
 static_assert(sizeof(RDMP_HEADER64) == 0x20, "Invalid size for RDMP_HEADER64");
 
-struct KERNEL_RDMP_HEADER64 : public RDMP_HEADER64 {
+struct KERNEL_RDMP_HEADER64 {
+  RDMP_HEADER64 Hdr;
   uint64_t __Unknown1;
   uint64_t __Unknown2;
   std::array<uint8_t, 1> Bitmap;
 };
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-#endif //__GNUC__
 
 static_assert(sizeof(KERNEL_RDMP_HEADER64) == 0x30 + 1,
               "Invalid size for KERNEL_RDMP_HEADER64");
 
 static_assert(offsetof(KERNEL_RDMP_HEADER64, Bitmap) == 0x30,
               "Invalid offset for KERNEL_RDMP_HEADER64");
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif //__GNUC__
 
-struct FULL_RDMP_HEADER64 : RDMP_HEADER64 {
+struct FULL_RDMP_HEADER64 {
+  RDMP_HEADER64 Hdr;
   uint32_t NumberOfRanges;
   uint16_t __Unknown1;
   uint16_t __Unknown2;
@@ -342,18 +336,11 @@ struct FULL_RDMP_HEADER64 : RDMP_HEADER64 {
   std::array<uint8_t, 1> Bitmap;
 };
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-#endif //__GNUC__
 static_assert(sizeof(FULL_RDMP_HEADER64) == 0x30 + 1,
               "Invalid size for FULL_RDMP_HEADER64");
 
 static_assert(offsetof(FULL_RDMP_HEADER64, Bitmap) == 0x30,
               "Invalid offset for FULL_RDMP_HEADER64");
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif //__GNUC__
 
 struct CONTEXT {
 
@@ -773,7 +760,7 @@ struct HEADER64 {
 
     case DumpType_t::KernelAndUserMemoryDump:
     case DumpType_t::KernelMemoryDump: {
-      if (!u3.RdmpHeader.LooksGood()) {
+      if (!u3.RdmpHeader.Hdr.LooksGood()) {
         printf("The RdmpHeader looks wrong.\n");
         return false;
       }
@@ -781,7 +768,7 @@ struct HEADER64 {
     }
 
     case DumpType_t::CompleteMemoryDump: {
-      if (!u3.FullRdmpHeader.LooksGood()) {
+      if (!u3.FullRdmpHeader.Hdr.LooksGood()) {
         printf("The RdmpHeader looks wrong.\n");
         return false;
       }
