@@ -262,7 +262,7 @@ public:
       return false;
     }
 
-    ViewSize_ = Page::Align(Stat.st_size);
+    ViewSize_ = Page::Align(Stat.st_size) + Page::Size;
     ViewBase_ = mmap(nullptr, ViewSize_, PROT_READ, MAP_SHARED, Fd_, 0);
     if (ViewBase_ == MAP_FAILED) {
       perror("Could not mmap");
