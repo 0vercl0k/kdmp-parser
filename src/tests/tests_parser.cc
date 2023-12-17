@@ -228,8 +228,8 @@ TEST_CASE("kdmp-parser", "parser") {
       kdmpparser::KernelDumpParser Dmp;
       REQUIRE(Dmp.Parse(Testcase.File.data()));
       const uint64_t Address = Testcase.ReadAddress;
-      const uint64_t AddressAligned = Address & 0xffffffff'fffff000;
-      const uint64_t AddressOffset = Address & 0xfff;
+      const uint64_t AddressAligned = kdmpparser::Page::Align(Address);
+      const uint64_t AddressOffset = kdmpparser::Page::Offset(Address);
       const auto &ExpectedContent = Testcase.Bytes;
       const uint8_t *Page = Dmp.GetPhysicalPage(AddressAligned);
       REQUIRE(Page != nullptr);

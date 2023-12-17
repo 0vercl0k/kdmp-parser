@@ -3,6 +3,28 @@
 #include <cstdint>
 #include <cstdio>
 
+namespace kdmpparser {
+namespace Page {
+
+//
+// Page size.
+//
+
+constexpr uint64_t Size = 0x1000;
+
+//
+// Page align an address.
+//
+
+constexpr uint64_t Align(const uint64_t Address) { return Address & ~0xfff; }
+
+//
+// Extract the page offset off an address.
+//
+
+constexpr uint64_t Offset(const uint64_t Address) { return Address & 0xfff; }
+} // namespace Page
+
 #if defined(WINDOWS)
 class FileMap_t {
   //
@@ -27,7 +49,7 @@ class FileMap_t {
   // File size
   //
 
-  LARGE_INTEGER FileSize_ = {0};
+  uint64_t FileSize_ = 0;
 
 public:
   ~FileMap_t() {
@@ -70,6 +92,7 @@ public:
     HANDLE File = nullptr;
     HANDLE FileMap = nullptr;
     PVOID ViewBase = nullptr;
+    LARGE_INTEGER FileSize = {0};
 
     //
     // Open the dump file in read-only.
@@ -136,12 +159,14 @@ public:
     // Get the file size.
     //
 
-    if (!GetFileSizeEx(File, &FileSize_)) {
+    if (!GetFileSizeEx(File, &FileSize)) {
       const DWORD GLE = GetLastError();
       printf("GetFileSizeEx failed with GLE=%lu.\n", GLE);
       Success = false;
       goto clean;
     }
+
+    FileSize_ = Page::Align(FileSize.QuadPart) + Page::Size;
 
     //
     // Everything went well, so grab a copy of the handles for
@@ -181,9 +206,10 @@ public:
   }
 
   bool InBounds(const void *Ptr, const size_t Size) const {
-    const uint8_t *End = (uint8_t *)ViewBase_ + FileSize_.QuadPart;
+    const uint8_t *ViewEnd = (uint8_t *)ViewBase_ + FileSize_;
     const uint8_t *PtrEnd = (uint8_t *)Ptr + Size;
-    return PtrEnd > Ptr && End > ViewBase_ && Ptr >= ViewBase_ && PtrEnd < End;
+    return PtrEnd > Ptr && ViewEnd > ViewBase_ && Ptr >= ViewBase_ &&
+           PtrEnd < ViewEnd;
   }
 };
 
@@ -234,7 +260,7 @@ public:
       return false;
     }
 
-    ViewSize_ = Stat.st_size;
+    ViewSize_ = Page::Align(Stat.st_size);
     ViewBase_ = mmap(nullptr, ViewSize_, PROT_READ, MAP_SHARED, Fd_, 0);
     if (ViewBase_ == MAP_FAILED) {
       perror("Could not mmap");
@@ -245,10 +271,11 @@ public:
   }
 
   bool InBounds(const void *Ptr, const size_t Size) const {
-    const uint8_t *End = (uint8_t *)ViewBase_ + ViewSize_;
+    const uint8_t *ViewEnd = (uint8_t *)ViewBase_ + FileSize_;
     const uint8_t *PtrEnd = (uint8_t *)Ptr + Size;
-    return PtrEnd > Ptr && End > ViewBase_ && Ptr >= ViewBase_ && PtrEnd < End;
+    return PtrEnd > Ptr && ViewEnd > ViewBase_ && Ptr >= ViewBase_ &&
+           PtrEnd < ViewEnd;
   }
 };
-
 #endif
+} // namespace kdmpparser
