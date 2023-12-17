@@ -182,7 +182,8 @@ public:
 
   bool InBounds(const void *Ptr, const size_t Size) const {
     const uint8_t *End = (uint8_t *)ViewBase_ + FileSize_.QuadPart;
-    return Ptr >= ViewBase_ && Ptr < End;
+    const uint8_t *PtrEnd = (uint8_t *)Ptr + Size;
+    return PtrEnd > Ptr && End > ViewBase_ && Ptr >= ViewBase_ && PtrEnd < End;
   }
 };
 
@@ -245,7 +246,8 @@ public:
 
   bool InBounds(const void *Ptr, const size_t Size) const {
     const uint8_t *End = (uint8_t *)ViewBase_ + ViewSize_;
-    return Ptr >= ViewBase_ && Ptr < End;
+    const uint8_t *PtrEnd = (uint8_t *)Ptr + Size;
+    return PtrEnd > Ptr && End > ViewBase_ && Ptr >= ViewBase_ && PtrEnd < End;
   }
 };
 
