@@ -271,7 +271,7 @@ public:
   }
 
   bool InBounds(const void *Ptr, const size_t Size) const {
-    const uint8_t *ViewEnd = (uint8_t *)ViewBase_ + FileSize_;
+    const uint8_t *ViewEnd = (uint8_t *)ViewBase_ + ViewSize_;
     const uint8_t *PtrEnd = (uint8_t *)Ptr + Size;
     return PtrEnd > Ptr && ViewEnd > ViewBase_ && Ptr >= ViewBase_ &&
            PtrEnd < ViewEnd;
