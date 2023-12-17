@@ -3,6 +3,15 @@
 #include <cstdint>
 #include <cstdio>
 
+#if defined(LINUX)
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 namespace kdmpparser {
 namespace Page {
 
@@ -214,13 +223,6 @@ public:
 };
 
 #elif defined(LINUX)
-
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 class FileMap_t {
   void *ViewBase_ = nullptr;
