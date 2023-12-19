@@ -2,7 +2,7 @@
 
 ![Build status](https://github.com/0vercl0k/kdmp-parser/workflows/Builds/badge.svg)
 
-This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg) as well as [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg).
+This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg), [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg) as well as more recent dump types that were introduced in ~2022.
 
 ![parser](https://github.com/0vercl0k/kdmp-parser/raw/master/pics/parser.jpg)
 
