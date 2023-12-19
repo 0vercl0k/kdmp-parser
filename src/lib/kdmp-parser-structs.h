@@ -75,7 +75,7 @@ static void DisplayHeader(const uint32_t Prefix, const char *FieldName,
 // This takes care of displaying basic types.
 //
 
-const std::string_view DumpTypeToString(const DumpType_t Type) {
+constexpr std::string_view DumpTypeToString(const DumpType_t Type) {
   switch (Type) {
   // Old dump types from dbgeng.dll
   case DumpType_t::FullDump:
