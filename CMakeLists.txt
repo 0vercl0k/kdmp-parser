@@ -19,7 +19,7 @@ set(PROJECT_LICENSE MIT)
 
 option(BUILD_PARSER "Build the parser executable for kdmp-parser" ON)
 option(BUILD_TESTS "Build the test suite for kdmp-parser" OFF)
-option(BUILD_PYTHON_BINDING "Build the Python bindings for kdmp-parser" ON)
+option(BUILD_PYTHON_BINDING "Build the Python bindings for kdmp-parser" OFF)
 
 add_subdirectory(src/lib)
 

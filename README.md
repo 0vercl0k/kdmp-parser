@@ -130,11 +130,11 @@ Examples:
     parser.exe -c -p 0x1000 full.dmp
 ```
 
-Here is another example on Linux (without the Python bindings):
+Here is another example on Linux (with the Python bindings):
 ```
 $ mkdir build
 $ cd build
-$ cmake .. -DBUILD_PYTHON_BINDING=OFF
+$ cmake .. -DBUILD_PYTHON_BINDING=ON
 ...
 
 $ cmake --build . --config RelWithDebInfo
@@ -167,7 +167,6 @@ Examples:
 ### From PyPI
 
 The easiest way is simply to:
-
 ```
 pip install kdmp_parser
 ```
