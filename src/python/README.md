@@ -1,11 +1,10 @@
 # Python building for `kdmp-parser`
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Licence MIT](https://img.shields.io/packagist/l/doctrine/orm.svg?maxAge=2592000?style=plastic)](https://github.com/0vercl0k/kdmp-parser/blob/master/LICENSE)
+![Build status](https://github.com/0vercl0k/kdmp-parser/workflows/Builds/badge.svg)
 
+This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg), [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg) as well as more recent dump types that were introduced in ~2022.
 
-This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg) as well as [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg).
-
-![parser](pics/parser.jpg)
+![parser](https://github.com/0vercl0k/kdmp-parser/raw/master/pics/parser.jpg)
 
 The library supports loading 64-bit dumps and provides read access to things like:
 
@@ -24,7 +23,22 @@ The easiest way is simply to:
 pip install kdmp_parser
 ```
 
-## Examples
+## Installing using PIP
+
+Run the following after installing [CMake](https://cmake.org/) and [Python](https://python.org/) 3.8+ / `pip`:
+```
+cd src/python
+pip install requirements.txt
+pip install .
+```
+
+To create a wheel pacakge:
+```
+cd src/python
+pip wheel .
+```
+
+## Usage
 
 ### Get context, print the program counter
 
@@ -32,16 +46,15 @@ pip install kdmp_parser
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
 assert dmp.type == kdmp_parser.DumpType.FullDump
-ctx = dmp.context
-print(f"Dump RIP={ctx.Rip:#x}")
+print(f"Dump RIP={dmp.context.Rip:#x}")
 ```
 
-### Read a virtual memory page at address pointed by RAX
+### Read a virtual memory page at address pointed by RIP
 
 ```python
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
-dmp.read_virtual_page(ctx.Rax)
+dmp.read_virtual_page(dmp.context.Rip)
 ```
 
 ### Explore the physical memory
@@ -50,7 +63,7 @@ dmp.read_virtual_page(ctx.Rax)
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
 pml4 = dmp.directory_table_base
-print(f"{pml=:#x}")
+print(f"{pml4=:#x}")
 dmp.read_physical_page(pml4)
 ```
 
@@ -59,18 +72,9 @@ dmp.read_physical_page(pml4)
 ```python
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
-VA = dmp.Rip
+VA = dmp.context.Rip
 PA = dmp.translate_virtual(VA)
 print(f"{VA=:#x} -> {PA=:#x}")
-```
-
-## Build
-
-Run the following after installing [CMake](https://cmake.org/) and [Python](https://python.org/) 3.8+ / `pip`:
-
-```bash
-pip install -r src/python/requirements.txt
-pip install src/python
 ```
 
 # Authors

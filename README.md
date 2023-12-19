@@ -1,8 +1,9 @@
 # kdmp-parser
 
 ![Build status](https://github.com/0vercl0k/kdmp-parser/workflows/Builds/badge.svg)
+[![Downloads](https://static.pepy.tech/badge/kdmp-parser/month)](https://pepy.tech/project/kdmp-parser)
 
-This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg) as well as [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg).
+This C++ library parses Windows kernel [full](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/complete-memory-dump) dumps (`.dump /f` in WinDbg), [BMP](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/active-memory-dump) dumps (`.dump /ka` in WinDbg) as well as more recent dump types that were introduced in ~2022.
 
 ![parser](pics/parser.jpg)
 
@@ -19,34 +20,12 @@ Special thanks to:
 - [yrp604](https://github.com/yrp604) for being knowledgeable about the format,
 - the [rekall](https://github.com/google/rekall) project and their [Python implementation](https://github.com/google/rekall/blob/master/rekall-core/rekall/plugins/overlays/windows/crashdump.py) (most of the structures in [kdmp-parser-structs.h](https://github.com/0vercl0k/kdmp-parser/blob/master/src/kdmp-parser/kdmp-parser-structs.h) have been adapted from it).
 
-## Python 3 bindings
-
-The Python bindings exposes all functions from `kdmp-parser` to a Python module named `kdmp_parser`. To install the bindings:
-
- * from PyPI
-```
-python -m pip install kdmp_parser
-```
- * using `pip` with `git`
-```
-python -m pip install -e "git+https://github.com/hugsy/kdmp-parser.git/#egg=kdmp-parser&subdirectory=src/python"
-```
- * from cloning this repository
-```
-git clone https://github.com/0vercl0k/kdmp-parser.git
-cd kdmp-parser
-python -m pip install .\src\python\
-```
-
-
-
-
 ## Parser
 
 The `parser.exe` application is able to dump various information about the dump file: exception record, context record, etc.
 
 ```text
-kdmp-parser\src>x64\Debug\parser.exe -c -e -p 0x1000 full.dmp
+>parser.exe -c -e -p 0x1000 full.dmp
 --------------------------------------------------------------------------------
 Context Record:
   rax=0000000000000003 rbx=fffff8050f4e9f70 rcx=0000000000000001
@@ -115,75 +94,141 @@ Physical memory:
 
 ## Building
 
-You can build it yourself using `builder.py` or [CMake](https://cmake.org/) on either [Windows](#Windows) or [Linux](#Linux). More detailed information are described in the below sections.
+You can build it yourself using CMake and it builds on Linux, Windows, OSX with the Microsoft, the LLVM Clang and GNU compilers.
 
-### Linux
-
-You can build it via the command line using `builder.py` or by invoking `cmake` yourself:
-
-```text
-over@oof:/kdmp-parser$ python3 builder.py -h
-usage: Build and run test [-h] [--run-tests]
-                          [--configuration {Debug,RelWithDebInfo}]
-                          [--arch {x64,x86}]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --run-tests
-  --configuration {Debug,RelWithDebInfo}
-  --arch {x64,x86}
-
-over@oof:/kdmp-parser$ python3 builder.py --configuration Debug
+Here is an example on Windows:
+```
+> mkdir build
+> cd build
+> cmake ..
+-- Building for: Visual Studio 17 2022
 ...
-[6/6] Linking CXX executable ../../bin/linx64-Debug/testapp
-[6/6] Linking CXX executable ../../bin/linx86-Debug/testapp
 
-over@oof:/kdmp-parser/$ cd build/
-over@oof:/kdmp-parser/build$ mkdir linx64-RelWithDebInfo/
-over@oof:/kdmp-parser/build$ cd linx64-RelWithDebInfo/
-over@oof:/kdmp-parser/build/linx64-RelWithDebInfo$ cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../../ && cmake --build .
+> cmake --build . --config RelWithDebInfo
+MSBuild version 17.8.3+195e7f5a3 for .NET Framework
+...
+
+> src\parser\RelWithDebInfo\parser.exe
+You didn't provide the path to the dump file.
+
+parser.exe [-p [<physical address>]] [-c] [-e] [-h] <kdump path>
+
+Examples:
+  Show every structures of the dump:
+    parser.exe -a full.dmp
+
+  Show the context record:
+    parser.exe -c full.dmp
+
+  Show the exception record:
+    parser.exe -e full.dmp
+
+  Show all the physical memory (first 16 bytes of every pages):
+    parser.exe -p full.dmp
+
+  Show the context record as well as the page at physical address 0x1000:
+    parser.exe -c -p 0x1000 full.dmp
 ```
 
-### Windows
-
-You can build it using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) by either using the *Open the folder* option or via the command line using `builder.py` /  `cmake` directly:
-
-```text
-kdmp-parser>python builder.py --configuration Debug
+Here is another example on Linux (with the Python bindings):
+```
+$ mkdir build
+$ cd build
+$ cmake .. -DBUILD_PYTHON_BINDING=ON
 ...
-[6/6] Linking CXX executable ..\..\bin\x64-Debug\testapp.exe
-[6/6] Linking CXX executable ..\..\bin\x86-Debug\testapp.exe
 
-kdmp-parser>cd build
-kdmp-parser\build>mkdir x64-RelWithDebInfo
-kdmp-parser\build>cd x64-RelWithDebInfo
-kdmp-parser\build\x64-RelWithDebInfo>cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja ..\..\
--- The C compiler identification is MSVC 19.25.28614.0
--- The CXX compiler identification is MSVC 19.25.28614.0
--- Check for working C compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.25.28610/bin/Hostx64/x64/cl.exe
--- Check for working C compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.25.28610/bin/Hostx64/x64/cl.exe -- works
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Detecting C compile features
--- Detecting C compile features - done
--- Check for working CXX compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.25.28610/bin/Hostx64/x64/cl.exe
--- Check for working CXX compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.25.28610/bin/Hostx64/x64/cl.exe -- works
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Detecting CXX compile features
--- Detecting CXX compile features - done
--- Configuring done
--- Generating done
--- Build files have been written to: kdmp-parser/build/x64-RelWithDebInfo
+$ cmake --build . --config RelWithDebInfo
+...
 
-kdmp-parser\build\x64-RelWithDebInfo>cmake --build .
-[6/6] Linking CXX executable ..\..\bin\x64-RelWithDebInfo\parser.exe
+$ ./src/parser/parser
+You didn't provide the path to the dump file.
+
+parser.exe [-p [<physical address>]] [-c] [-e] [-h] <kdump path>
+
+Examples:
+  Show every structures of the dump:
+    parser.exe -a full.dmp
+
+  Show the context record:
+    parser.exe -c full.dmp
+
+  Show the exception record:
+    parser.exe -e full.dmp
+
+  Show all the physical memory (first 16 bytes of every pages):
+    parser.exe -p full.dmp
+
+  Show the context record as well as the page at physical address 0x1000:
+    parser.exe -c -p 0x1000 full.dmp
+```
+
+## Python bindings
+
+### From PyPI
+
+The easiest way is simply to:
+```
+pip install kdmp_parser
+```
+
+### Using PIP
+
+Run the following after installing [CMake](https://cmake.org/) and [Python](https://python.org/) 3.8+ / `pip`:
+```
+cd src/python
+pip install requirements.txt
+pip install .
+```
+
+To create a wheel pacakge:
+```
+cd src/python
+pip wheel .
+```
+
+### Usage
+
+#### Get context, print the program counter
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+assert dmp.type == kdmp_parser.DumpType.FullDump
+print(f"Dump RIP={dmp.context.Rip:#x}")
+```
+
+#### Read a virtual memory page at address pointed by RIP
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+dmp.read_virtual_page(dmp.context.Rip)
+```
+
+#### Explore the physical memory
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+pml4 = dmp.directory_table_base
+print(f"{pml4=:#x}")
+dmp.read_physical_page(pml4)
+```
+
+#### Translate a virtual address into a physical address
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+VA = dmp.context.Rip
+PA = dmp.translate_virtual(VA)
+print(f"{VA=:#x} -> {PA=:#x}")
 ```
 
 # Authors
 
 * Axel '[@0vercl0k](https://twitter.com/0vercl0k)' Souchet
 
-With contributions from:
-  - [@masthoon](https://github.com/masthoon)
-  - [@hugsy](https://github.com/hugsy)
+# Contributors
+
+[ ![contributors-img](https://contrib.rocks/image?repo=0vercl0k/kdmp-parser) ](https://github.com/0vercl0k/kdmp-parser/graphs/contributors)

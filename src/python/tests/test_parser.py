@@ -10,7 +10,6 @@
 
 import pathlib
 import unittest
-
 import kdmp_parser
 
 REPO_ROOT = pathlib.Path(__file__).absolute().parent.parent.parent.parent

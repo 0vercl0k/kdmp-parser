@@ -14,6 +14,8 @@ from ._kdmp_parser import (  # type: ignore
     version,
     DumpType_t as _DumpType_t,
     KernelDumpParser as _KernelDumpParser,
+    CONTEXT as __CONTEXT,
+    HEADER64 as __HEADER64,
 )
 
 from .page import (
@@ -25,6 +27,10 @@ class DumpType(enum.IntEnum):
     FullDump = _DumpType_t.FullDump
     KernelDump = _DumpType_t.KernelDump
     BMPDump = _DumpType_t.BMPDump
+    MiniDump = _DumpType_t.MiniDump
+    KernelMemoryDump = _DumpType_t.KernelMemoryDump
+    KernelAndUserMemoryDump = _DumpType_t.KernelAndUserMemoryDump
+    CompleteMemoryDump = _DumpType_t.CompleteMemoryDump
 
 
 class KernelDumpParser:
@@ -48,9 +54,10 @@ class KernelDumpParser:
             raise RuntimeError(f"Invalid kernel dump file: {path}")
 
         self.filepath = path
-        self.context = self.__dump.GetContext()
-        self.directory_table_base = self.__dump.GetDirectoryTableBase() & ~0xFFF
+        self.context: __CONTEXT = self.__dump.GetContext()
+        self.directory_table_base: int = self.__dump.GetDirectoryTableBase() & ~0xFFF
         self.type = DumpType(self.__dump.GetDumpType())
+        self.header: __HEADER64 = self.__dump.GetDumpHeader()
         self.pages = _PageIterator(self.__dump)
         return
 

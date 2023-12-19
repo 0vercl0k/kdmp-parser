@@ -13,7 +13,7 @@ project(
     kdmp-parser-python
     DESCRIPTION "A Cross-Platform C++ parser library for Windows kernel minidumps."
     HOMEPAGE_URL https://github.com/0vercl0k/kdmp-parser
-    VERSION 0.6.0
+    VERSION 0.7.0
 )
 set(PROJECT_AUTHOR 0vercl0k)
 set(PROJECT_LICENSE MIT)

@@ -1,11 +1,12 @@
 name: Builds
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   testdatas:
+    env:
+      TESTDATA_URL: https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.7z
+
     name: Fetch Test Data
     runs-on: ubuntu-latest
     steps:
@@ -17,9 +18,9 @@ jobs:
         path: .
     - if: steps.cache-testdatas.outputs.cache-hit != 'true'
       run: |
-        sudo apt-get -y update; sudo apt-get install -y unzip;
-        curl https://github.com/0vercl0k/kdmp-parser/releases/download/v0.1/testdatas.zip -O -L
-        unzip testdatas.zip
+        sudo apt-get -y update; sudo apt-get install -y p7zip-full;
+        curl ${{ env.TESTDATA_URL }}  -O -L
+        7z x testdatas.7z; rm testdatas.7z
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -45,7 +46,6 @@ jobs:
     env:
       CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_PYTHON_BINDING:BOOL=OFF"
       CMAKE_ARCH: ""
-      CTEST_DIR: "~/testdatas"
 
     steps:
     - name: Checkout
@@ -89,12 +89,12 @@ jobs:
         mkdir artifact
         cmake -S . -B ./build ${{ env.CMAKE_ARCH }} ${{ env.CMAKE_FLAGS }}
         cmake --build ./build --verbose --config ${{ matrix.variant.config }}
-        cmake --install ./build --config ${{ matrix.variant.config }} --prefix ./artifact --verbose
+        cmake --install ./build --config ${{ matrix.variant.config }} --prefix ./artifact
 
     - name: Tests
       run: |
         mv *.dmp ./build/src/tests/
-        ctest --progress --extra-verbose --build-config ${{ matrix.variant.config }} -T test --test-dir ./build/src/tests/
+        ctest --progress --build-config ${{ matrix.variant.config }} -T test --test-dir ./build/src/tests/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
