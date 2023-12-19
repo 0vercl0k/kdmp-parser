@@ -174,19 +174,57 @@ pip install kdmp_parser
 
 ### Using PIP
 
-To install the package
+Run the following after installing [CMake](https://cmake.org/) and [Python](https://python.org/) 3.8+ / `pip`:
 ```
 cd src/python
+pip install requirements.txt
 pip install .
 ```
 
-To create a wheel pacakge
+To create a wheel pacakge:
 ```
 cd src/python
 pip wheel .
 ```
 
 ### Usage
+
+#### Get context, print the program counter
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+assert dmp.type == kdmp_parser.DumpType.FullDump
+print(f"Dump RIP={dmp.context.Rip:#x}")
+```
+
+#### Read a virtual memory page at address pointed by RIP
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+dmp.read_virtual_page(dmp.context.Rip)
+```
+
+#### Explore the physical memory
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+pml4 = dmp.directory_table_base
+print(f"{pml4=:#x}")
+dmp.read_physical_page(pml4)
+```
+
+#### Translate a virtual address into a physical address
+
+```python
+import kdmp_parser
+dmp = kdmp_parser.KernelDumpParser("full.dmp")
+VA = dmp.context.Rip
+PA = dmp.translate_virtual(VA)
+print(f"{VA=:#x} -> {PA=:#x}")
+```
 
 # Authors
 

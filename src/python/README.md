@@ -23,7 +23,22 @@ The easiest way is simply to:
 pip install kdmp_parser
 ```
 
-## Examples
+## Installing using PIP
+
+Run the following after installing [CMake](https://cmake.org/) and [Python](https://python.org/) 3.8+ / `pip`:
+```
+cd src/python
+pip install requirements.txt
+pip install .
+```
+
+To create a wheel pacakge:
+```
+cd src/python
+pip wheel .
+```
+
+## Usage
 
 ### Get context, print the program counter
 
@@ -31,16 +46,15 @@ pip install kdmp_parser
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
 assert dmp.type == kdmp_parser.DumpType.FullDump
-ctx = dmp.context
-print(f"Dump RIP={ctx.Rip:#x}")
+print(f"Dump RIP={dmp.context.Rip:#x}")
 ```
 
-### Read a virtual memory page at address pointed by RAX
+### Read a virtual memory page at address pointed by RIP
 
 ```python
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
-dmp.read_virtual_page(ctx.Rax)
+dmp.read_virtual_page(dmp.context.Rip)
 ```
 
 ### Explore the physical memory
@@ -49,7 +63,7 @@ dmp.read_virtual_page(ctx.Rax)
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
 pml4 = dmp.directory_table_base
-print(f"{pml=:#x}")
+print(f"{pml4=:#x}")
 dmp.read_physical_page(pml4)
 ```
 
@@ -58,18 +72,9 @@ dmp.read_physical_page(pml4)
 ```python
 import kdmp_parser
 dmp = kdmp_parser.KernelDumpParser("full.dmp")
-VA = dmp.Rip
+VA = dmp.context.Rip
 PA = dmp.translate_virtual(VA)
 print(f"{VA=:#x} -> {PA=:#x}")
-```
-
-## Build
-
-Run the following after installing [CMake](https://cmake.org/) and [Python](https://python.org/) 3.8+ / `pip`:
-
-```bash
-pip install -r src/python/requirements.txt
-pip install src/python
 ```
 
 # Authors
