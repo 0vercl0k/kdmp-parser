@@ -324,7 +324,6 @@ NB_MODULE(_kdmp_parser, m) {
           [](KernelDumpParser &Parser, const uint64_t VirtualAddress,
              const uint64_t DirectoryTableBase =
                  0) -> std::optional<kdmpparser::Page_t> {
-
             kdmpparser::Page_t Out;
             if (!Parser.VirtReadExact(VirtualAddress, Out.data(), Out.size())) {
               return {};

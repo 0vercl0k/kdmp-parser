@@ -6,9 +6,9 @@
 #include "kdmp-parser-version.h"
 
 #include <array>
-#include <cstdarg>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -30,10 +30,10 @@ public:
   Reader_t(const char *Path) : Path_(Path) {}
   virtual ~Reader_t() {}
 
-  virtual [[nodiscard]] bool Initialize() = 0;
-  virtual [[nodiscard]] uint64_t SeekFromStart(const int64_t Offset) = 0;
+  [[nodiscard]] virtual bool Initialize() = 0;
+  virtual uint64_t SeekFromStart(const int64_t Offset) = 0;
 
-  virtual [[nodiscard]] size_t Read(const uint8_t *Buffer,
+  [[nodiscard]] virtual size_t Read(const uint8_t *Buffer,
                                     const size_t BufferSize) = 0;
 
   [[nodiscard]] size_t ReadFrom(const uint64_t Offset, const uint8_t *Buffer,
@@ -131,9 +131,8 @@ public:
   }
 
   [[nodiscard]] bool Initialize() override {
-    File_ = fopen(Path().string().c_str(), "rb");
-    if (!File_) {
-      dprintf("fopen failed.\n");
+    if (fopen_s(&File_, Path().string().c_str(), "rb") != 0) {
+      dprintf("fopen_s failed.\n");
       return false;
     }
 

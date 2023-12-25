@@ -4,6 +4,7 @@
 #include "platform.h"
 #include <array>
 #include <cinttypes>
+#include <cstdarg>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
