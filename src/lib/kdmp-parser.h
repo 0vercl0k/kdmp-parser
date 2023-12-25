@@ -7,12 +7,14 @@
 
 #include <array>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
+
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <cstdio>
 
 namespace kdmpparser {
 
@@ -53,7 +55,8 @@ public:
     return Read((const uint8_t *)Buffer, sizeof(Type_t)) == sizeof(Type_t);
   }
 
-  [[nodiscard]] bool ReadExactFrom(const uint64_t FromOffset, uint8_t *Buffer,
+  [[nodiscard]] bool ReadExactFrom(const uint64_t FromOffset,
+                                   const uint8_t *Buffer,
                                    const size_t BufferSize) {
     const auto PreviousOffset = SeekFromStart(FromOffset);
     const auto Success = ReadExact(Buffer, BufferSize);
@@ -894,8 +897,8 @@ private:
       return false;
     }
 
-    const size_t NumberPfnRanges = MetadataSize / sizeof(PfnRange);
-    for (size_t Idx = 0; Idx < NumberPfnRanges; Idx++) {
+    const uint64_t NumberPfnRanges = MetadataSize / sizeof(PfnRange);
+    for (uint64_t PfnIdx = 0; PfnIdx < NumberPfnRanges; PfnIdx++) {
       PfnRange Entry = {};
       if (!Reader_->ReadExact(&Entry)) {
         dprintf("Failed to read PfnRange.\n");
