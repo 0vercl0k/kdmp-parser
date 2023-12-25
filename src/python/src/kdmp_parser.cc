@@ -61,7 +61,6 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("NumberOfRuns", &kdmpparser::PHYSMEM_DESC::NumberOfRuns)
       .def_ro("Padding0", &kdmpparser::PHYSMEM_DESC::Padding0)
       .def_ro("NumberOfPages", &kdmpparser::PHYSMEM_DESC::NumberOfPages)
-      .def_ro("Run", &kdmpparser::PHYSMEM_DESC::Run)
       .def("Show", &kdmpparser::PHYSMEM_DESC::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::PHYSMEM_DESC::LooksGood);
 
@@ -79,7 +78,6 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("FirstPage", &kdmpparser::BMP_HEADER64::FirstPage)
       .def_ro("TotalPresentPages", &kdmpparser::BMP_HEADER64::TotalPresentPages)
       .def_ro("Pages", &kdmpparser::BMP_HEADER64::Pages)
-      .def_ro("Bitmap", &kdmpparser::BMP_HEADER64::Bitmap)
       .def("Show", &kdmpparser::PHYSMEM_DESC::Show, "Prefix"_a)
       .def("LooksGood", &kdmpparser::PHYSMEM_DESC::LooksGood);
 
@@ -236,37 +234,38 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("KdSecondaryVersion", &HEADER64::KdSecondaryVersion)
       .def_ro("Attributes", &HEADER64::Attributes)
       .def_ro("BootId", &HEADER64::BootId)
-      .def_prop_ro(
-          "BmpHeader",
-          [](const HEADER64 &Hdr) -> std::optional<kdmpparser::BMP_HEADER64> {
-            if (Hdr.DumpType != kdmpparser::DumpType_t::BMPDump) {
-              return {};
-            }
+      //.def_prop_ro(
+      //    "BmpHeader",
+      //    [](const HEADER64 &Hdr) -> std::optional<kdmpparser::BMP_HEADER64> {
+      //      if (Hdr.DumpType != kdmpparser::DumpType_t::BMPDump) {
+      //        return {};
+      //      }
 
-            return Hdr.u3.BmpHeader;
-          })
-      .def_prop_ro("RdmpHeader",
-                   [](const HEADER64 &Hdr)
-                       -> std::optional<kdmpparser::KERNEL_RDMP_HEADER64> {
-                     if (Hdr.DumpType !=
-                             kdmpparser::DumpType_t::KernelAndUserMemoryDump &&
-                         Hdr.DumpType !=
-                             kdmpparser::DumpType_t::KernelMemoryDump) {
-                       return {};
-                     }
+      //      return Hdr.u3.BmpHeader;
+      //    })
+      //.def_prop_ro("RdmpHeader",
+      //             [](const HEADER64 &Hdr)
+      //                 -> std::optional<kdmpparser::KERNEL_RDMP_HEADER64> {
+      //               if (Hdr.DumpType !=
+      //                       kdmpparser::DumpType_t::KernelAndUserMemoryDump
+      //                       &&
+      //                   Hdr.DumpType !=
+      //                       kdmpparser::DumpType_t::KernelMemoryDump) {
+      //                 return {};
+      //               }
 
-                     return Hdr.u3.RdmpHeader;
-                   })
-      .def_prop_ro("FullRdmpHeader",
-                   [](const HEADER64 &Hdr)
-                       -> std::optional<kdmpparser::FULL_RDMP_HEADER64> {
-                     if (Hdr.DumpType !=
-                         kdmpparser::DumpType_t::CompleteMemoryDump) {
-                       return {};
-                     }
+      //               return Hdr.u3.RdmpHeader;
+      //             })
+      //.def_prop_ro("FullRdmpHeader",
+      //             [](const HEADER64 &Hdr)
+      //                 -> std::optional<kdmpparser::FULL_RDMP_HEADER64> {
+      //               if (Hdr.DumpType !=
+      //                   kdmpparser::DumpType_t::CompleteMemoryDump) {
+      //                 return {};
+      //               }
 
-                     return Hdr.u3.FullRdmpHeader;
-                   })
+      //               return Hdr.u3.FullRdmpHeader;
+      //             })
       .def("Show", &CONTEXT::Show, "Prefix"_a)
       .def("LooksGood", &CONTEXT::LooksGood);
 
@@ -307,15 +306,13 @@ NB_MODULE(_kdmp_parser, m) {
            "Prefix"_a = 0)
       .def(
           "GetPhysicalPage",
-          [](const KernelDumpParser &Parser, const uint64_t PhysicalAddress)
+          [](KernelDumpParser &Parser, const uint64_t PhysicalAddress)
               -> std::optional<kdmpparser::Page_t> {
-            const auto *Page = Parser.GetPhysicalPage(PhysicalAddress);
-            if (!Page) {
-              return std::nullopt;
+            kdmpparser::Page_t Out;
+            if (!Parser.PhyReadExact(PhysicalAddress, Out.data(), Out.size())) {
+              return {};
             }
 
-            kdmpparser::Page_t Out;
-            memcpy(Out.data(), Page, kdmpparser::Page::Size);
             return Out;
           },
           "PhysicalAddress"_a)
@@ -324,17 +321,15 @@ NB_MODULE(_kdmp_parser, m) {
            "VirtualAddress"_a, "DirectoryTableBase"_a)
       .def(
           "GetVirtualPage",
-          [](const KernelDumpParser &Parser, const uint64_t VirtualAddress,
+          [](KernelDumpParser &Parser, const uint64_t VirtualAddress,
              const uint64_t DirectoryTableBase =
                  0) -> std::optional<kdmpparser::Page_t> {
-            const auto *Page =
-                Parser.GetVirtualPage(VirtualAddress, DirectoryTableBase);
-            if (!Page) {
-              return std::nullopt;
-            }
 
             kdmpparser::Page_t Out;
-            memcpy(Out.data(), Page, kdmpparser::Page::Size);
+            if (!Parser.VirtReadExact(VirtualAddress, Out.data(), Out.size())) {
+              return {};
+            }
+
             return Out;
           },
           "VirtualAddress"_a, "DirectoryTableBase"_a = 0);

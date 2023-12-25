@@ -13,6 +13,17 @@
 
 namespace kdmpparser {
 
+static void dprintf(const char *Format, ...) {
+#ifndef NDEBUG
+  va_list Args;
+  va_start(Args, Format);
+  vfprintf(stderr, Format, Args);
+  va_end(Args);
+#else
+  (void)Format;
+#endif
+}
+
 //
 // We need a way to represent 128-bits integers so here goes.
 //
@@ -158,20 +169,20 @@ struct PHYSMEM_DESC {
   uint32_t NumberOfRuns;
   uint32_t Padding0;
   uint64_t NumberOfPages;
-  PHYSMEM_RUN Run[1];
+  // PHYSMEM_RUN Run[1];
 
   void Show(const uint32_t Prefix = 0) const {
     DISPLAY_HEADER("PHYSMEM_DESC");
     DISPLAY_FIELD(NumberOfRuns);
     DISPLAY_FIELD(NumberOfPages);
-    DISPLAY_FIELD_OFFSET(Run);
+    // DISPLAY_FIELD_OFFSET(Run);
     if (!LooksGood()) {
       return;
     }
 
-    for (uint32_t RunIdx = 0; RunIdx < NumberOfRuns; RunIdx++) {
-      Run[RunIdx].Show(Prefix + 2);
-    }
+    // for (uint32_t RunIdx = 0; RunIdx < NumberOfRuns; RunIdx++) {
+    //   Run[RunIdx].Show(Prefix + 2);
+    // }
   }
 
   constexpr bool LooksGood() const {
@@ -183,8 +194,7 @@ struct PHYSMEM_DESC {
   }
 };
 
-static_assert(sizeof(PHYSMEM_DESC) == 0x20,
-              "PHYSICAL_MEMORY_DESCRIPTOR's size looks wrong.");
+static_assert(sizeof(PHYSMEM_DESC) == 0x10, "PHYSMEM_DESC's size looks wrong.");
 
 struct BMP_HEADER64 {
   static constexpr uint32_t ExpectedSignature = 0x50'4D'44'53;  // 'PMDS'
@@ -234,7 +244,7 @@ struct BMP_HEADER64 {
 
   uint64_t Pages;
 
-  std::array<uint8_t, 1> Bitmap;
+  // std::array<uint8_t, 1> Bitmap;
 
   bool LooksGood() const {
 
@@ -243,12 +253,12 @@ struct BMP_HEADER64 {
     //
 
     if (Signature != ExpectedSignature && Signature != ExpectedSignature2) {
-      printf("BMP_HEADER64::Signature looks wrong.\n");
+      dprintf("BMP_HEADER64::Signature looks wrong.\n");
       return false;
     }
 
     if (ValidDump != ExpectedValidDump) {
-      printf("BMP_HEADER64::ValidDump looks wrong.\n");
+      dprintf("BMP_HEADER64::ValidDump looks wrong.\n");
       return false;
     }
 
@@ -262,7 +272,7 @@ struct BMP_HEADER64 {
     DISPLAY_FIELD(FirstPage);
     DISPLAY_FIELD(TotalPresentPages);
     DISPLAY_FIELD(Pages);
-    DISPLAY_FIELD_OFFSET(Bitmap);
+    // DISPLAY_FIELD_OFFSET(Bitmap);
   }
 };
 
@@ -318,14 +328,11 @@ struct KERNEL_RDMP_HEADER64 {
   RDMP_HEADER64 Hdr;
   uint64_t __Unknown1;
   uint64_t __Unknown2;
-  std::array<uint8_t, 1> Bitmap;
+  // std::array<uint8_t, 1> Bitmap;
 };
 
-static_assert(sizeof(KERNEL_RDMP_HEADER64) == 0x30 + 1,
+static_assert(sizeof(KERNEL_RDMP_HEADER64) == 0x30,
               "Invalid size for KERNEL_RDMP_HEADER64");
-
-static_assert(offsetof(KERNEL_RDMP_HEADER64, Bitmap) == 0x30,
-              "Invalid offset for KERNEL_RDMP_HEADER64");
 
 struct FULL_RDMP_HEADER64 {
   RDMP_HEADER64 Hdr;
@@ -333,14 +340,11 @@ struct FULL_RDMP_HEADER64 {
   uint16_t __Unknown1;
   uint16_t __Unknown2;
   uint64_t TotalNumberOfPages;
-  std::array<uint8_t, 1> Bitmap;
+  // std::array<uint8_t, 1> Bitmap;
 };
 
-static_assert(sizeof(FULL_RDMP_HEADER64) == 0x30 + 1,
+static_assert(sizeof(FULL_RDMP_HEADER64) == 0x30,
               "Invalid size for FULL_RDMP_HEADER64");
-
-static_assert(offsetof(FULL_RDMP_HEADER64, Bitmap) == 0x30,
-              "Invalid offset for FULL_RDMP_HEADER64");
 
 struct CONTEXT {
 
@@ -481,7 +485,7 @@ struct CONTEXT {
     //
 
     if (MxCsr != MxCsr2) {
-      printf("CONTEXT::MxCsr doesn't match MxCsr2.\n");
+      dprintf("CONTEXT::MxCsr doesn't match MxCsr2.\n");
       return false;
     }
 
@@ -626,7 +630,7 @@ struct EXCEPTION_RECORD64 {
   std::array<uint64_t, 15> ExceptionInformation;
 
   void Show(const uint32_t Prefix = 0) const {
-    DISPLAY_HEADER("KDMP_PARSER_EXCEPTION_RECORD64");
+    DISPLAY_HEADER("EXCEPTION_RECORD64");
     DISPLAY_FIELD(ExceptionCode);
     DISPLAY_FIELD(ExceptionFlags);
     DISPLAY_FIELD(ExceptionRecord);
@@ -651,7 +655,7 @@ struct EXCEPTION_RECORD64 {
 };
 
 static_assert(sizeof(EXCEPTION_RECORD64) == 0x98,
-              "KDMP_PARSER_EXCEPTION_RECORD64's size looks wrong.");
+              "EXCEPTION_RECORD64's size looks wrong.");
 
 union DUMP_FILE_ATTRIBUTES {
   struct DUMP_FILE_ATTRIBUTES_0 {
@@ -715,12 +719,6 @@ struct HEADER64 {
   /* 0x1054 */ uint32_t BootId;
   /* 0x1058 */ std::array<uint8_t, 4008> _reserved0;
 
-  union {
-    BMP_HEADER64 BmpHeader;
-    KERNEL_RDMP_HEADER64 RdmpHeader;
-    FULL_RDMP_HEADER64 FullRdmpHeader;
-  } u3;
-
   bool LooksGood() const {
 
     //
@@ -728,12 +726,20 @@ struct HEADER64 {
     //
 
     if (Signature != ExpectedSignature) {
-      printf("HEADER64::Signature looks wrong.\n");
+      dprintf("HEADER64::Signature looks wrong.\n");
       return false;
     }
 
     if (ValidDump != ExpectedValidDump) {
-      printf("HEADER64::ValidDump looks wrong.\n");
+      dprintf("HEADER64::ValidDump looks wrong.\n");
+      return false;
+    }
+
+    //
+    // Integrity check the CONTEXT record.
+    //
+
+    if (!u2.ContextRecord.LooksGood()) {
       return false;
     }
 
@@ -744,55 +750,29 @@ struct HEADER64 {
     switch (DumpType) {
     case DumpType_t::FullDump: {
       if (!u1.PhysicalMemoryBlock.LooksGood()) {
-        printf("The PhysicalMemoryBlockBuffer looks wrong.\n");
+        dprintf("The PhysicalMemoryBlock looks wrong.\n");
         return false;
       }
       break;
     }
 
-    case DumpType_t::BMPDump: {
-      if (!u3.BmpHeader.LooksGood()) {
-        printf("The BmpHeader looks wrong.\n");
-        return false;
-      }
-      break;
-    }
-
+    case DumpType_t::CompleteMemoryDump:
+    case DumpType_t::KernelMemoryDump:
     case DumpType_t::KernelAndUserMemoryDump:
-    case DumpType_t::KernelMemoryDump: {
-      if (!u3.RdmpHeader.Hdr.LooksGood()) {
-        printf("The RdmpHeader looks wrong.\n");
-        return false;
-      }
-      break;
-    }
-
-    case DumpType_t::CompleteMemoryDump: {
-      if (!u3.FullRdmpHeader.Hdr.LooksGood()) {
-        printf("The RdmpHeader looks wrong.\n");
-        return false;
-      }
+    case DumpType_t::BMPDump: {
       break;
     }
 
     case DumpType_t::MiniDump: {
-      printf("Unsupported type %s (%#x).\n", DumpTypeToString(DumpType).data(),
-             uint32_t(DumpType));
+      dprintf("Unsupported type %s (%#x).\n", DumpTypeToString(DumpType).data(),
+              uint32_t(DumpType));
       return false;
     }
 
     default: {
-      printf("Unknown Type %#x.\n", uint32_t(DumpType));
+      dprintf("Unknown Type %#x.\n", uint32_t(DumpType));
       return false;
     }
-    }
-
-    //
-    // Integrity check the CONTEXT record.
-    //
-
-    if (!u2.ContextRecord.LooksGood()) {
-      return false;
     }
 
     return true;
@@ -830,10 +810,12 @@ struct HEADER64 {
     DISPLAY_FIELD(SuiteMask);
     DISPLAY_FIELD(WriterStatus);
     DISPLAY_FIELD(KdSecondaryVersion);
+#if 0
     if (DumpType == DumpType_t::BMPDump) {
       DISPLAY_FIELD_OFFSET(u3.BmpHeader);
       u3.BmpHeader.Show();
     }
+#endif
   }
 };
 
@@ -855,10 +837,6 @@ struct HEADER64 {
 // layout, so hopefully they prevent any regressions regarding the layout.
 //
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-#endif //__GNUC__
 static_assert(offsetof(HEADER64, Signature) == 0x00,
               "The offset of KdDebuggerDataBlock looks wrong.");
 
@@ -868,20 +846,17 @@ static_assert(offsetof(HEADER64, BugCheckCodeParameters) == 0x40,
 static_assert(offsetof(HEADER64, KdDebuggerDataBlock) == 0x80,
               "The offset of KdDebuggerDataBlock looks wrong.");
 
-static_assert(offsetof(HEADER64, u2.ContextRecord) == 0x348,
+static_assert(offsetof(HEADER64, u2.ContextRecord) == 0x03'48,
               "The offset of ContextRecord looks wrong.");
 
-static_assert(offsetof(HEADER64, Exception) == 0xf00,
+static_assert(offsetof(HEADER64, Exception) == 0x0f'00,
               "The offset of Exception looks wrong.");
 
-static_assert(offsetof(HEADER64, Comment) == 0xfb0,
+static_assert(offsetof(HEADER64, Comment) == 0x0f'b0,
               "The offset of Comment looks wrong.");
 
-static_assert(offsetof(HEADER64, u3.BmpHeader) == 0x2000,
+static_assert(sizeof(HEADER64) == 0x20'00,
               "The offset of BmpHeaders looks wrong.");
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif //__GNUC__
 
 //
 // Structure for parsing a PTE.

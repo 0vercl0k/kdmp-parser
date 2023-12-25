@@ -6,6 +6,7 @@
 #include "kdmp-parser-version.h"
 
 #include <array>
+#include <cstdarg>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
@@ -15,15 +16,65 @@
 
 namespace kdmpparser {
 
+namespace fs = std::filesystem;
 using Page_t = std::array<uint8_t, kdmpparser::Page::Size>;
-using Physmem_t = std::unordered_map<uint64_t, const uint8_t *>;
+using Physmem_t = std::unordered_map<uint64_t, uint64_t>;
 
 struct BugCheckParameters_t {
   uint32_t BugCheckCode;
   std::array<uint64_t, 4> BugCheckCodeParameter;
 };
 
-class KernelDumpParser {
+class Reader_t {
+public:
+  Reader_t(const char *Path) : Path_(Path) {}
+  virtual ~Reader_t() {}
+
+  virtual [[nodiscard]] bool Initialize() = 0;
+  virtual [[nodiscard]] uint64_t SeekFromStart(const int64_t Offset) = 0;
+
+  virtual [[nodiscard]] size_t Read(const uint8_t *Buffer,
+                                    const size_t BufferSize) = 0;
+
+  [[nodiscard]] size_t ReadFrom(const uint64_t Offset, const uint8_t *Buffer,
+                                const size_t BufferSize) {
+    const auto PreviousOffset = SeekFromStart(Offset);
+    const auto SizeRead = Read(Buffer, BufferSize);
+    SeekFromStart(PreviousOffset);
+    return SizeRead;
+  }
+
+  [[nodiscard]] bool ReadExact(const uint8_t *Buffer, const size_t BufferSize) {
+    return Read(Buffer, BufferSize) == BufferSize;
+  }
+
+  template <typename Type_t>
+  [[nodiscard]] bool ReadExact(const Type_t *Buffer) {
+    return Read((const uint8_t *)Buffer, sizeof(Type_t)) == sizeof(Type_t);
+  }
+
+  [[nodiscard]] bool ReadExactFrom(const uint64_t FromOffset, uint8_t *Buffer,
+                                   const size_t BufferSize) {
+    const auto PreviousOffset = SeekFromStart(FromOffset);
+    const auto Success = ReadExact(Buffer, BufferSize);
+    SeekFromStart(PreviousOffset);
+    return Success;
+  }
+
+  template <typename Type_t>
+  [[nodiscard]] bool ReadExactFrom(const uint64_t FromOffset,
+                                   const Type_t *Buffer) {
+    return ReadExactFrom(FromOffset, (const uint8_t *)Buffer, sizeof(Type_t)) ==
+           sizeof(Type_t);
+  }
+
+  const fs::path &Path() const { return Path_; }
+
+private:
+  fs::path Path_;
+};
+
+class MemoryMappedReader_t : public Reader_t {
 
   //
   // The mapped file.
@@ -31,17 +82,106 @@ class KernelDumpParser {
 
   FileMap_t FileMap_;
 
+  uint64_t Cursor_ = 0;
+
+public:
+  MemoryMappedReader_t(const char *Path) : Reader_t(Path), Cursor_(0) {}
+
+  [[nodiscard]] bool Initialize() override {
+    if (!FileMap_.MapFile(Path().string().c_str())) {
+      dprintf("MapFile failed.\n");
+      return false;
+    }
+
+    return true;
+  }
+
+  uint64_t SeekFromStart(const int64_t Offset) override {
+    const uint64_t Before = Cursor_;
+    Cursor_ = Offset;
+    return Before;
+  }
+
+  [[nodiscard]] size_t Read(const uint8_t *Buffer,
+                            const size_t BufferSize) override {
+    const auto *Start = (const uint8_t *)FileMap_.ViewBase() + Cursor_;
+    if (!FileMap_.InBounds(Start, BufferSize)) {
+      dprintf("Reading %zd bytes from %p (offset %" PRId64
+              ") is out of bounds\n",
+              BufferSize, Start, Cursor_);
+      return 0;
+    }
+
+    memcpy((void *)Buffer, Start, BufferSize);
+    Cursor_ += BufferSize;
+    return BufferSize;
+  }
+};
+
+class FileReader_t : public Reader_t {
+  FILE *File_ = nullptr;
+
+public:
+  FileReader_t(const char *Path) : Reader_t(Path) {}
+
+  ~FileReader_t() {
+    if (File_) {
+      fclose(File_);
+    }
+  }
+
+  [[nodiscard]] bool Initialize() override {
+    File_ = fopen(Path().string().c_str(), "rb");
+    if (!File_) {
+      dprintf("fopen failed.\n");
+      return false;
+    }
+
+    return true;
+  }
+
+  uint64_t SeekFromStart(const int64_t Offset) override {
+#ifdef WINDOWS
+    const auto Before = _ftelli64(File_);
+    const auto Res = _fseeki64(File_, Offset, SEEK_SET);
+#else
+    const auto Before = ftell(File_);
+    const auto Res = fseek(File_, Offset, SEEK_SET);
+#endif
+
+    if (Res != 0) {
+      std::abort();
+    }
+
+    return Before;
+  }
+
+  [[nodiscard]] size_t Read(const uint8_t *Buffer,
+                            const size_t BufferSize) override {
+    const auto N = fread((void *)Buffer, BufferSize, 1, File_);
+    return N * BufferSize;
+  }
+};
+
+class KernelDumpParser {
+
+  //
+  // The dump reader.
+  //
+
+  std::unique_ptr<Reader_t> Reader_;
+
   //
   // Header of the crash-dump.
   //
 
-  HEADER64 *DmpHdr_ = nullptr;
+  std::unique_ptr<HEADER64> DmpHdr_;
 
   //
   // File path to the crash-dump.
   //
 
-  std::filesystem::path PathFile_;
+  fs::path PathFile_;
 
   //
   // Mapping between physical addresses / page data.
@@ -57,30 +197,37 @@ public:
   bool Parse(const char *PathFile) {
 
     //
+    // Create the reader instance.
+    //
+
+    auto Reader = std::make_unique<FileReader_t>(PathFile);
+
+    //
     // Copy the path file.
     //
 
-    PathFile_ = std::filesystem::path(PathFile);
-    if (!std::filesystem::exists(PathFile_)) {
-      printf("Invalid file: %s.\n", (char *)PathFile_.string().c_str());
+    if (!fs::exists(Reader->Path())) {
+      dprintf("Invalid file: %s.\n", Reader->Path().string().c_str());
       return false;
     }
 
     //
-    // Map a view of the file.
+    // Initialize the reader.
     //
 
-    if (!MapFile()) {
-      printf("MapFile failed.\n");
+    if (!Reader->Initialize()) {
+      dprintf("Invalid file: %s.\n", Reader->Path().string().c_str());
       return false;
     }
+
+    Reader_ = std::move(Reader);
 
     //
     // Parse the DMP_HEADER.
     //
 
     if (!ParseDmpHeader()) {
-      printf("ParseDmpHeader failed.\n");
+      dprintf("ParseDmpHeader failed.\n");
       return false;
     }
 
@@ -91,14 +238,14 @@ public:
     switch (DmpHdr_->DumpType) {
     case DumpType_t::FullDump: {
       if (!BuildPhysmemFullDump()) {
-        printf("BuildPhysmemFullDump failed.\n");
+        dprintf("BuildPhysmemFullDump failed.\n");
         return false;
       }
       break;
     }
     case DumpType_t::BMPDump: {
       if (!BuildPhysmemBMPDump()) {
-        printf("BuildPhysmemBMPDump failed.\n");
+        dprintf("BuildPhysmemBMPDump failed.\n");
         return false;
       }
       break;
@@ -108,14 +255,14 @@ public:
     case DumpType_t::KernelAndUserMemoryDump:
     case DumpType_t::KernelMemoryDump: {
       if (!BuildPhysicalMemoryFromDump(DmpHdr_->DumpType)) {
-        printf("BuildPhysicalMemoryFromDump failed.\n");
+        dprintf("BuildPhysicalMemoryFromDump failed.\n");
         return false;
       }
       break;
     }
 
     default: {
-      printf("Invalid type\n");
+      dprintf("Invalid type\n");
       return false;
     }
     }
@@ -127,7 +274,10 @@ public:
   // Give the Context record to the user.
   //
 
-  constexpr const CONTEXT &GetContext() const {
+  const CONTEXT &GetContext() const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
 
     //
     // Give the user a view of the context record.
@@ -140,7 +290,10 @@ public:
   // Give the bugcheck parameters to the user.
   //
 
-  constexpr BugCheckParameters_t GetBugCheckParameters() const {
+  BugCheckParameters_t GetBugCheckParameters() const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
 
     //
     // Give the user a view of the bugcheck parameters.
@@ -157,13 +310,25 @@ public:
   // Get the path of dump.
   //
 
-  const std::filesystem::path &GetDumpPath() const { return PathFile_; }
+  const fs::path &GetDumpPath() const {
+    if (!Reader_) {
+      std::abort();
+    }
+
+    return Reader_->Path();
+  }
 
   //
   // Get the type of dump.
   //
 
-  constexpr DumpType_t GetDumpType() const { return DmpHdr_->DumpType; }
+  DumpType_t GetDumpType() const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
+
+    return DmpHdr_->DumpType;
+  }
 
   //
   // Get the physmem.
@@ -176,6 +341,10 @@ public:
   //
 
   void ShowExceptionRecord(const uint32_t Prefix) const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
+
     DmpHdr_->Exception.Show(Prefix);
   }
 
@@ -261,40 +430,51 @@ public:
   // Show all the structures of the dump.
   //
 
-  void ShowAllStructures(const uint32_t Prefix) const { DmpHdr_->Show(Prefix); }
+  void ShowAllStructures(const uint32_t Prefix) const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
+
+    DmpHdr_->Show(Prefix);
+  }
 
   //
   // Get the content of a physical address.
   //
 
-  const uint8_t *GetPhysicalPage(const uint64_t PhysicalAddress) const {
+  std::optional<uint64_t>
+  GetPhysicalPageOffset(const uint64_t PhysicalAddress) const {
 
     //
     // Attempt to find the physical address.
     //
 
-    const auto &Pair = Physmem_.find(PhysicalAddress);
+    const auto &Pair = Physmem_.find(Page::Align(PhysicalAddress));
 
     //
     // If it doesn't exist then return nullptr.
     //
 
     if (Pair == Physmem_.end()) {
-      return nullptr;
+      return {};
     }
 
     //
     // Otherwise we return a pointer to the content of the page.
     //
 
-    return Pair->second;
+    return Pair->second + Page::Offset(PhysicalAddress);
   }
 
   //
   // Get the directory table base.
   //
 
-  constexpr uint64_t GetDirectoryTableBase() const {
+  uint64_t GetDirectoryTableBase() const {
+    if (!DmpHdr_) {
+      std::abort();
+    }
+
     return DmpHdr_->DirectoryTableBase;
   }
 
@@ -303,9 +483,8 @@ public:
   // base.
   //
 
-  std::optional<uint64_t>
-  VirtTranslate(const uint64_t VirtualAddress,
-                const uint64_t DirectoryTableBase = 0) const {
+  std::optional<uint64_t> VirtTranslate(const uint64_t VirtualAddress,
+                                        const uint64_t DirectoryTableBase = 0) {
 
     //
     // If DirectoryTableBase is null ; use the one from the dump header and
@@ -328,7 +507,7 @@ public:
     const uint64_t Pml4eGpa = Pml4Base + GuestAddress.u.Pml4Index * 8;
     const MMPTE_HARDWARE Pml4e(PhyRead8(Pml4eGpa));
     if (!Pml4e.u.Present) {
-      printf("Invalid page map level 4, address translation failed!\n");
+      dprintf("Invalid page map level 4, address translation failed!\n");
       return {};
     }
 
@@ -336,8 +515,8 @@ public:
     const uint64_t PdpteGpa = PdptBase + GuestAddress.u.PdPtIndex * 8;
     const MMPTE_HARDWARE Pdpte(PhyRead8(PdpteGpa));
     if (!Pdpte.u.Present) {
-      printf("Invalid page directory pointer table, address translation "
-             "failed!\n");
+      dprintf("Invalid page directory pointer table, address translation "
+              "failed!\n");
       return {};
     }
 
@@ -355,7 +534,7 @@ public:
     const uint64_t PdeGpa = PdBase + GuestAddress.u.PdIndex * 8;
     const MMPTE_HARDWARE Pde(PhyRead8(PdeGpa));
     if (!Pde.u.Present) {
-      printf("Invalid page directory entry, address translation failed!\n");
+      dprintf("Invalid page directory entry, address translation failed!\n");
       return {};
     }
 
@@ -373,7 +552,7 @@ public:
     const uint64_t PteGpa = PtBase + GuestAddress.u.PtIndex * 8;
     const MMPTE_HARDWARE Pte(PhyRead8(PteGpa));
     if (!Pte.u.Present) {
-      printf("Invalid page table entry, address translation failed!\n");
+      dprintf("Invalid page table entry, address translation failed!\n");
       return {};
     }
 
@@ -385,8 +564,9 @@ public:
   // Get the content of a virtual address.
   //
 
-  const uint8_t *GetVirtualPage(const uint64_t VirtualAddress,
-                                const uint64_t DirectoryTableBase = 0) const {
+  std::optional<size_t> VirtRead(const uint64_t VirtualAddress,
+                                 const uint8_t *Buffer, const size_t BufferSize,
+                                 const uint64_t DirectoryTableBase = 0) {
 
     //
     // First remove offset and translate the virtual address.
@@ -396,14 +576,41 @@ public:
         VirtTranslate(Page::Align(VirtualAddress), DirectoryTableBase);
 
     if (!PhysicalAddress) {
-      return nullptr;
+      return {};
     }
 
     //
     // Then get the physical page.
     //
 
-    return GetPhysicalPage(*PhysicalAddress);
+    const auto &Offset = GetPhysicalPageOffset(*PhysicalAddress);
+    if (!Offset) {
+      return {};
+    }
+
+    return Reader_->ReadFrom(*Offset, Buffer, BufferSize);
+  }
+
+  template <typename Type_t>
+  std::optional<size_t> VirtRead(const uint64_t VirtualAddress,
+                                 const Type_t *Buffer,
+                                 const uint64_t DirectoryTableBase = 0) {
+    return VirtRead(VirtualAddress, (const uint8_t *)Buffer, sizeof(Type_t),
+                    DirectoryTableBase);
+  }
+
+  bool VirtReadExact(const uint64_t VirtualAddress, const uint8_t *Buffer,
+                     const size_t BufferSize,
+                     const uint64_t DirectoryTableBase = 0) {
+    const auto &Res =
+        VirtRead(VirtualAddress, Buffer, BufferSize, DirectoryTableBase);
+    return Res ? *Res == BufferSize : false;
+  }
+
+  template <typename Type_t>
+  bool VirtReadExact(const uint64_t VirtualAddress, const Type_t *Buffer) {
+    return VirtReadExact(VirtualAddress, (const uint8_t *)Buffer,
+                         sizeof(Type_t));
   }
 
   const HEADER64 &GetDumpHeader() const {
@@ -414,27 +621,52 @@ public:
     return *DmpHdr_;
   }
 
+  std::optional<size_t> PhyRead(const uint64_t PhysicalAddress,
+                                const uint8_t *Buffer,
+                                const size_t BufferSize) {
+    //
+    // Get the physical page and read from the offset.
+    //
+
+    const auto PhyPageOffset = GetPhysicalPageOffset(PhysicalAddress);
+    if (!PhyPageOffset) {
+      dprintf("Internal page table parsing failed!\n");
+      return {};
+    }
+
+    return Reader_->ReadFrom(*PhyPageOffset, Buffer, BufferSize);
+  }
+
+  template <typename Type_t>
+  std::optional<size_t> PhyRead(const uint64_t PhysicalAddress,
+                                const Type_t *Buffer) {
+    return PhyRead(PhysicalAddress, (const uint8_t *)Buffer, sizeof(Type_t));
+  }
+
+  bool PhyReadExact(const uint64_t PhysicalAddress, const uint8_t *Buffer,
+                    const size_t BufferSize) {
+    const auto &Res = PhyRead(PhysicalAddress, Buffer, BufferSize);
+    return Res ? *Res == BufferSize : false;
+  }
+
+  template <typename Type_t>
+  bool PhyReadExact(const uint64_t PhysicalAddress, const Type_t *Buffer) {
+    return PhyReadExact(PhysicalAddress, (const uint8_t *)Buffer,
+                        sizeof(Type_t));
+  }
+
 private:
   //
   // Utility function to read an uint64_t from a physical address.
   //
 
-  uint64_t PhyRead8(const uint64_t PhysicalAddress) const {
-
-    //
-    // Get the physical page and read from the offset.
-    //
-
-    const uint8_t *PhysicalPage = GetPhysicalPage(Page::Align(PhysicalAddress));
-
-    if (!PhysicalPage) {
-      printf("Internal page table parsing failed!\n");
+  uint64_t PhyRead8(const uint64_t PhysicalAddress) {
+    uint64_t Value = 0;
+    if (!PhyReadExact(PhysicalAddress, &Value)) {
       return 0;
     }
 
-    const uint64_t *Ptr =
-        (uint64_t *)(PhysicalPage + Page::Offset(PhysicalAddress));
-    return *Ptr;
+    return Value;
   }
 
   //
@@ -442,13 +674,19 @@ private:
   //
 
   bool BuildPhysmemFullDump() {
-
     //
     // Walk through the runs.
     //
 
-    uint8_t *RunBase = (uint8_t *)&DmpHdr_->u3.BmpHeader;
     const uint32_t NumberOfRuns = DmpHdr_->u1.PhysicalMemoryBlock.NumberOfRuns;
+    uint64_t RunBase = sizeof(HEADER64);
+    const uint64_t Offset = offsetof(HEADER64, u1.PhysicalMemoryBlock) +
+                            sizeof(DmpHdr_->u1.PhysicalMemoryBlock);
+
+    if (!Reader_->SeekFromStart(Offset)) {
+      dprintf("Failed to Seek after the PhysicalMemoryBlock.\n");
+      return false;
+    }
 
     //
     // Back at it, this time building the index!
@@ -460,10 +698,14 @@ private:
       // Grab the current run as well as its base page and page count.
       //
 
-      const PHYSMEM_RUN *Run = DmpHdr_->u1.PhysicalMemoryBlock.Run + RunIdx;
+      PHYSMEM_RUN Run = {};
+      if (!Reader_->ReadExact(&Run)) {
+        dprintf("Failed to read a PHYSMEM_RUN.\n");
+        return false;
+      }
 
-      const uint64_t BasePage = Run->BasePage;
-      const uint64_t PageCount = Run->PageCount;
+      const uint64_t BasePage = Run.BasePage;
+      const uint64_t PageCount = Run.PageCount;
 
       //
       // Walk the pages from the run.
@@ -508,13 +750,13 @@ private:
         // That is the reason why the computation below is RunBase + (PageIdx
         // * 0x1000) instead of RunBase + (Pfn * 0x1000).
 
-        const uint8_t *PageBase = RunBase + (PageIdx * Page::Size);
+        const uint64_t PageOffset = RunBase + (PageIdx * Page::Size);
 
         //
         // Map the Pfn to a page.
         //
 
-        Physmem_.try_emplace(Pa, PageBase);
+        Physmem_.try_emplace(Pa, PageOffset);
       }
 
       //
@@ -532,9 +774,14 @@ private:
   //
 
   bool BuildPhysmemBMPDump() {
-    const uint8_t *Page = (uint8_t *)DmpHdr_ + DmpHdr_->u3.BmpHeader.FirstPage;
-    const uint64_t BitmapSize = DmpHdr_->u3.BmpHeader.Pages / 8;
-    const uint8_t *Bitmap = DmpHdr_->u3.BmpHeader.Bitmap.data();
+    BMP_HEADER64 BmpHeader = {};
+    if (!Reader_->ReadExact(&BmpHeader)) {
+      dprintf("Failed to read the BMP_HEADER64.\n");
+      return false;
+    }
+
+    uint64_t Page = BmpHeader.FirstPage;
+    const uint64_t BitmapSize = BmpHeader.Pages / 8;
 
     //
     // Walk the bitmap byte per byte.
@@ -546,7 +793,12 @@ private:
       // Now walk the bits of the current byte.
       //
 
-      const uint8_t Byte = Bitmap[BitmapIdx];
+      uint8_t Byte = 0;
+      if (!Reader_->ReadExact(&Byte)) {
+        dprintf("Failed to read bitmap byte.\n");
+        return false;
+      }
+
       for (uint8_t BitIdx = 0; BitIdx < 8; BitIdx++) {
 
         //
@@ -582,42 +834,54 @@ private:
 
   bool BuildPhysicalMemoryFromDump(const DumpType_t Type) {
     uint64_t FirstPageOffset = 0;
-    uint8_t *Page = nullptr;
+    uint64_t Page = 0;
     uint64_t MetadataSize = 0;
-    uint8_t *Bitmap = nullptr;
 
     switch (Type) {
     case DumpType_t::KernelMemoryDump:
     case DumpType_t::KernelAndUserMemoryDump: {
-      FirstPageOffset = DmpHdr_->u3.RdmpHeader.Hdr.FirstPageOffset;
-      Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
-      MetadataSize = DmpHdr_->u3.RdmpHeader.Hdr.MetadataSize;
-      Bitmap = DmpHdr_->u3.RdmpHeader.Bitmap.data();
+      KERNEL_RDMP_HEADER64 RdmpHeader = {};
+      if (!Reader_->ReadExact(&RdmpHeader)) {
+        dprintf("Failed to read the RdmpHeader.\n");
+        return false;
+      }
+
+      if (!RdmpHeader.Hdr.LooksGood()) {
+        dprintf("The RdmpHeader looks wrong.\n");
+        return false;
+      }
+
+      FirstPageOffset = RdmpHeader.Hdr.FirstPageOffset;
+      Page = FirstPageOffset;
+      MetadataSize = RdmpHeader.Hdr.MetadataSize;
       break;
     }
 
     case DumpType_t::CompleteMemoryDump: {
-      FirstPageOffset = DmpHdr_->u3.RdmpHeader.Hdr.FirstPageOffset;
-      Page = (uint8_t *)DmpHdr_ + FirstPageOffset;
-      MetadataSize = DmpHdr_->u3.FullRdmpHeader.Hdr.MetadataSize;
-      Bitmap = DmpHdr_->u3.FullRdmpHeader.Bitmap.data();
+      FULL_RDMP_HEADER64 FullRdmpHeader = {};
+      if (!Reader_->ReadExact(&FullRdmpHeader)) {
+        return false;
+      }
+
+      if (!FullRdmpHeader.Hdr.LooksGood()) {
+        dprintf("The FullRdmpHeader looks wrong.\n");
+        return false;
+      }
+
+      FirstPageOffset = FullRdmpHeader.Hdr.FirstPageOffset;
+      Page = FirstPageOffset;
+      MetadataSize = FullRdmpHeader.Hdr.MetadataSize;
       break;
     }
 
     default: {
+      dprintf("Unknown Type %#x.\n", uint32_t(Type));
       return false;
     }
     }
 
-    if (!FirstPageOffset || !Page || !MetadataSize || !Bitmap) {
-      return false;
-    }
-
-    auto IsPageInBounds = [&](const uint8_t *Ptr) {
-      return FileMap_.InBounds(Ptr, Page::Size);
-    };
-
-    if (!IsPageInBounds(Page)) {
+    if (!FirstPageOffset || !Page || !MetadataSize) {
+      dprintf("FirstPageOffset, Page or MetadaSize is wrong.\n");
       return false;
     }
 
@@ -626,10 +890,16 @@ private:
       uint64_t NumberOfPages;
     };
 
-    for (uint64_t Offset = 0; Offset < MetadataSize;
-         Offset += sizeof(PfnRange)) {
-      const PfnRange &Entry = (PfnRange &)Bitmap[Offset];
-      if (!FileMap_.InBounds(&Entry, sizeof(Entry))) {
+    if ((MetadataSize % sizeof(PfnRange)) != 0) {
+      dprintf("MetadataSize is not aligned to sizeof(PfnRange).\n");
+      return false;
+    }
+
+    const size_t NumberPfnRanges = MetadataSize / sizeof(PfnRange);
+    for (size_t Idx = 0; Idx < NumberPfnRanges; Idx++) {
+      PfnRange Entry = {};
+      if (!Reader_->ReadExact(&Entry)) {
+        dprintf("Failed to read PfnRange.\n");
         return false;
       }
 
@@ -639,10 +909,6 @@ private:
       }
 
       for (uint64_t PageIdx = 0; PageIdx < Entry.NumberOfPages; PageIdx++) {
-        if (!IsPageInBounds(Page)) {
-          return false;
-        }
-
         const uint64_t Pa = (Pfn * Page::Size) + (PageIdx * Page::Size);
         Physmem_.try_emplace(Pa, Page);
         Page += Page::Size;
@@ -657,30 +923,27 @@ private:
   //
 
   bool ParseDmpHeader() {
-
     //
     // The base of the view points on the HEADER64.
     //
 
-    DmpHdr_ = (HEADER64 *)FileMap_.ViewBase();
+    DmpHdr_ = std::make_unique<HEADER64>();
+    if (!Reader_->ReadExact(DmpHdr_.get())) {
+      dprintf("Failed to read the HEADER64.\n");
+      return false;
+    }
 
     //
     // Now let's make sure the structures look right.
     //
 
     if (!DmpHdr_->LooksGood()) {
-      printf("The header looks wrong.\n");
+      dprintf("The HEADER64 looks wrong.\n");
       return false;
     }
 
     return true;
   }
-
-  //
-  // Map a view of the file in memory.
-  //
-
-  bool MapFile() { return FileMap_.MapFile(PathFile_.string().c_str()); }
 };
 
 struct Version_t {

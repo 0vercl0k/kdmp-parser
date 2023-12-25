@@ -227,14 +227,10 @@ TEST_CASE("kdmp-parser", "parser") {
     for (const auto &Testcase : Testcases) {
       kdmpparser::KernelDumpParser Dmp;
       REQUIRE(Dmp.Parse(Testcase.File.data()));
-      const uint64_t Address = Testcase.ReadAddress;
-      const uint64_t AddressAligned = kdmpparser::Page::Align(Address);
-      const uint64_t AddressOffset = kdmpparser::Page::Offset(Address);
       const auto &ExpectedContent = Testcase.Bytes;
-      const uint8_t *Page = Dmp.GetPhysicalPage(AddressAligned);
-      REQUIRE(Page != nullptr);
-      CHECK(memcmp(Page + AddressOffset, ExpectedContent.data(),
-                   sizeof(ExpectedContent)) == 0);
+      uint8_t Page[sizeof(Testcase.Bytes)];
+      REQUIRE(Dmp.PhyReadExact(Testcase.ReadAddress, Page, sizeof(Page)));
+      CHECK(memcmp(Page, ExpectedContent.data(), sizeof(ExpectedContent)) == 0);
     }
   }
 }

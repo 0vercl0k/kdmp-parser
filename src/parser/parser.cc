@@ -316,8 +316,9 @@ int main(int argc, const char *argv[]) {
       // If it doesn't exist then display a message, else dump it on stdout.
       //
 
-      const uint8_t *Page = Dmp.GetPhysicalPage(Opts.PhysicalAddress);
-      if (Page == nullptr) {
+      uint8_t Page[kdmpparser::Page::Size];
+
+      if (!Dmp.PhyReadExact(Opts.PhysicalAddress, Page, sizeof(Page))) {
         printf("0x%" PRIx64 " is not a valid physical address.\n",
                Opts.PhysicalAddress);
       } else {
@@ -357,7 +358,13 @@ int main(int argc, const char *argv[]) {
       //
 
       for (const auto PhysicalAddress : OrderedPhysicalAddresses) {
-        const uint8_t *Page = Dmp.GetPhysicalPage(PhysicalAddress);
+        uint8_t Page[16] = {};
+        if (!Dmp.PhyReadExact(PhysicalAddress, Page)) {
+          printf(
+              "PhyReadExact failed when it should not be possible, skipping\n");
+          continue;
+        }
+
         Hexdump(PhysicalAddress, Page, 16);
       }
     }
