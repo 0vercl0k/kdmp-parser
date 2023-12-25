@@ -13,7 +13,10 @@
 #define WINDOWS
 #define SYSTEM_PLATFORM "Windows"
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#undef _CRT_SECURE_NO_WARNINGS
+
 #if defined ARCH_X86
 #define WINDOWS_X86
 #elif defined ARCH_X64

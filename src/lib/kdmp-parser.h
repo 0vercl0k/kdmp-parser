@@ -7,14 +7,12 @@
 
 #include <array>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
-
-#define __STDC_WANT_LIB_EXT1__ 1
-#include <cstdio>
 
 namespace kdmpparser {
 
@@ -134,7 +132,8 @@ public:
   }
 
   [[nodiscard]] bool Initialize() override {
-    if (fopen_s(&File_, Path().string().c_str(), "rb") != 0) {
+    File_ = fopen(Path().string().c_str(), "rb");
+    if (File_ == nullptr) {
       dprintf("fopen_s failed.\n");
       return false;
     }

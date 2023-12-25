@@ -3,14 +3,12 @@
 
 #include "platform.h"
 
-#define __STDC_WANT_LIB_EXT1__ 1
-#include <cstdio>
-
 #include <array>
 #include <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <string_view>
 #include <type_traits>
 #include <variant>
