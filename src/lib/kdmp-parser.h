@@ -640,7 +640,7 @@ private:
       if (Type == DumpType_t::CompleteMemoryDump) {
         // `CompleteMemoryDump` type seems to be bound by the
         // `TotalNumberOfPages` field, *not* by `MetadataSize`
-        if (CurrentPageCount == TotalNumberOfPages) // [[unlikely]]
+        if (CurrentPageCount == TotalNumberOfPages)
           break;
 
         if (CurrentPageCount > TotalNumberOfPages)
