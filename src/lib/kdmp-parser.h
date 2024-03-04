@@ -631,7 +631,6 @@ private:
 
     // Sanity check
     if (MetadataSize % sizeof(PfnRange)) {
-      // printf("MetadataSize field is invalid, value=%llx\r\n", MetadataSize);
       return false;
     }
 
