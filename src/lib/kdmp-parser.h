@@ -585,8 +585,8 @@ private:
     uint8_t *Page = nullptr;
     uint64_t MetadataSize = 0;
     uint8_t *Bitmap = nullptr;
-    uint64_t TotalNumberOfPages{};
-    uint64_t CurrentPageCount{};
+    uint64_t TotalNumberOfPages = 0;
+    uint64_t CurrentPageCount = 0;
 
     switch (Type) {
     case DumpType_t::KernelMemoryDump:
@@ -639,12 +639,14 @@ private:
 
       if (Type == DumpType_t::CompleteMemoryDump) {
         // `CompleteMemoryDump` type seems to be bound by the
-        // `TotalNumberOfPages` field, *not* by `MetadataSize`
-        if (CurrentPageCount == TotalNumberOfPages)
+        // `TotalNumberOfPages` field, *not* by `MetadataSize`.
+        if (CurrentPageCount == TotalNumberOfPages) {
           break;
+        }
 
-        if (CurrentPageCount > TotalNumberOfPages)
+        if (CurrentPageCount > TotalNumberOfPages) {
           return false;
+        }
       }
 
       const PfnRange &Entry = (PfnRange &)Bitmap[Offset];
