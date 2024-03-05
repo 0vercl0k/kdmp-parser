@@ -181,7 +181,7 @@ jobs:
     - name: Upload wheel
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}-${{ matrix.variant.arch }}.${{ matrix.variant.config }}-${{ github.sha }}
+        name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}.${{ matrix.python-version }}.${{ matrix.variant.arch }}
         path: wheel/*.whl
 
   merge:
