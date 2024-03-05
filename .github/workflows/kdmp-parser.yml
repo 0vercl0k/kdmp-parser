@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Cache Artifacts
       id: cache-testdatas
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: kdmp-parser-testdatas-cache
         path: .
@@ -22,7 +22,7 @@ jobs:
         curl ${{ env.TESTDATA_URL }}  -O -L
         7z x testdatas.7z; rm testdatas.7z
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         if-no-files-found: error
         name: kdmp-parser-testdatas-cache
@@ -52,7 +52,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Retrieve testdatas
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: kdmp-parser-testdatas-cache
         path: .
@@ -97,7 +97,7 @@ jobs:
         ctest --progress --build-config ${{ matrix.variant.config }} -T test --test-dir ./build/src/tests/
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: parser-${{ matrix.variant.os }}.${{ matrix.variant.generator }}-${{ matrix.variant.arch }}.${{ matrix.variant.config }}-${{ github.sha }}
         path: artifact/
@@ -125,7 +125,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Retrieve testdatas
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: kdmp-parser-testdatas-cache
         path: .
@@ -179,7 +179,7 @@ jobs:
         pytest -vvv src/python/tests
 
     - name: Upload wheel
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: wheels
         path: wheel/*.whl
