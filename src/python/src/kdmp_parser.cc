@@ -43,6 +43,8 @@ NB_MODULE(_kdmp_parser, m) {
       .value("KernelDump", kdmpparser::DumpType_t::KernelDump)
       .value("BMPDump", kdmpparser::DumpType_t::BMPDump)
 
+      .value("LiveKernelBitmapDump",
+             kdmpparser::DumpType_t::LiveKernelBitmapDump)
       .value("MiniDump", kdmpparser::DumpType_t::MiniDump)
       .value("KernelMemoryDump", kdmpparser::DumpType_t::KernelMemoryDump)
       .value("KernelAndUserMemoryDump",
