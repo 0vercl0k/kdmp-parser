@@ -40,7 +40,7 @@ jobs:
           # - {os: windows-latest, generator: msvc, arch: arm64, config: RelWithDebInfo}
           - {os: ubuntu-latest, generator: gcc, arch: x64, config: RelWithDebInfo}
           - {os: ubuntu-latest, generator: clang, arch: x64, config: RelWithDebInfo}
-          - {os: macos-latest, generator: clang, arch: x64, config: Release}
+          - {os: macos-latest-large, generator: clang, arch: x64, config: Release}
     runs-on: ${{ matrix.variant.os }}
     name: parser / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.variant.arch }}
     env:
