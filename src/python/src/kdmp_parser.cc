@@ -82,8 +82,8 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("TotalPresentPages", &kdmpparser::BMP_HEADER64::TotalPresentPages)
       .def_ro("Pages", &kdmpparser::BMP_HEADER64::Pages)
       .def_ro("Bitmap", &kdmpparser::BMP_HEADER64::Bitmap)
-      .def("Show", &kdmpparser::PHYSMEM_DESC::Show, "Prefix"_a)
-      .def("LooksGood", &kdmpparser::PHYSMEM_DESC::LooksGood);
+      .def("Show", &kdmpparser::BMP_HEADER64::Show, "Prefix"_a)
+      .def("LooksGood", &kdmpparser::BMP_HEADER64::LooksGood);
 
   nb::class_<kdmpparser::RDMP_HEADER64>(m, "RDMP_HEADER64")
       .def(nb::init<>())
