@@ -176,7 +176,7 @@ constexpr TestCaseValues TestCaseCompleteDump{
 };
 
 constexpr TestCaseValues TestLiveKernelBitmapDump{
-    "FullLiveKernelMemory.dmp",
+    "fulllivekernelmemory.dmp",
     kdmpparser::DumpType_t::LiveKernelBitmapDump,
     0x154f5,
     0x0000000d96a9000, // cr3
