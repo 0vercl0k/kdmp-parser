@@ -269,8 +269,8 @@ NB_MODULE(_kdmp_parser, m) {
 
                      return Hdr.u3.FullRdmpHeader;
                    })
-      .def("Show", &CONTEXT::Show, "Prefix"_a)
-      .def("LooksGood", &CONTEXT::LooksGood);
+      .def("Show", &HEADER64::Show, "Prefix"_a)
+      .def("LooksGood", &HEADER64::LooksGood);
 
   m.attr("PageSize") = kdmpparser::Page::Size;
   m.def("PageAlign", &kdmpparser::Page::Align, "Address"_a,
