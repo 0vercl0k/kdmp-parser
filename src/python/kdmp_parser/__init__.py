@@ -24,14 +24,14 @@ from .page import (
 
 
 class DumpType(enum.IntEnum):
-    FullDump = int(_DumpType_t.FullDump)
-    KernelDump = int(_DumpType_t.KernelDump)
-    BMPDump = int(_DumpType_t.BMPDump)
-    LiveKernelBitmapDump = int(_DumpType_t.LiveKernelBitmapDump)
-    MiniDump = int(_DumpType_t.MiniDump)
-    KernelMemoryDump = int(_DumpType_t.KernelMemoryDump)
-    KernelAndUserMemoryDump = int(_DumpType_t.KernelAndUserMemoryDump)
-    CompleteMemoryDump = int(_DumpType_t.CompleteMemoryDump)
+    FullDump = _DumpType_t.FullDump.value
+    KernelDump = _DumpType_t.KernelDump.value
+    BMPDump = _DumpType_t.BMPDump.value
+    LiveKernelBitmapDump = _DumpType_t.LiveKernelBitmapDump.value
+    MiniDump = _DumpType_t.MiniDump.value
+    KernelMemoryDump = _DumpType_t.KernelMemoryDump.value
+    KernelAndUserMemoryDump = _DumpType_t.KernelAndUserMemoryDump.value
+    CompleteMemoryDump = _DumpType_t.CompleteMemoryDump.value
 
 
 class KernelDumpParser:
