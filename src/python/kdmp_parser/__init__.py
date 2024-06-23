@@ -57,7 +57,7 @@ class KernelDumpParser:
         self.filepath = path
         self.context: __CONTEXT = self.__dump.GetContext()
         self.directory_table_base: int = self.__dump.GetDirectoryTableBase() & ~0xFFF
-        self.type = DumpType(self.__dump.GetDumpType())
+        self.type = DumpType(self.__dump.GetDumpType().value)
         self.header: __HEADER64 = self.__dump.GetDumpHeader()
         self.pages = _PageIterator(self.__dump)
         return
