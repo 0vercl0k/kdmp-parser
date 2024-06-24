@@ -24,13 +24,14 @@ from .page import (
 
 
 class DumpType(enum.IntEnum):
-    FullDump = _DumpType_t.FullDump
-    KernelDump = _DumpType_t.KernelDump
-    BMPDump = _DumpType_t.BMPDump
-    MiniDump = _DumpType_t.MiniDump
-    KernelMemoryDump = _DumpType_t.KernelMemoryDump
-    KernelAndUserMemoryDump = _DumpType_t.KernelAndUserMemoryDump
-    CompleteMemoryDump = _DumpType_t.CompleteMemoryDump
+    FullDump = _DumpType_t.FullDump.value
+    KernelDump = _DumpType_t.KernelDump.value
+    BMPDump = _DumpType_t.BMPDump.value
+    LiveKernelBitmapDump = _DumpType_t.LiveKernelBitmapDump.value
+    MiniDump = _DumpType_t.MiniDump.value
+    KernelMemoryDump = _DumpType_t.KernelMemoryDump.value
+    KernelAndUserMemoryDump = _DumpType_t.KernelAndUserMemoryDump.value
+    CompleteMemoryDump = _DumpType_t.CompleteMemoryDump.value
 
 
 class KernelDumpParser:
@@ -56,7 +57,7 @@ class KernelDumpParser:
         self.filepath = path
         self.context: __CONTEXT = self.__dump.GetContext()
         self.directory_table_base: int = self.__dump.GetDirectoryTableBase() & ~0xFFF
-        self.type = DumpType(self.__dump.GetDumpType())
+        self.type = DumpType(self.__dump.GetDumpType().value)
         self.header: __HEADER64 = self.__dump.GetDumpHeader()
         self.pages = _PageIterator(self.__dump)
         return

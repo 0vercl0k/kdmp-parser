@@ -175,10 +175,36 @@ constexpr TestCaseValues TestCaseCompleteDump{
     0x00000000'0000001fULL,
 };
 
+constexpr TestCaseValues TestLiveKernelBitmapDump{
+    "fulllivekernelmemory.dmp",
+    kdmpparser::DumpType_t::LiveKernelBitmapDump,
+    0x154f5,
+    0x0000000d96a9000, // cr3
+    {0x67, 0xd8, 0xb6, 0xdd, 0x00, 0x00, 0x00, 0x0a, 0x67, 0xa8, 0x1d, 0xd6,
+     0x00, 0x00, 0x00, 0x0a},
+    0x4ULL,
+    0xffffd20fd8553000ULL,
+    0xffffa1000ed84a00ULL,
+    0x0ULL,
+    0xffffd20fd3beeae0ULL,
+    0xfffff8074fb4b180ULL,
+    0xfffff80750a98b6dULL,
+    0xfffffd8d6bcaed10ULL,
+    0x0ULL,
+    0xb80ULL,
+    0xffffd20fd8553348ULL,
+    0x0ULL,
+    0xffffd20fd8553000ULL,
+    0x2ULL,
+    0x0ULL,
+    0xffffd20fd48d5080ULL,
+    0x1ULL,
+};
+
 constexpr std::array Testcases{
     TestCaseBmp,          TestCaseFull,
     TestCaseKernelDump,   TestCaseKernelUserDump,
-    TestCaseCompleteDump,
+    TestCaseCompleteDump, TestLiveKernelBitmapDump,
 };
 
 TEST_CASE("kdmp-parser", "parser") {

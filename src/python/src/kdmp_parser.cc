@@ -42,7 +42,8 @@ NB_MODULE(_kdmp_parser, m) {
       .value("FullDump", kdmpparser::DumpType_t::FullDump)
       .value("KernelDump", kdmpparser::DumpType_t::KernelDump)
       .value("BMPDump", kdmpparser::DumpType_t::BMPDump)
-
+      .value("LiveKernelBitmapDump",
+             kdmpparser::DumpType_t::LiveKernelBitmapDump)
       .value("MiniDump", kdmpparser::DumpType_t::MiniDump)
       .value("KernelMemoryDump", kdmpparser::DumpType_t::KernelMemoryDump)
       .value("KernelAndUserMemoryDump",
@@ -80,8 +81,8 @@ NB_MODULE(_kdmp_parser, m) {
       .def_ro("TotalPresentPages", &kdmpparser::BMP_HEADER64::TotalPresentPages)
       .def_ro("Pages", &kdmpparser::BMP_HEADER64::Pages)
       .def_ro("Bitmap", &kdmpparser::BMP_HEADER64::Bitmap)
-      .def("Show", &kdmpparser::PHYSMEM_DESC::Show, "Prefix"_a)
-      .def("LooksGood", &kdmpparser::PHYSMEM_DESC::LooksGood);
+      .def("Show", &kdmpparser::BMP_HEADER64::Show, "Prefix"_a)
+      .def("LooksGood", &kdmpparser::BMP_HEADER64::LooksGood);
 
   nb::class_<kdmpparser::RDMP_HEADER64>(m, "RDMP_HEADER64")
       .def(nb::init<>())
@@ -267,8 +268,8 @@ NB_MODULE(_kdmp_parser, m) {
 
                      return Hdr.u3.FullRdmpHeader;
                    })
-      .def("Show", &CONTEXT::Show, "Prefix"_a)
-      .def("LooksGood", &CONTEXT::LooksGood);
+      .def("Show", &HEADER64::Show, "Prefix"_a)
+      .def("LooksGood", &HEADER64::LooksGood);
 
   m.attr("PageSize") = kdmpparser::Page::Size;
   m.def("PageAlign", &kdmpparser::Page::Align, "Address"_a,

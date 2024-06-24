@@ -31,8 +31,10 @@ enum class DumpType_t : uint32_t {
   BMPDump = 0x5,
 
   // New stuff
-  MiniDump = 0x4,                // Produced by `.dump /m`
-  KernelMemoryDump = 0x8,        // Produced by `.dump /k`
+  MiniDump = 0x4,             // Produced by `.dump /m`
+  LiveKernelBitmapDump = 0x6, // (22h2+) Produced by TaskMgr > System > Create
+                              // Live Kernel Memory Dump
+  KernelMemoryDump = 0x8,     // Produced by `.dump /k`
   KernelAndUserMemoryDump = 0x9, // Produced by `.dump /ka`
   CompleteMemoryDump = 0xa,      // Produced by `.dump /f`
 };
@@ -88,6 +90,8 @@ constexpr std::string_view DumpTypeToString(const DumpType_t Type) {
   // New stuff
   case DumpType_t::MiniDump:
     return "MiniDump";
+  case DumpType_t::LiveKernelBitmapDump:
+    return "LiveKernelBitmapDump";
   case DumpType_t::KernelMemoryDump:
     return "KernelMemoryDump";
   case DumpType_t::KernelAndUserMemoryDump:
@@ -750,6 +754,7 @@ struct HEADER64 {
       break;
     }
 
+    case DumpType_t::LiveKernelBitmapDump:
     case DumpType_t::BMPDump: {
       if (!u3.BmpHeader.LooksGood()) {
         printf("The BmpHeader looks wrong.\n");

@@ -96,6 +96,7 @@ public:
       }
       break;
     }
+    case DumpType_t::LiveKernelBitmapDump:
     case DumpType_t::BMPDump: {
       if (!BuildPhysmemBMPDump()) {
         printf("BuildPhysmemBMPDump failed.\n");
