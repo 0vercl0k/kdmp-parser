@@ -170,15 +170,10 @@ jobs:
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.19.1
+      env:
+        CIBW_TEST_COMMAND: pytest -vvv {project}/src/python/tests
       with:
         package-dir: ./src/python
-
-    - name: Python Binding Tests
-      run: |
-        pip install --upgrade pip setuptools wheel
-        pip install -U -r src/python/tests/requirements.txt
-        pip install -U --user src/python
-        pytest -vvv src/python/tests
 
     - name: Upload wheel
       uses: actions/upload-artifact@v4
