@@ -168,10 +168,10 @@ jobs:
         echo CC=clang >> $GITHUB_ENV
         echo CXX=clang++ >> $GITHUB_ENV
 
-    - name: Build wheel
-      run: |
-        mkdir wheel
-        pip wheel src/python -w ./wheel
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.19.1
+      with:
+        package-dir: ./src/python
 
     - name: Python Binding Tests
       run: |
@@ -184,7 +184,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}.${{ matrix.python-version }}.${{ matrix.variant.arch }}
-        path: wheel/*.whl
+        path: ./wheelhouse/*.whl
 
   merge:
     runs-on: ubuntu-latest
