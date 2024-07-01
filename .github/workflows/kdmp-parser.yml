@@ -19,7 +19,7 @@ jobs:
     - if: steps.cache-testdatas.outputs.cache-hit != 'true'
       run: |
         sudo apt-get -y update; sudo apt-get install -y p7zip-full;
-        curl ${{ env.TESTDATA_URL }}  -O -L
+        curl ${{ env.TESTDATA_URL }} -O -L
         7z x testdatas.7z; rm testdatas.7z
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -108,18 +108,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # nanobind does not support Python < 3.8.
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         variant:
-          - {os: windows-2019, generator: msvc, arch: x64, config: RelWithDebInfo, py-arch: x64}
-          - {os: windows-2019, generator: msvc, arch: win32, config: RelWithDebInfo, py-arch: x86}
+          - {os: windows-2019, generator: msvc, config: RelWithDebInfo }
           # - {os: windows-latest, generator: msvc, arch: arm64, config: RelWithDebInfo, py-arch: x64} # Unsupported (see https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
-          - {os: ubuntu-22.04, generator: gcc, arch: x64, config: RelWithDebInfo}
-          - {os: ubuntu-22.04, generator: clang, arch: x64, config: RelWithDebInfo}
+          - {os: ubuntu-22.04, config: RelWithDebInfo }
           # most up to date free intel based osx?
-          - {os: macos-13, generator: clang, arch: x64, config: Release, py-arch: x64}
+          - {os: macos-13, config: Release }
     runs-on: ${{ matrix.variant.os }}
-    name: bindings / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.python-version }} / ${{ matrix.variant.arch }}
+    name: bindings / ${{ matrix.variant.os }}
     env:
       CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=OFF -DBUILD_TESTS:BOOL=OFF -DBUILD_PYTHON_BINDING:BOOL=ON"
     steps:
@@ -132,59 +128,18 @@ jobs:
         name: kdmp-parser-testdatas-cache
         path: .
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
+    - name: Build / test wheels
+      uses: pypa/cibuildwheel@v2.19.1
+      env:
+        CIBW_BEFORE_TEST: pip install -U -r {project}/src/python/tests/requirements.txt
       with:
-        python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.variant.py-arch }}
-
-    - name: Environment Setup (Windows)
-      if: matrix.variant.os == 'windows-2019'
-      run: |
-        Import-Module .\.github\Invoke-VisualStudio.ps1
-        Invoke-VisualStudio2022${{ matrix.variant.arch }}
-
-    - name: Environment Setup (Linux)
-      if: matrix.variant.os == 'ubuntu-22.04'
-      run: |
-        sudo apt-get -y update
-
-    - name: Environment Setup (OSX)
-      if: matrix.variant.os == 'macos-13'
-      run: |
-        echo
-
-    - name: Environment Setup (Linux/GCC)
-      if: matrix.variant.os == 'ubuntu-22.04' && matrix.variant.generator == 'gcc'
-      run: |
-        sudo apt install -y g++
-        echo CC=gcc >> $GITHUB_ENV
-        echo CXX=g++ >> $GITHUB_ENV
-
-    - name: Environment Setup (Linux/CLang)
-      if: matrix.variant.os == 'ubuntu-22.04' && matrix.variant.generator == 'clang'
-      run: |
-        sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-        echo CC=clang >> $GITHUB_ENV
-        echo CXX=clang++ >> $GITHUB_ENV
-
-    - name: Build wheel
-      run: |
-        mkdir wheel
-        pip wheel src/python -w ./wheel
-
-    - name: Python Binding Tests
-      run: |
-        pip install --upgrade pip setuptools wheel
-        pip install -U -r src/python/tests/requirements.txt
-        pip install -U --user src/python
-        pytest -vvv src/python/tests
+        package-dir: ./src/python
 
     - name: Upload wheel
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}.${{ matrix.python-version }}.${{ matrix.variant.arch }}
-        path: wheel/*.whl
+        name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}
+        path: ./wheelhouse/*.whl
 
   merge:
     runs-on: ubuntu-latest
