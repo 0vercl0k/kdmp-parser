@@ -109,15 +109,14 @@ jobs:
       fail-fast: false
       matrix:
         variant:
-          - {os: windows-2019, generator: msvc, arch: x64, config: RelWithDebInfo, py-arch: x64}
-          - {os: windows-2019, generator: msvc, arch: win32, config: RelWithDebInfo, py-arch: x86}
+          - {os: windows-2019, generator: msvc, config: RelWithDebInfo }
           # - {os: windows-latest, generator: msvc, arch: arm64, config: RelWithDebInfo, py-arch: x64} # Unsupported (see https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
-          - {os: ubuntu-22.04, generator: gcc, arch: x64, config: RelWithDebInfo}
-          - {os: ubuntu-22.04, generator: clang, arch: x64, config: RelWithDebInfo}
+          - {os: ubuntu-22.04, generator: gcc, config: RelWithDebInfo }
+          - {os: ubuntu-22.04, generator: clang, config: RelWithDebInfo }
           # most up to date free intel based osx?
-          - {os: macos-13, generator: clang, arch: x64, config: Release, py-arch: x64}
+          - {os: macos-13, generator: clang, config: Release }
     runs-on: ${{ matrix.variant.os }}
-    name: bindings / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }} / ${{ matrix.python-version }} / ${{ matrix.variant.arch }}
+    name: bindings / ${{ matrix.variant.os }} / ${{ matrix.variant.generator }}
     env:
       CMAKE_FLAGS: "-DBUILD_PARSER:BOOL=OFF -DBUILD_TESTS:BOOL=OFF -DBUILD_PYTHON_BINDING:BOOL=ON"
     steps:
@@ -130,25 +129,10 @@ jobs:
         name: kdmp-parser-testdatas-cache
         path: .
 
-    - name: Environment Setup (Windows)
-      if: matrix.variant.os == 'windows-2019'
-      run: |
-        Import-Module .\.github\Invoke-VisualStudio.ps1
-        Invoke-VisualStudio2022${{ matrix.variant.arch }}
-
-    - name: Environment Setup (Linux)
-      if: matrix.variant.os == 'ubuntu-22.04'
-      run: |
-        sudo apt-get -y update
-
-    - name: Environment Setup (OSX)
-      if: matrix.variant.os == 'macos-13'
-      run: |
-        echo
-
     - name: Environment Setup (Linux/GCC)
       if: matrix.variant.os == 'ubuntu-22.04' && matrix.variant.generator == 'gcc'
       run: |
+        sudo apt-get -y update
         sudo apt install -y g++
         echo CC=gcc >> $GITHUB_ENV
         echo CXX=g++ >> $GITHUB_ENV
@@ -156,6 +140,7 @@ jobs:
     - name: Environment Setup (Linux/CLang)
       if: matrix.variant.os == 'ubuntu-22.04' && matrix.variant.generator == 'clang'
       run: |
+        sudo apt-get -y update
         sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
         echo CC=clang >> $GITHUB_ENV
         echo CXX=clang++ >> $GITHUB_ENV
@@ -170,7 +155,7 @@ jobs:
     - name: Upload wheel
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}.${{ matrix.python-version }}.${{ matrix.variant.arch }}
+        name: wheels-${{ matrix.variant.os }}.${{ matrix.variant.generator }}
         path: ./wheelhouse/*.whl
 
   merge:
