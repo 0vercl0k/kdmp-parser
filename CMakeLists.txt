@@ -11,7 +11,7 @@ project(
     kdmp-parser
     DESCRIPTION "A Cross-Platform C++ parser library for Windows kernel minidumps."
     HOMEPAGE_URL https://github.com/0vercl0k/kdmp-parser
-    VERSION 0.7.3
+    VERSION 0.7.4
 )
 
 set(PROJECT_AUTHOR 0vercl0k)
