@@ -40,7 +40,7 @@ list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 
 find_package(nanobind CONFIG REQUIRED)
 
-nanobind_add_module(_kdmp_parser NB_STATIC src/kdmp_parser.cc)
+nanobind_add_module(_kdmp_parser STABLE_ABI src/kdmp_parser.cc)
 
 if(BUILD_PYTHON_PACKAGE)
     #

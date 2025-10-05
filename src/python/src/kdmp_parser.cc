@@ -9,6 +9,7 @@
 
 #include "kdmp-parser.h"
 
+#include <cstring>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/bind_map.h>
