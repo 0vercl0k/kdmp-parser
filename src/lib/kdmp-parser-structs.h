@@ -720,6 +720,9 @@ struct HEADER64 {
   /* 0x1058 */ std::array<uint8_t, 4008> _reserved0;
 
   union {
+    // When dealing with a `DumpType_t::FullDump`, the content of the physical
+    // memory directly follows, there's no extra header like with the BMP/RDMP
+    // dumps (see `KernelDumpParser::BuildPhysmemFullDump`).
     BMP_HEADER64 BmpHeader;
     KERNEL_RDMP_HEADER64 RdmpHeader;
     FULL_RDMP_HEADER64 FullRdmpHeader;
